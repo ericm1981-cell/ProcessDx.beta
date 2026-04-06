@@ -1,0 +1,1450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#1B4332">
+<title>Process Dx</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F0F7F2;--s1:#FFFFFF;--s2:#E8F2EB;--s3:#D8EBE0;
+  --br:#C3D9C9;--br2:#A8C9B0;--forest:#1B4332;--forest2:#2D6A4F;
+  --green:#40916C;--greenlt:#74C69D;--gdim:rgba(64,145,108,.1);
+  --amber:#D97706;--amber2:#F59E0B;--adim:rgba(217,119,6,.1);
+  --red:#B91C1C;--rdim:rgba(185,28,28,.08);--txt:#1A2A1F;--slate:#3D5247;
+  --muted:#5A7A66;--muted2:#8AAD95;--mono:'IBM Plex Mono',monospace;
+  --head:'Barlow Condensed',sans-serif;--body:'Barlow',sans-serif;
+  --r:6px;--r2:10px;--r3:14px;--sb:env(safe-area-inset-bottom,0px);
+  --st:env(safe-area-inset-top,0px);--shadow:0 1px 3px rgba(0,0,0,.07);
+  --shadow2:0 4px 12px rgba(0,0,0,.1);
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{background:var(--bg);color:var(--txt);font-family:var(--body);min-height:100%;-webkit-font-smoothing:antialiased}
+body{overscroll-behavior:none}
+.prog-wrap{background:var(--forest);padding:10px 16px;padding-top:calc(10px + var(--st));flex-shrink:0}
+.prog-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.prog-name{font-family:var(--head);font-size:18px;font-weight:800;color:#fff;text-transform:uppercase;letter-spacing:.5px}
+.prog-name em{color:var(--greenlt);font-style:normal}
+.prog-sub{font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.45);letter-spacing:1.5px}
+.prog-gates{display:flex;gap:3px}
+.prog-gate{height:4px;flex:1;border-radius:2px;background:rgba(255,255,255,.15);transition:background .3s}
+.prog-gate.done{background:var(--greenlt)}.prog-gate.active{background:var(--amber2)}
+.prog-labels{display:flex;justify-content:space-between;margin-top:4px}
+.prog-lbl{font-family:var(--mono);font-size:8px;color:rgba(255,255,255,.3);letter-spacing:.5px;flex:1;text-align:center}
+.prog-lbl.active{color:var(--amber2)}.prog-lbl.done{color:rgba(255,255,255,.55)}
+.ts-badge{font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.6);background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:3px;padding:4px 8px;display:inline-flex;align-items:center;gap:5px}
+.dot-live{width:6px;height:6px;border-radius:50%;background:#ef4444;animation:blink .9s infinite;flex-shrink:0}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.15}}
+.scr{display:none;flex-direction:column;min-height:100vh}.scr.on{display:flex}
+.scroll{flex:1;overflow-y:auto;padding:16px 18px;-webkit-overflow-scrolling:touch;padding-bottom:110px}
+.gate-hdr{background:var(--s1);border-bottom:1px solid var(--br);padding:14px 18px;flex-shrink:0;box-shadow:var(--shadow)}
+.gate-tag{font-family:var(--mono);font-size:9px;letter-spacing:2px;color:var(--green);text-transform:uppercase;margin-bottom:2px}
+.gate-title{font-family:var(--head);font-size:22px;font-weight:800;color:var(--forest);text-transform:uppercase;letter-spacing:.5px;line-height:1}
+.gate-desc{font-size:13px;color:var(--muted);margin-top:4px;line-height:1.5}
+.slbl{display:flex;align-items:center;gap:8px;font-family:var(--head);font-size:11px;font-weight:700;color:var(--forest);text-transform:uppercase;letter-spacing:2px;border-bottom:2px solid var(--forest);padding-bottom:4px;margin:18px 0 12px}
+.slbl:first-child{margin-top:0}
+.qbtn{width:18px;height:18px;border-radius:50%;background:var(--forest);color:#fff;font-family:var(--mono);font-size:10px;font-weight:600;border:none;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;opacity:.7}
+.fg{margin-bottom:12px}
+.fg label{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:4px}
+.fg input,.fg select,.fg textarea{width:100%;background:var(--s1);border:1px solid var(--br);border-radius:var(--r);color:var(--txt);font-family:var(--body);font-size:15px;padding:10px 11px;-webkit-appearance:none;transition:border-color .12s;box-shadow:inset 0 1px 2px rgba(0,0,0,.03)}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--green)}
+.fg input.err{border-color:var(--red)!important}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.frow3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.calc-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
+.calc-box{background:var(--s1);border:1px solid var(--br);border-radius:var(--r2);padding:12px 14px;box-shadow:var(--shadow)}
+.calc-box.alert{border-color:var(--red);background:var(--rdim)}.calc-box.good{border-color:var(--green);background:var(--gdim)}
+.calc-lbl{font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px}
+.calc-val{font-family:var(--mono);font-size:20px;font-weight:600;color:var(--forest);letter-spacing:.5px}
+.calc-val.red{color:var(--red)}.calc-val.grn{color:var(--green)}
+.cbox-item{display:flex;align-items:flex-start;gap:12px;background:var(--s1);border:1px solid var(--br);border-radius:var(--r);padding:12px 14px;margin-bottom:8px;cursor:pointer;transition:all .15s;box-shadow:var(--shadow)}
+.cbox-item.checked{border-color:var(--green);background:var(--gdim)}
+.cbox-item.blind{border-color:var(--amber);background:var(--adim)}
+.cbox{width:24px;height:24px;border:2px solid var(--br2);border-radius:4px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px;transition:all .15s;margin-top:1px}
+.cbox-item.checked .cbox{background:var(--green);border-color:var(--green);color:#fff}
+.cbox-item.blind .cbox{background:var(--amber);border-color:var(--amber);color:#fff}
+.cbox-body{flex:1}
+.cbox-title{font-weight:600;font-size:13px;color:var(--forest);margin-bottom:2px;display:flex;align-items:center;gap:6px}
+.cbox-desc{font-size:12px;color:var(--muted);line-height:1.5}
+.blind-badge{font-family:var(--mono);font-size:9px;color:var(--amber);background:var(--adim);border:1px solid rgba(217,119,6,.3);border-radius:3px;padding:1px 6px;letter-spacing:.5px}
+/* ERGO */
+.ergo-card{background:var(--s1);border:1px solid var(--br);border-radius:var(--r2);padding:14px;margin-bottom:10px;box-shadow:var(--shadow)}
+.ergo-card.flagged-hard{border-color:var(--red);background:var(--rdim)}
+.ergo-card.flagged-soft{border-color:var(--amber);background:var(--adim)}
+.ergo-card.clear{border-color:var(--green);background:var(--gdim)}
+/* ITEM 1 — after-state eliminated state */
+.ergo-card.elim{border-color:var(--muted2);background:var(--s2);opacity:.6}
+.ergo-step-num{font-family:var(--mono);font-size:9px;color:var(--green);background:var(--gdim);border:1px solid rgba(64,145,108,.3);border-radius:3px;padding:2px 7px;display:inline-block;margin-bottom:5px;letter-spacing:1px}
+.ergo-step-name{font-family:var(--head);font-size:15px;font-weight:700;color:var(--forest);text-transform:uppercase;letter-spacing:.3px;margin-bottom:10px}
+.ergo-flags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.ergo-flag{font-family:var(--mono);font-size:10px;padding:6px 11px;border:1px solid var(--br);border-radius:4px;background:var(--s2);color:var(--muted);cursor:pointer;transition:all .12s}
+.ergo-flag.on-hard{border-color:var(--red);color:var(--red);background:var(--rdim)}
+.ergo-flag.on-soft{border-color:var(--amber);color:var(--amber);background:var(--adim)}
+.freq-row{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}
+.freq-btn{font-family:var(--mono);font-size:9px;padding:4px 9px;border:1px solid var(--br);border-radius:3px;background:var(--s2);color:var(--muted);cursor:pointer;transition:all .12s;letter-spacing:.5px}
+.freq-btn.sel-ec{border-color:var(--red);color:var(--red);background:var(--rdim)}
+.freq-btn.sel-fr{border-color:var(--amber);color:var(--amber);background:var(--adim)}
+.freq-btn.sel-oc{border-color:var(--green);color:var(--green);background:var(--gdim)}
+.ergo-status{font-family:var(--mono);font-size:10px;margin-top:6px;padding:5px 10px;border-radius:4px;display:inline-block}
+.es-red{color:var(--red);background:var(--rdim);border:1px solid rgba(185,28,28,.2)}
+.es-amber{color:var(--amber);background:var(--adim);border:1px solid rgba(217,119,6,.2)}
+.es-grn{color:var(--green);background:var(--gdim);border:1px solid rgba(64,145,108,.2)}
+/* ITEM 1 — eliminated toggle button */
+.elim-btn{font-family:var(--mono);font-size:9px;padding:5px 10px;border-radius:4px;cursor:pointer;letter-spacing:.5px;transition:all .12s;-webkit-appearance:none;border:1px solid var(--br);background:var(--s2);color:var(--muted)}
+.elim-btn.on{border-color:var(--amber);background:var(--adim);color:var(--amber);font-weight:700}
+/* step cards */
+.step-card{background:var(--s1);border:1px solid var(--br);border-radius:var(--r);padding:10px 12px;margin-bottom:7px;box-shadow:var(--shadow)}
+/* ITEM 3 — eliminated step in capture list */
+.step-card.skip-elim{background:var(--s2);border-color:var(--muted2);opacity:.5}
+.step-card-top{display:flex;align-items:center;gap:8px;margin-bottom:3px}
+.step-num-tag{font-family:var(--mono);font-size:9px;color:var(--green);background:var(--gdim);border:1px solid rgba(64,145,108,.3);border-radius:3px;padding:2px 7px;letter-spacing:1px;flex-shrink:0}
+.step-name-txt{font-weight:600;font-size:13px;color:var(--forest);flex:1}
+.step-del{background:none;border:none;color:var(--muted2);font-size:16px;padding:2px 5px;cursor:pointer}
+.step-times{font-family:var(--mono);font-size:10px;color:var(--muted);display:flex;flex-wrap:wrap;gap:8px;margin-top:3px}
+.step-times b{color:var(--forest2);font-weight:500}
+.var-table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:11px}
+.var-table th{background:var(--forest);color:rgba(255,255,255,.8);padding:8px 10px;text-align:left;font-weight:500;letter-spacing:.5px}
+.var-table td{padding:8px 10px;border-bottom:1px solid var(--br);color:var(--txt);background:var(--s1)}
+.var-table tr:nth-child(even) td{background:var(--s2)}
+.var-flag{display:inline-block;padding:2px 8px;border-radius:3px;font-size:9px;letter-spacing:.5px}
+.vf-ok{color:var(--green);background:var(--gdim);border:1px solid rgba(64,145,108,.25)}
+.vf-warn{color:var(--red);background:var(--rdim);border:1px solid rgba(185,28,28,.25)}
+.vf-override{color:var(--amber);background:var(--adim);border:1px solid rgba(217,119,6,.25)}
+.var-override-btn{font-family:var(--mono);font-size:10px;color:var(--amber);border:1px solid rgba(217,119,6,.4);background:var(--adim);border-radius:4px;padding:4px 10px;cursor:pointer;margin-top:6px;display:inline-block}
+.wc-chip{font-family:var(--mono);font-size:10px;border-radius:4px;padding:8px 13px;cursor:pointer;display:flex;align-items:center;gap:6px;border:1px solid var(--br);background:var(--s2);color:var(--muted);transition:all .12s;user-select:none}
+.wc-chip .wd{width:7px;height:7px;border-radius:50%;background:var(--br2);flex-shrink:0}
+.wc-chip.locked{opacity:.3;pointer-events:none}
+.wc-chip.on-va{border-color:var(--green);color:var(--green);background:var(--gdim)}.wc-chip.on-va .wd{background:var(--green)}
+.wc-chip.on-inc{border-color:var(--amber);color:var(--amber);background:var(--adim)}.wc-chip.on-inc .wd{background:var(--amber)}
+.wc-chip.on-wst{border-color:var(--red);color:var(--red);background:var(--rdim)}.wc-chip.on-wst .wd{background:var(--red)}
+.output-phase{background:var(--s1);border:1px solid var(--br);border-radius:var(--r2);padding:14px;margin-bottom:12px;box-shadow:var(--shadow)}
+.output-phase-hdr{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.phase-num{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--head);font-size:16px;font-weight:800;color:#fff;flex-shrink:0}
+.ph1{background:var(--red)}.ph2{background:var(--amber)}.ph3{background:var(--green)}
+.phase-title{font-family:var(--head);font-size:16px;font-weight:800;color:var(--forest);text-transform:uppercase;letter-spacing:.5px}
+.phase-sub{font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:1px}
+.output-item{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--br)}
+.output-item:last-child{border-bottom:none;padding-bottom:0}
+.out-step{font-family:var(--mono);font-size:9px;color:var(--green);background:var(--gdim);border:1px solid rgba(64,145,108,.25);border-radius:3px;padding:2px 6px;flex-shrink:0;margin-top:2px;letter-spacing:.5px}
+.out-step.red{color:var(--red);background:var(--rdim);border-color:rgba(185,28,28,.25)}
+.out-step.amber{color:var(--amber);background:var(--adim);border-color:rgba(217,119,6,.25)}
+.out-text{font-size:13px;color:var(--slate);line-height:1.5}
+.out-text b{color:var(--forest);font-weight:600}
+.out-empty{font-family:var(--mono);font-size:11px;color:var(--green);padding:6px 0;letter-spacing:.3px}
+.roi-box{background:var(--forest);border-radius:var(--r2);padding:16px 18px;margin-bottom:16px}
+.roi-lbl{font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.45);letter-spacing:2px;text-transform:uppercase;margin-bottom:4px}
+.roi-val{font-family:var(--head);font-size:32px;font-weight:800;color:var(--greenlt);letter-spacing:.5px;line-height:1}
+.roi-sub{font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.45);margin-top:4px}
+.vpick-btn{font-family:var(--mono);font-size:11px;letter-spacing:1px;text-transform:uppercase;padding:9px 18px;background:var(--green);color:#fff;border:none;border-radius:var(--r);cursor:pointer;margin-top:4px}
+.ptrack{height:3px;background:rgba(255,255,255,.12);flex-shrink:0}
+.pfill{height:100%;background:var(--amber2);width:0%;transition:width .1s linear}
+.cap-bar{background:var(--forest);padding:10px 14px;display:flex;gap:8px;flex-shrink:0;flex-wrap:wrap;align-items:center}
+.cap-btn{font-family:var(--head);font-size:12px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;padding:9px 12px;border-radius:var(--r);border:2px solid transparent;cursor:pointer;transition:opacity .1s;-webkit-appearance:none}
+.cap-btn:active{opacity:.75}.cap-btn:disabled{opacity:.25}
+.cap-go{background:var(--amber);color:#fff;border-color:var(--amber);flex:2}
+.cap-step{background:transparent;color:#fff;border-color:#fff;flex:1.5}
+.cap-end{background:transparent;color:#ef4444;border-color:#ef4444;flex:1}
+.cap-timer{font-family:var(--mono);font-size:20px;color:var(--amber2);background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);border-radius:4px;padding:5px 12px;text-align:center;flex-shrink:0;letter-spacing:.5px}
+.quick-note-bar{background:var(--forest2);padding:6px 14px;display:flex;gap:8px;align-items:center;flex-shrink:0}
+.qn-input{flex:1;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:var(--r);color:#fff;font-family:var(--mono);font-size:12px;padding:7px 11px}
+.qn-input::placeholder{color:rgba(255,255,255,.35)}
+.qn-input:focus{outline:none;border-color:var(--amber2)}
+.qn-save{background:var(--green);color:#fff;border:none;border-radius:var(--r);padding:7px 12px;font-family:var(--mono);font-size:10px;cursor:pointer;letter-spacing:.5px;flex-shrink:0}
+.cycle-tabs{display:flex;gap:5px;padding:6px 12px;background:var(--s2);border-bottom:1px solid var(--br);overflow-x:auto}
+.cycle-tabs::-webkit-scrollbar{display:none}
+.ctab{font-family:var(--mono);font-size:9px;padding:4px 10px;border:1px solid var(--br);border-radius:3px;background:transparent;color:var(--muted);cursor:pointer;letter-spacing:.5px;-webkit-appearance:none}
+.ctab.on{border-color:var(--green);color:var(--green);background:var(--gdim)}
+.note-tag{font-family:var(--mono);font-size:9px;color:var(--amber);background:var(--adim);border:1px solid rgba(217,119,6,.3);border-radius:3px;padding:2px 6px;display:inline-block;margin-top:3px;letter-spacing:.5px}
+.foot{position:fixed;bottom:0;left:0;right:0;background:var(--s1);border-top:2px solid var(--forest);padding:10px 18px;padding-bottom:calc(10px + var(--sb));display:flex;gap:10px;z-index:100;box-shadow:0 -4px 12px rgba(0,0,0,.08)}
+.btn-primary{flex:2;background:var(--forest);color:#fff;font-family:var(--head);font-size:16px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:14px;border:none;border-radius:var(--r);cursor:pointer;-webkit-appearance:none}
+.btn-primary:active{filter:brightness(.9)}.btn-primary:disabled{opacity:.3}
+.btn-secondary{flex:1;background:transparent;color:var(--muted);font-family:var(--head);font-size:13px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:14px;border:1px solid var(--br);border-radius:var(--r);cursor:pointer;-webkit-appearance:none}
+.btn-secondary:active{background:var(--s2)}
+.btn-amber{background:var(--amber)!important;color:#fff!important;border-color:var(--amber)!important}
+.btn-grn{background:var(--green)!important;color:#fff!important;border-color:var(--green)!important}
+.info-box{background:var(--s2);border:1px solid var(--br);border-left:3px solid var(--green);border-radius:var(--r);padding:12px 14px;margin-bottom:14px;font-size:13px;color:var(--slate);line-height:1.6}
+.info-box strong{color:var(--forest);font-weight:600}
+.info-box.amber{border-left-color:var(--amber);background:var(--adim)}
+.info-box.red{border-left-color:var(--red);background:var(--rdim)}
+.gate-lock{display:flex;align-items:flex-start;gap:8px;background:var(--rdim);border:1px solid rgba(185,28,28,.25);border-radius:var(--r);padding:10px 14px;margin-bottom:8px}
+.gate-lock-text{font-family:var(--mono);font-size:11px;color:var(--red);line-height:1.5;letter-spacing:.3px}
+.empty-state{text-align:center;padding:32px 16px;font-family:var(--mono);font-size:11px;color:var(--muted2);letter-spacing:.5px}
+#coachOverlay{display:none;position:fixed;inset:0;background:rgba(27,67,50,.82);z-index:500;align-items:flex-end;backdrop-filter:blur(6px)}
+.coach-box{background:var(--s1);border-top:4px solid var(--amber);border-radius:16px 16px 0 0;padding:20px 20px calc(24px + var(--sb));width:100%;max-height:82vh;overflow-y:auto}
+.coach-eyebrow{font-family:var(--mono);font-size:9px;letter-spacing:2px;color:var(--amber);text-transform:uppercase;margin-bottom:6px}
+.coach-icon{font-size:28px;margin-bottom:8px}
+.coach-title{font-family:var(--head);font-size:22px;font-weight:800;color:var(--forest);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px}
+.coach-body{font-size:14px;color:var(--slate);line-height:1.8;margin-bottom:14px}
+.coach-body strong{color:var(--forest)}
+.coach-yt{background:var(--s2);border:1px solid var(--br);border-left:3px solid var(--amber);border-radius:var(--r);padding:10px 14px;margin-bottom:14px;font-family:var(--mono);font-size:11px;color:var(--muted);line-height:1.6}
+.coach-yt strong{color:var(--amber);font-weight:600}
+.coach-skip{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11px;color:var(--muted);cursor:pointer;margin-bottom:14px;user-select:none}
+.coach-skip input[type=checkbox]{width:15px;height:15px;accent-color:var(--green);cursor:pointer}
+#tipModal{display:none;position:fixed;inset:0;background:rgba(27,67,50,.6);z-index:400;align-items:center;justify-content:center;padding:20px}
+.tip-box{background:var(--s1);border:1px solid var(--br);border-top:3px solid var(--green);border-radius:var(--r3);padding:20px;max-width:420px;width:100%;box-shadow:var(--shadow2)}
+.tip-title{font-family:var(--head);font-size:16px;font-weight:800;color:var(--forest);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px}
+.tip-body{font-size:13px;color:var(--slate);line-height:1.7}
+.tip-close{margin-top:14px;background:var(--forest);color:#fff;font-family:var(--head);font-size:13px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:10px;border:none;border-radius:var(--r);cursor:pointer;width:100%}
+#stepModal,#capSheet{display:none;position:fixed;inset:0;background:rgba(27,67,50,.6);z-index:300;align-items:flex-end;backdrop-filter:blur(4px)}
+.sheet-inner{background:var(--s1);border-top:3px solid var(--amber);border-radius:14px 14px 0 0;padding:16px 18px;width:100%;max-height:85vh;overflow-y:auto;padding-bottom:calc(20px + var(--sb))}
+.sheet-grip{width:36px;height:4px;background:var(--br);border-radius:2px;margin:0 auto 14px}
+.sheet-title{font-family:var(--head);font-size:14px;font-weight:800;text-transform:uppercase;letter-spacing:2px;margin-bottom:12px}
+.ts-table{width:100%;border-collapse:collapse;font-size:13px;color:var(--txt)}
+.ts-table th{background:var(--forest);color:rgba(255,255,255,.8);padding:9px 10px;text-align:left;font-family:var(--mono);font-size:9px;letter-spacing:1px;font-weight:500}
+.ts-table th.center{text-align:center}
+.ts-table td{padding:8px 10px;border-bottom:1px solid var(--br);vertical-align:middle}
+.ts-table tbody tr:nth-child(even) td{background:var(--s2)}.ts-table tbody tr:nth-child(odd) td{background:var(--s1)}
+.ts-table tfoot td{background:var(--forest);color:rgba(255,255,255,.9);padding:9px 10px;font-family:var(--mono);font-size:11px;font-weight:600}
+.ts-pct-bar{height:4px;border-radius:2px;margin-top:4px;min-width:4px;transition:width .3s}
+.kata-card{background:var(--s1);border:1px solid var(--br);border-radius:var(--r2);padding:16px;margin-bottom:12px;box-shadow:var(--shadow)}
+.kata-hdr{font-family:var(--head);font-size:11px;font-weight:800;color:var(--forest);text-transform:uppercase;letter-spacing:2px;border-bottom:2px solid var(--forest);padding-bottom:4px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between}
+.kata-lbl{font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:3px}
+.kata-field{width:100%;background:var(--s2);border:1px solid var(--br);border-radius:var(--r);font-family:var(--body);font-size:13px;color:var(--txt);padding:8px 10px;resize:none}
+.kata-field:focus{outline:none;border-color:var(--green)}
+.kata-obs{display:flex;align-items:flex-start;gap:8px;padding:7px 10px;border-radius:var(--r);margin-bottom:5px;border:1px solid var(--br);background:var(--s2)}
+.kata-obs.resolved .kata-obs-txt{text-decoration:line-through;opacity:.5}
+.kata-obs-txt{flex:1;font-size:12px;color:var(--slate);line-height:1.5}
+.kata-obs.auto .kata-obs-txt{color:var(--muted)}
+.kata-obs-src{font-family:var(--mono);font-size:8px;padding:1px 5px;border-radius:2px;background:var(--gdim);color:var(--green);border:1px solid rgba(64,145,108,.2);flex-shrink:0;margin-top:2px;letter-spacing:.5px}
+.kata-obs.auto .kata-obs-src{background:var(--s3);color:var(--muted);border-color:var(--br)}
+.kata-exp-table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:8px}
+.kata-exp-table th{background:var(--forest2);color:rgba(255,255,255,.8);padding:7px 8px;text-align:left;font-family:var(--mono);font-size:9px;letter-spacing:.8px;font-weight:500}
+.kata-exp-table td{padding:7px 8px;border-bottom:1px solid var(--br);vertical-align:top;background:var(--s1)}
+.kata-exp-table tr:nth-child(even) td{background:var(--s2)}
+.kata-exp-table td[contenteditable]{cursor:text;min-height:28px;outline:none}
+.kata-exp-table td[contenteditable]:focus{background:#fff;box-shadow:inset 0 0 0 1px var(--green)}
+.eracs-chips{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}
+.eracs-chip{font-family:var(--mono);font-size:10px;font-weight:600;padding:5px 11px;border:1px solid var(--br);border-radius:4px;background:var(--s2);color:var(--muted);cursor:pointer;transition:all .12s;letter-spacing:.5px;-webkit-appearance:none}
+.eracs-chip.on{border-color:var(--forest);background:var(--forest);color:#fff}
+.ctmethod-toggle{font-family:var(--mono);font-size:10px;border:1px solid var(--br2);background:var(--s2);color:var(--muted);border-radius:4px;padding:5px 12px;cursor:pointer;letter-spacing:.5px;-webkit-appearance:none}
+.ctmethod-toggle.lowrep{border-color:var(--amber);color:var(--amber);background:var(--adim)}
+.save-flash{position:fixed;bottom:calc(70px + var(--sb));right:14px;font-family:var(--mono);font-size:9px;color:var(--green);background:var(--gdim);border:1px solid rgba(64,145,108,.3);border-radius:3px;padding:3px 8px;z-index:200;letter-spacing:.5px;opacity:0;transition:opacity .3s;pointer-events:none}
+.wtype-chips{display:flex;gap:4px;flex-wrap:wrap;margin-top:5px}
+.wtype-chip{font-family:var(--mono);font-size:9px;font-weight:600;padding:4px 8px;border:1px solid var(--br);border-radius:3px;background:var(--s2);color:var(--muted);cursor:pointer;transition:all .12s;letter-spacing:.3px;-webkit-appearance:none}
+.wtype-chip.on{border-color:var(--red);background:var(--rdim);color:var(--red)}
+.cycle-pip{display:inline-flex;align-items:center;gap:2px;font-family:var(--mono);font-size:9px;padding:3px 7px;border:1px solid var(--br);border-radius:3px;background:var(--s1);color:var(--muted);cursor:pointer;margin:2px;transition:all .12s}
+.cycle-pip.excl{text-decoration:line-through;opacity:.35;background:var(--rdim);border-color:rgba(185,28,28,.2)}
+.cycle-pip:hover{border-color:var(--red);color:var(--red)}
+/* ITEM 4 — weekly tracking table */
+.wt-table{width:100%;border-collapse:collapse;font-size:12px}
+.wt-table th{background:var(--forest);color:rgba(255,255,255,.8);padding:7px 8px;text-align:left;font-family:var(--mono);font-size:9px;letter-spacing:.8px;font-weight:500}
+.wt-table td{padding:5px 7px;border-bottom:1px solid var(--br);background:var(--s1)}
+.wt-table tr:nth-child(even) td{background:var(--s2)}
+.wt-input{font-family:var(--mono);font-size:11px;width:100%;border:none;background:transparent;color:var(--txt);padding:2px 4px}
+.wt-input:focus{outline:1px solid var(--green);border-radius:2px}
+</style>
+</head>
+<body>
+
+<!-- WELCOME -->
+<div class="scr on" id="S0" style="align-items:center;justify-content:center;padding:32px 24px;background-image:repeating-linear-gradient(0deg,transparent,transparent 23px,rgba(27,67,50,.04) 23px,rgba(27,67,50,.04) 24px)">
+  <div style="width:100%;max-width:360px">
+    <div style="font-family:var(--head);font-size:54px;font-weight:800;color:var(--forest);text-transform:uppercase;letter-spacing:-1px;line-height:1;margin-bottom:2px">Process <em style="color:var(--green);font-style:normal">Dx</em></div>
+    <div style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:3px;text-transform:uppercase;border-bottom:2px solid var(--forest);padding-bottom:8px;margin-bottom:16px">Muri · Mura · Muda</div>
+    <div style="font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.5px;margin-bottom:24px;line-height:2">Seven gates. Right sequence.<br><span style="color:var(--red)">Fix overburden first.</span><br><span style="color:var(--amber)">Stabilize variation second.</span><br><span style="color:var(--green)">Remove waste third.</span></div>
+    <div id="resumeBtnWrap" style="display:none;margin-bottom:12px">
+      <button id="resumeBtn" class="btn-primary" style="width:100%;background:var(--amber);border-color:var(--amber);font-size:16px;padding:16px" onclick="doResume()">↩ Resume Last Study →</button>
+      <div id="resumeHint" style="font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;margin-top:5px;padding:4px;background:var(--gdim);border-radius:4px"></div>
+      <button onclick="clearSave()" style="width:100%;font-family:var(--mono);font-size:9px;color:var(--muted2);background:none;border:none;cursor:pointer;margin-top:4px;padding:4px;letter-spacing:.5px">✕ Discard saved study and start fresh</button>
+    </div>
+    <button class="btn-primary" style="width:100%;margin-bottom:8px;font-size:18px" onclick="startNew()">Begin Diagnostic →</button>
+    <button class="btn-secondary" style="width:100%" onclick="$('resumeInput').click()">Load Saved Study (JSON)</button>
+    <div style="font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;margin-top:14px;line-height:1.8;background:var(--s2);border:1px solid var(--br);border-radius:var(--r);padding:10px 12px"><span style="color:var(--amber);font-weight:700">⬇ Save Backup</span> appears in the header bar after setup.<br>Tap it at any time to download your study file.<br><span style="color:var(--muted2);font-size:9px">Auto-saves locally · Use backup before closing tab</span></div>
+    <input type="file" id="resumeInput" accept="application/json" style="display:none">
+  </div>
+</div>
+
+<!-- GATE 1 -->
+<div class="scr" id="S1">
+  <div id="prog1"></div>
+  <!-- AFTER-STATE LOCK G1 -->
+  <div id="g1AfterLock" style="display:none;background:var(--adim);border:2px solid var(--amber);border-radius:var(--r2);margin:14px 18px 0;padding:14px 16px;text-align:center">
+    <div style="font-family:var(--mono);font-size:10px;color:var(--amber);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px">🔒 AFTER-STATE · Setup Locked</div>
+    <div style="font-family:var(--mono);font-size:11px;color:var(--muted);margin-bottom:10px;line-height:1.7">Original setup preserved as the before baseline.<br>Skip directly to Capture.</div>
+    <button class="btn-primary btn-amber" style="width:100%;font-size:14px" onclick="goGate(3)">→ Skip to Capture</button>
+  </div>
+  <div class="gate-hdr"><div class="gate-tag">Gate 1 of 7</div><div class="gate-title">Study Setup</div><div class="gate-desc">Process information, time standards, and cost basis before you touch the floor.</div></div>
+  <div class="scroll">
+    <div class="slbl">Process Information</div>
+    <div class="frow">
+      <div class="fg"><label>Process / Station *</label><input type="text" id="g1proc" placeholder="e.g. Frame Assembly"/></div>
+      <div class="fg"><label>Department</label><input type="text" id="g1dept" placeholder="e.g. Assembly"/></div>
+    </div>
+    <div class="frow">
+      <div class="fg"><label>Analyst *</label><input type="text" id="g1analyst" placeholder="Your name"/></div>
+      <div class="fg"><label>Date</label><input type="text" id="g1date"/></div>
+    </div>
+    <div class="fg"><label>Operator / Subject</label><input type="text" id="g1operator" placeholder="Name or ID — optional"/></div>
+    <div class="fg" style="margin-top:4px"><label style="font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px;display:flex;align-items:center;gap:6px">Is this the line bottleneck station?</label>
+      <div style="display:flex;gap:8px">
+        <button id="btnBnYes" style="flex:1;padding:10px;font-family:var(--head);font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;border-radius:var(--r);border:2px solid var(--br);background:var(--s2);color:var(--muted);cursor:pointer;-webkit-appearance:none" onclick="setBn(true)">Yes — Bottleneck</button>
+        <button id="btnBnNo" style="flex:1;padding:10px;font-family:var(--head);font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;border-radius:var(--r);border:2px solid var(--br);background:var(--s2);color:var(--muted);cursor:pointer;-webkit-appearance:none" onclick="setBn(false)">No — Not Bottleneck</button>
+        <button id="btnBnUnk" style="flex:1;padding:10px;font-family:var(--head);font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;border-radius:var(--r);border:2px solid var(--br);background:var(--s2);color:var(--muted);cursor:pointer;-webkit-appearance:none" onclick="setBn(null)">Unknown</button>
+      </div>
+      <div id="bnWarning" style="display:none;margin-top:8px" class="info-box red"><strong>⚠ Non-bottleneck station.</strong> Improving this station may not change line output. Identify and study the bottleneck first.</div>
+    </div>
+    <div style="background:var(--s2);border:1px solid var(--br);border-radius:var(--r);padding:11px 13px;margin-bottom:12px">
+      <div style="font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px">Takt Calculator</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+        <div class="fg" style="margin-bottom:0"><label>Shift Minutes</label><input type="number" id="g1taktShiftMin" placeholder="e.g. 455" oninput="calcTakt()"/></div>
+        <div class="fg" style="margin-bottom:0"><label>Units/Hour</label><input type="number" id="g1uph" placeholder="e.g. 95" oninput="calcTaktFromHr()"/></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr auto;gap:8px;align-items:end">
+        <div class="fg" style="margin-bottom:0"><label>— OR — Total Units / Shift</label><input type="number" id="g1upshift" placeholder="e.g. 720" oninput="calcTaktFromShift()"/></div>
+        <button onclick="applyTakt()" style="font-family:var(--head);font-size:12px;font-weight:700;text-transform:uppercase;padding:10px 14px;background:var(--green);color:#fff;border:none;border-radius:var(--r);cursor:pointer;white-space:nowrap;-webkit-appearance:none;height:40px">→ Use</button>
+      </div>
+      <div id="taktCalcResult" style="font-family:var(--mono);font-size:11px;color:var(--forest);margin-top:7px;display:none;background:var(--gdim);border:1px solid rgba(64,145,108,.3);border-radius:var(--r);padding:7px 10px;line-height:1.9"></div>
+    </div>
+    <div class="slbl">Time Standards</div>
+    <div class="frow">
+      <div class="fg"><label>Takt Time (sec) *</label><input type="number" id="g1takt" placeholder="e.g. 120"/></div>
+      <div class="fg"><label>Minutes Per Shift</label><input type="number" id="g1shiftmin" placeholder="e.g. 455"/></div>
+    </div>
+    <div class="slbl">Operating Schedule</div>
+    <div class="frow3">
+      <div class="fg"><label>Shifts/Day</label><select id="g1shiftsday"><option value="1">1 shift</option><option value="2">2 shifts</option><option value="3">3 shifts</option></select></div>
+      <div class="fg"><label>Days/Week</label><select id="g1daysweek"><option value="5">5 days</option><option value="6">6 days</option><option value="7">7 days</option></select></div>
+      <div class="fg"><label>Weeks/Year</label><input type="number" id="g1weeks" value="50" placeholder="50"/></div>
+    </div>
+    <div class="slbl">Labor Cost</div>
+    <div class="frow">
+      <div class="fg"><label>Headcount on Station</label><input type="number" id="g1heads" placeholder="e.g. 2"/></div>
+      <div class="fg"><label>Labor Rate ($/hr)</label><input type="number" id="g1rate" placeholder="e.g. 20.25" step="0.01"/></div>
+    </div>
+  </div>
+  <div id="g1err" style="display:none;background:var(--rdim);border:1px solid rgba(185,28,28,.3);border-radius:var(--r);padding:10px 14px;margin:0 18px 8px;font-family:var(--mono);font-size:11px;color:var(--red);line-height:1.6"></div>
+  <div class="foot"><button class="btn-secondary" onclick="goHome()">← Home</button><button class="btn-primary" onclick="gate1Next()">Confirm Setup →</button></div>
+</div>
+
+<!-- GATE 2 -->
+<div class="scr" id="S2">
+  <div id="prog2"></div>
+  <!-- AFTER-STATE LOCK G2 -->
+  <div id="g2AfterLock" style="display:none;background:var(--adim);border:2px solid var(--amber);border-radius:var(--r2);margin:14px 18px 0;padding:14px 16px">
+    <div style="font-family:var(--mono);font-size:10px;color:var(--amber);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px">🔒 AFTER-STATE · Baseline Reference</div>
+    <div id="g2AfterRef" style="font-family:var(--mono);font-size:11px;color:var(--muted);line-height:2;background:rgba(255,255,255,.5);border-radius:var(--r);padding:8px 12px;margin-bottom:10px"></div>
+    <button class="btn-primary btn-amber" style="width:100%;font-size:14px" onclick="goGate(3)">→ Skip to Capture</button>
+  </div>
+  <div class="gate-hdr"><div class="gate-tag">Gate 2 of 7 — Muri Setup</div><div class="gate-title">Baseline + Gemba Log</div><div class="gate-desc">Record the before number. Observe before capturing. Confirm conditions are representative.</div></div>
+  <div class="scroll">
+    <div class="slbl">2A — Baseline Time</div>
+    <div class="info-box">Before you time anything — record the <strong>current cycle time</strong>. This becomes the locked before number for your ROI calculation.</div>
+    <div style="background:var(--forest);border-radius:var(--r2);padding:14px 16px;margin-bottom:14px">
+      <div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:2px;margin-bottom:6px">Built-in Stopwatch</div>
+      <div style="font-family:var(--mono);font-size:42px;font-weight:600;color:var(--greenlt);text-align:center;letter-spacing:2px;margin-bottom:10px" id="swDisplay">0:00.0</div>
+      <div id="swLaps" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px;min-height:0"></div>
+      <div style="display:flex;gap:8px;margin-bottom:8px">
+        <button id="swStartBtn" onclick="swToggle()" style="flex:2;font-family:var(--head);font-size:15px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:12px;border:none;border-radius:var(--r);background:var(--amber);color:#fff;cursor:pointer;-webkit-appearance:none">▶ Start</button>
+        <button onclick="swLap()" style="flex:1;font-family:var(--head);font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:12px;border:1px solid rgba(255,255,255,.3);border-radius:var(--r);background:transparent;color:#fff;cursor:pointer;-webkit-appearance:none">+ Lap</button>
+        <button onclick="swReset()" style="flex:1;font-family:var(--head);font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:12px;border:1px solid rgba(255,255,255,.2);border-radius:var(--r);background:transparent;color:rgba(255,255,255,.5);cursor:pointer;-webkit-appearance:none">Reset</button>
+      </div>
+      <button id="swUseBtn" onclick="swUse()" disabled style="width:100%;font-family:var(--head);font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:11px;border:none;border-radius:var(--r);background:var(--green);color:#fff;cursor:pointer;opacity:.3;-webkit-appearance:none">✓ Use This Time → Fill CT Field</button>
+      <div id="swAvgNote" style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.4);text-align:center;margin-top:6px;display:none">Avg of <span id="swLapCount">0</span> laps</div>
+    </div>
+    <div class="frow">
+      <div class="fg"><label>Current Cycle Time (sec) *</label><input type="number" id="g2ct" placeholder="Stopwatch or supervisor standard" oninput="calcBaseline()"/></div>
+      <div class="fg"><label>Actual Units Last Shift</label><input type="number" id="g2actual" placeholder="Optional verification"/></div>
+    </div>
+    <div class="fg"><label>Baseline Notes</label><textarea id="g2baselineNote" rows="2" placeholder="Context — machine condition, known issues, recent changes…"></textarea></div>
+    <div class="calc-grid" id="baselineCalc">
+      <div class="calc-box" id="bcCTvsT"><div class="calc-lbl">CT vs Takt</div><div class="calc-val" id="bcCTvTval">—</div><div style="font-family:var(--mono);font-size:10px;color:var(--muted)" id="bcCTvTlbl">—</div></div>
+      <div class="calc-box" id="bcGap"><div class="calc-lbl">Units at Risk/Shift</div><div class="calc-val" id="bcGapVal">—</div><div style="font-family:var(--mono);font-size:10px;color:var(--muted)" id="bcGapLbl">—</div></div>
+      <div class="calc-box" id="bcCost"><div class="calc-lbl">$/Shift Exposure</div><div class="calc-val" id="bcCostVal">—</div><div style="font-family:var(--mono);font-size:10px;color:var(--muted)" id="bcCostLbl">—</div></div>
+      <div class="calc-box" id="bcAnnual"><div class="calc-lbl">Annual Exposure</div><div class="calc-val" id="bcAnnualVal">—</div><div style="font-family:var(--mono);font-size:10px;color:var(--muted)" id="bcAnnualLbl">—</div></div>
+    </div>
+    <div class="slbl">2B — Gemba Observation Log</div>
+    <div id="gembaChecklist">
+      <div class="cbox-item" onclick="toggleCbox(this,'cycle')"><div class="cbox">✓</div><div class="cbox-body"><div class="cbox-title">Full cycle observed</div><div class="cbox-desc">Watched at least one complete cycle start to finish without interruption</div></div></div>
+      <div class="cbox-item" onclick="toggleCbox(this,'operator')"><div class="cbox">✓</div><div class="cbox-body"><div class="cbox-title">Operator informed</div><div class="cbox-desc">Operator knows this is improvement work — not a performance review.</div></div></div>
+      <div class="cbox-item" onclick="toggleCbox(this,'material')"><div class="cbox">✓</div><div class="cbox-body"><div class="cbox-title">Material flow confirmed</div><div class="cbox-desc">Materials are staged correctly. Supply is not a constraint during this study.</div></div></div>
+      <div class="cbox-item" onclick="toggleCbox(this,'equipment')"><div class="cbox">✓</div><div class="cbox-body"><div class="cbox-title">Equipment condition noted</div><div class="cbox-desc">No breakdowns or abnormal equipment conditions.</div></div></div>
+      <div class="cbox-item" onclick="toggleCbox(this,'quality')"><div class="cbox">✓</div><div class="cbox-body"><div class="cbox-title">Quality standard known</div><div class="cbox-desc">Acceptance criteria for this station is understood before timing begins.</div></div></div>
+      <div class="cbox-item" onclick="toggleCbox(this,'normal')"><div class="cbox">✓</div><div class="cbox-body"><div class="cbox-title">Normal conditions confirmed</div><div class="cbox-desc">Production is representative of a typical shift.</div></div></div>
+    </div>
+    <div class="fg" style="margin-top:12px"><label>Abnormal Conditions / Additional Notes</label><textarea id="g2abnormal" rows="2" placeholder="Document anything abnormal."></textarea></div>
+    <div id="gembaTimestamp" style="margin-top:8px;display:none"><span class="ts-badge" style="background:var(--gdim);border-color:rgba(64,145,108,.3);color:var(--forest)">📋 <span id="gembaTS">Logged --:--</span></span></div>
+  </div>
+  <div class="foot"><button class="btn-secondary" onclick="goGate(1)">← Back</button><button class="btn-primary" onclick="gate2Next()">Log &amp; Continue →</button></div>
+</div>
+
+<!-- GATE 4 -->
+<div class="scr" id="S3">
+  <div id="prog3"></div>
+  <div class="gate-hdr" style="padding-bottom:10px"><div class="gate-tag">Gate 3 of 7 — Mura Setup</div><div class="gate-title">Cycle Capture</div><div class="gate-desc">Video-synced or free-running. Minimum 3 cycles — 10 preferred. Cycle 1 discarded (Hawthorne). More cycles = more reliable low-rep CT.</div></div>
+  <div class="cap-bar">
+    <button class="cap-btn cap-go" id="capStart" onclick="capDoStart()">▶ Start</button>
+    <button class="cap-btn cap-step" id="capStep" onclick="capDoStep()" disabled>◼ Step End</button>
+    <div class="cap-timer" id="capTimer">00:00.0</div>
+    <button class="cap-btn cap-end" id="capEnd" onclick="capDoEndCycle()" disabled>◉ End Cycle</button>
+  </div>
+  <div class="quick-note-bar">
+    <input type="text" class="qn-input" id="quickNote" placeholder="Quick note — tap mic or type, then →" onkeydown="if(event.key==='Enter')saveQuickNote()"/>
+    <button class="qn-save" onclick="saveQuickNote()">→ Log</button>
+  </div>
+  <div class="cycle-tabs" id="capTabs">
+    <button class="ctab on" data-ci="0">Cycle 1 ⚠</button>
+    <button style="font-family:var(--mono);font-size:9px;padding:4px 9px;border:1px dashed var(--br2);border-radius:3px;background:transparent;color:var(--muted2);cursor:pointer;-webkit-appearance:none" onclick="capAddCycle()">＋ Cycle</button>
+  </div>
+  <div style="background:#0a0a0a;flex-shrink:0;position:relative">
+    <div id="vEmpty" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:28px 16px;min-height:200px">
+      <div style="font-size:32px;opacity:.25">🎬</div>
+      <div style="font-family:var(--head);font-size:14px;font-weight:700;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:1px">Load Video</div>
+      <div style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.25);text-align:center;line-height:1.8">Optional but recommended.<br>Video pauses automatically on Step End.</div>
+      <button class="vpick-btn" onclick="$('vidInput').click()">Choose Video</button>
+    </div>
+    <video id="vid" playsinline webkit-playsinline preload="metadata" style="width:100%;max-height:300px;object-fit:contain;display:none;background:#000"></video>
+    <div class="ptrack"><div class="pfill" id="pFill"></div></div>
+    <div style="display:flex;gap:6px;padding:8px 10px;background:rgba(0,0,0,.6)">
+      <button onclick="toggleVidPause.call(this)" style="flex:2;font-family:var(--mono);font-size:11px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:var(--r);padding:8px;cursor:pointer;letter-spacing:.3px;-webkit-appearance:none">⏸ Pause / Play</button>
+      <button onclick="vidRwLastStep.call(this)" style="flex:2;font-family:var(--mono);font-size:11px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:var(--amber2);border-radius:var(--r);padding:8px;cursor:pointer;letter-spacing:.3px;-webkit-appearance:none">⟲ Last Step End</button>
+      <button onclick="vidRw2.call(this)" style="flex:1;font-family:var(--mono);font-size:11px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.6);border-radius:var(--r);padding:8px;cursor:pointer;letter-spacing:.3px;-webkit-appearance:none">−2s</button>
+    </div>
+    <input type="file" id="vidInput" accept="video/*" style="display:none">
+  </div>
+  <div class="scroll" style="padding-top:10px">
+    <div class="info-box" id="capCycle1Warning"><strong>Cycle 1 will be discarded.</strong> Operators adjust pace when first observed (Hawthorne effect). Capture it — only cycles 2+ are used for analysis.<br><br><strong style="color:var(--amber)">Target 10 cycles.</strong> 3 is the minimum to proceed. With only 3, you get 2 usable data points — not enough to confirm a reliable low-rep pair. 10 cycles gives the variation analysis real signal and makes the lowest-repeatable CT defensible to anyone reviewing your work.</div>
+    <div id="capStepList"><div class="empty-state">Tap ▶ Start.<br>When operator finishes a step — tap ◼ Step End.<br>Video pauses. Name the step. Save &amp; Continue.</div></div>
+    <div id="capSumBar" style="display:none;background:var(--forest);border-radius:var(--r);padding:10px 14px;margin-top:8px;display:flex;justify-content:space-between;align-items:center">
+      <div style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.55)" id="capSumLbl">Cycle 1</div>
+      <div style="font-family:var(--mono);font-size:18px;color:var(--greenlt)" id="capSumVal">0.00s</div>
+    </div>
+  </div>
+  <div class="foot"><button class="btn-secondary" onclick="goGate(2)">← Back</button><button class="btn-primary" id="capNextBtn" onclick="gate3Next()" disabled>Analyze Variation →</button></div>
+</div>
+
+<!-- GATE 5 -->
+<div class="scr" id="S4">
+  <div id="prog4"></div>
+  <div class="gate-hdr"><div class="gate-tag">Gate 4 of 7 — Mura Analysis</div><div class="gate-title">Variation Check</div><div class="gate-desc">Variation is analyzed before waste. Short-cycle steps use an absolute threshold, not a percentage.</div></div>
+  <div class="scroll">
+    <div id="varSummaryBox"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+      <div style="font-family:var(--mono);font-size:10px;color:var(--muted)">CT basis for all downstream calculations:</div>
+      <button id="ctMethodBtn" class="ctmethod-toggle" onclick="toggleCtMethod(this)">Method: Average ▾</button>
+    </div>
+    <div id="ctMethodNote" style="display:none" class="info-box amber"><strong>Lowest Repeatable mode.</strong> Using the lowest pair of times within 10% of each other.</div>
+    <div class="slbl">Step Variation — Cycles 2+</div>
+    <div style="overflow-x:auto;border:1px solid var(--br);border-radius:var(--r);margin-bottom:16px">
+      <table class="var-table" id="varTable"><thead><tr><th>Step</th><th>Avg</th><th>Low Rep</th><th>Variance</th><th>Threshold</th><th>Status</th></tr></thead><tbody id="varTbody"></tbody></table>
+    </div>
+    <div class="slbl">Cycle Time vs Takt</div>
+    <div class="calc-grid" id="varTaktCalc"></div>
+    <div class="fg"><label>Variation Notes — Root Cause Hypotheses</label><textarea id="g5notes" rows="3" placeholder="What's driving the variation? Material? Method? Equipment? Document your hypothesis."></textarea></div>
+  </div>
+  <div class="foot"><button class="btn-secondary" onclick="goGate(3)">← Back</button><button class="btn-primary" onclick="gate4Next()">Proceed to Waste →</button></div>
+</div>
+
+<!-- GATE 6 -->
+<div class="scr" id="S5">
+  <div id="prog5"></div>
+  <div class="gate-hdr"><div class="gate-tag">Gate 5 of 7 — Muda</div><div class="gate-title">Waste Classification</div><div class="gate-desc">Classify work content. Steps with Every Cycle / Frequent ergo flags or high variation are locked.</div></div>
+  <div class="scroll">
+    <div class="info-box"><strong>Work Content</strong> — select one per step. Locked steps show the reason. ERACS recommendation auto-generates from your classification.</div>
+    <div id="wasteStepList"></div>
+  </div>
+  <div class="foot"><button class="btn-secondary" onclick="goGate(4)">← Back</button><button class="btn-primary" onclick="gate5Next()">Generate Output →</button></div>
+</div>
+
+<!-- GATE 7 -->
+<div class="scr" id="S6">
+  <div id="prog6"></div>
+  <div class="gate-hdr"><div class="gate-tag">Gate 6 of 7 — Priority Output</div><div class="gate-title">Diagnostic Output</div><div class="gate-desc">Fix first. Stabilize second. Remove waste third. Simulate future state on the chart.</div></div>
+  <div class="scroll">
+    <div id="roiOutput"></div>
+    <div class="slbl">Work Balance Chart — Current vs Future State</div>
+    <div style="background:var(--s1);border:1px solid var(--br);border-radius:var(--r2);padding:14px;margin-bottom:12px;box-shadow:var(--shadow)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+        <div><div style="font-family:var(--head);font-size:14px;font-weight:700;color:var(--forest);text-transform:uppercase;letter-spacing:.5px">Step Time Chart</div><div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:2px" id="yamCTDisplay">Tap a bar to toggle it in/out of future state</div></div>
+        <div style="display:flex;gap:8px"><button onclick="yamResetAll()" style="font-family:var(--mono);font-size:10px;border:1px solid var(--br);background:var(--s2);color:var(--muted);border-radius:4px;padding:5px 10px;cursor:pointer">Reset</button><button onclick="window.print()" style="font-family:var(--mono);font-size:10px;border:1px solid var(--forest);background:var(--forest);color:#fff;border-radius:4px;padding:5px 10px;cursor:pointer">🖨 Print</button></div>
+      </div>
+      <canvas id="yamCanvas" style="width:100%;display:block;border-radius:var(--r);background:#0a0a0a;cursor:pointer" height="220"></canvas>
+      <div id="yamLegend" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;font-family:var(--mono);font-size:10px;color:var(--muted)"></div>
+    </div>
+    <div class="slbl">Future State — Adjust Step Times</div>
+    <div id="yamSliders" style="margin-bottom:16px"></div>
+    <div id="phase1Output"></div>
+    <div id="phase2Output"></div>
+    <div id="phase3Output"></div>
+    <div id="timeStudyTable" style="margin-bottom:12px"></div>
+    <!-- capture observations — quick notes + step notes render here -->
+    <div id="captureObservations" style="margin-bottom:12px"></div>
+    <!-- after-state comparison — ITEM 1/2/3 results render here -->
+    <div id="afterStudySection" style="margin-bottom:12px"></div>
+    <!-- after-state action buttons -->
+    <div id="afterStudyBtnWrap" style="display:none;margin-bottom:16px;display:flex;gap:10px">
+      <button id="afterStudyBtn" onclick="startAfterStudy()" class="btn-primary btn-amber" style="flex:1;font-size:13px;display:none">↩ Begin After-State Re-Study</button>
+      <button id="commitAfterBtn" onclick="commitAfterStudy()" class="btn-primary btn-grn" style="flex:1;font-size:13px;display:none">✓ Commit After-State</button>
+      <button id="cancelAfterBtn" onclick="cancelAfterStudy()" class="btn-secondary" style="flex:0.5;font-size:12px;display:none">✕ Cancel</button>
+    </div>
+    <div id="studyMeta" style="font-family:var(--mono);font-size:10px;color:var(--muted);line-height:2;background:var(--s1);border:1px solid var(--br);border-radius:var(--r);padding:12px 14px;margin-bottom:20px"></div>
+  </div>
+  <div class="foot">
+    <button class="btn-secondary" style="flex:0.8" onclick="goGate(5)">← Back</button>
+    <div style="display:flex;gap:8px;flex:2">
+      <button class="btn-secondary" style="flex:0.5;font-size:11px;padding:8px 4px" onclick="exportJSON()">⬇ Save</button>
+      <button class="btn-primary" style="font-size:15px;letter-spacing:.5px" onclick="goGate(7)">Improvement Plan →</button>
+    </div>
+  </div>
+</div>
+
+<!-- GATE 7: KATA -->
+<div class="scr" id="S7">
+  <div id="prog7"></div>
+  <div class="gate-hdr"><div class="gate-tag">Gate 7 of 7 — Improvement Plan</div><div class="gate-title">Kata</div><div class="gate-desc">Target state. Obstacles. Experiments. Weekly tracking. Export your plan.</div></div>
+  <div class="scroll">
+    <div id="kataSection" style="margin-bottom:12px"></div>
+    <div id="progressLog" style="margin-bottom:12px"></div>
+    <div id="weeklyTrackingSection" style="margin-bottom:12px"></div>
+    <div class="slbl">Study Record</div>
+    <div id="studyMeta2" style="font-family:var(--mono);font-size:10px;color:var(--muted);line-height:2;background:var(--s1);border:1px solid var(--br);border-radius:var(--r);padding:12px 14px;margin-bottom:80px"></div>
+  </div>
+  <div class="foot">
+    <button class="btn-secondary" style="flex:0.8" onclick="goGate(6)">← Back</button>
+    <div style="display:flex;gap:5px;flex:2">
+      <button class="btn-primary" style="font-size:11px;padding:8px 4px;background:var(--red);letter-spacing:0" onclick="exportKataObstacles()">⬇ Obstacles</button>
+      <button class="btn-primary" style="font-size:11px;padding:8px 4px;background:var(--amber);letter-spacing:0" onclick="exportKataExp()">⬇ Exp. Record</button>
+      <button class="btn-primary btn-grn" style="font-size:11px;padding:8px 4px;letter-spacing:0" onclick="exportTargetSheet()">⬇ Target Sheet</button>
+      <button class="btn-secondary" style="flex:0.6;font-size:11px;padding:8px 4px" onclick="exportJSON()">⬇ Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- STEP MODAL -->
+<div id="stepModal"><div class="sheet-inner"><div class="sheet-grip"></div><div class="sheet-title" style="color:var(--forest)">Add Step</div><div class="fg"><label>Step Name / Description *</label><input type="text" id="stepModalName" placeholder="What does the operator do?"/></div><div style="display:flex;gap:10px;margin-top:12px"><button class="btn-primary btn-grn" onclick="saveStepModal()">Add Step</button><button class="btn-secondary" onclick="closeStepModal()">Cancel</button></div></div></div>
+
+<!-- CAPTURE SHEET -->
+<div id="capSheet">
+  <div class="sheet-inner">
+    <div class="sheet-grip"></div>
+    <div class="sheet-title" style="color:var(--red);display:flex;align-items:center;gap:8px"><span class="dot-live"></span>STEP CAPTURED</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:14px">
+      <div style="background:var(--s2);border:1px solid var(--br);border-radius:var(--r);padding:8px 10px"><div style="font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:2px">Duration</div><div style="font-family:var(--mono);font-size:18px;color:var(--green);font-weight:600" id="csDur">—</div></div>
+      <div style="background:var(--s2);border:1px solid var(--br);border-radius:var(--r);padding:8px 10px"><div style="font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:2px">Elapsed</div><div style="font-family:var(--mono);font-size:18px;color:var(--green);font-weight:600" id="csEl">—</div></div>
+    </div>
+    <div class="fg"><label>Step Name *</label><input type="text" id="csName" placeholder="Verb + object" autocomplete="off"/></div>
+    <div class="fg"><label>Notes (optional)</label><input type="text" id="csNote" placeholder="Anything to document about this step"/></div>
+    <div style="margin-bottom:10px">
+      <div style="font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px">Work Classification</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">
+        <button id="csWcVa" onclick="setCSWaste('va')" style="flex:1;font-family:var(--mono);font-size:11px;font-weight:800;padding:10px 6px;border:2px solid var(--br);border-radius:4px;background:var(--s2);color:var(--muted);cursor:pointer;transition:all .12s;-webkit-appearance:none;letter-spacing:.3px">VA</button>
+        <button id="csWcWst" onclick="setCSWaste('wst')" style="flex:1;font-family:var(--mono);font-size:11px;font-weight:800;padding:10px 6px;border:2px solid var(--br);border-radius:4px;background:var(--s2);color:var(--muted);cursor:pointer;transition:all .12s;-webkit-appearance:none;letter-spacing:.3px">Waste</button>
+      </div>
+      <div id="csWasteTypeRow" style="display:none;margin-bottom:8px"><div style="font-family:var(--mono);font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:4px">Waste Type (TIMWOODS):</div><div style="display:flex;gap:4px;flex-wrap:wrap" id="csWasteTypeChips"></div></div>
+      <div style="font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px">Ergo Flags</div>
+      <div style="display:flex;gap:5px;flex-wrap:wrap" id="csErgoFlags">
+        <button class="csErgoBtn" data-flag="POSTURE" onclick="toggleCSErgo(this)" style="font-family:var(--mono);font-size:9px;padding:5px 9px;border:1px solid var(--br);border-radius:3px;background:var(--s2);color:var(--muted);cursor:pointer;-webkit-appearance:none">POSTURE</button>
+        <button class="csErgoBtn" data-flag="FORCE" onclick="toggleCSErgo(this)" style="font-family:var(--mono);font-size:9px;padding:5px 9px;border:1px solid var(--br);border-radius:3px;background:var(--s2);color:var(--muted);cursor:pointer;-webkit-appearance:none">FORCE</button>
+        <button class="csErgoBtn" data-flag="REPETITION" onclick="toggleCSErgo(this)" style="font-family:var(--mono);font-size:9px;padding:5px 9px;border:1px solid var(--br);border-radius:3px;background:var(--s2);color:var(--muted);cursor:pointer;-webkit-appearance:none">REPETITION</button>
+        <button class="csErgoBtn" data-flag="REACH" onclick="toggleCSErgo(this)" style="font-family:var(--mono);font-size:9px;padding:5px 9px;border:1px solid var(--br);border-radius:3px;background:var(--s2);color:var(--muted);cursor:pointer;-webkit-appearance:none">REACH</button>
+        <button class="csErgoBtn" data-flag="VIBRATION" onclick="toggleCSErgo(this)" style="font-family:var(--mono);font-size:9px;padding:5px 9px;border:1px solid var(--br);border-radius:3px;background:var(--s2);color:var(--muted);cursor:pointer;-webkit-appearance:none">VIBRATION</button>
+        <button class="csErgoBtn" data-flag="SURFACE" onclick="toggleCSErgo(this)" style="font-family:var(--mono);font-size:9px;padding:5px 9px;border:1px solid var(--br);border-radius:3px;background:var(--s2);color:var(--muted);cursor:pointer;-webkit-appearance:none">SURFACE</button>
+        <button class="csErgoBtn" data-flag="BLIND OPS" onclick="toggleCSErgo(this)" style="font-family:var(--mono);font-size:9px;padding:5px 9px;border:1px solid rgba(217,119,6,.4);border-radius:3px;background:var(--s2);color:var(--amber);cursor:pointer;-webkit-appearance:none">BLIND OPS</button>
+        <button id="csQualBtn" onclick="toggleCSQual()" style="font-family:var(--mono);font-size:9px;padding:5px 9px;border:1px solid var(--br);border-radius:3px;background:var(--s2);color:var(--muted);cursor:pointer;-webkit-appearance:none;transition:all .12s">✓ QUAL CHECK</button>
+      </div>
+      <div style="margin-top:6px;display:flex;gap:6px">
+        <select id="csErgoFreq" style="font-family:var(--mono);font-size:9px;background:var(--s2);border:1px solid var(--br);border-radius:3px;padding:5px 8px;color:var(--muted);-webkit-appearance:none;letter-spacing:.3px"><option value="Every Cycle">Every Cycle</option><option value="Frequent">Frequent</option><option value="Occasional">Occasional</option></select>
+        <div style="font-family:var(--mono);font-size:9px;color:var(--muted2);padding:5px 0;line-height:1.4">Select frequency for flagged ergo risks</div>
+      </div>
+    </div>
+    <div id="csQuickNotes" style="margin-bottom:8px;display:none"><div style="font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Logged Notes</div><div id="csQuickNotesList" style="font-family:var(--mono);font-size:11px;color:var(--slate);background:var(--s2);border:1px solid var(--br);border-radius:var(--r);padding:8px 10px;line-height:1.8"></div></div>
+    <div class="fg"><label>Prior Step (reuse)</label><select id="priorSel"><option value="">— Select prior —</option></select></div>
+    <div style="display:flex;gap:10px;margin-top:12px;position:sticky;bottom:0;background:var(--s1);padding-top:10px;border-top:1px solid var(--br)">
+      <button onclick="capSave()" style="flex:2;background:var(--green);color:#fff;font-family:var(--head);font-size:16px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:14px;border:none;border-radius:var(--r);cursor:pointer">✓ Save &amp; Continue</button>
+      <button onclick="capDiscard()" style="flex:1;background:transparent;color:var(--muted);font-family:var(--head);font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:14px;border:1px solid var(--br);border-radius:var(--r);cursor:pointer">Discard</button>
+    </div>
+  </div>
+</div>
+
+<!-- COACH NOTE OVERLAY -->
+<div id="coachOverlay" style="display:none;position:fixed;inset:0;background:rgba(27,67,50,.82);z-index:500;align-items:flex-end;backdrop-filter:blur(6px)">
+  <div class="coach-box">
+    <div class="coach-eyebrow" id="coachEyebrow">Coach's Note — Gate 1</div>
+    <div class="coach-icon" id="coachIcon">🎓</div>
+    <div class="coach-title" id="coachTitle">Before You Begin</div>
+    <div class="coach-body" id="coachBody"></div>
+    <div class="coach-yt" id="coachYT" style="display:none"></div>
+    <label class="coach-skip"><input type="checkbox" id="coachSkipToggle" onchange="setCoachSkip(this.checked)"> Don't show Coach's Notes again</label>
+    <button class="btn-primary btn-grn" onclick="dismissCoach()" style="width:100%;margin-top:4px">Got It — Continue →</button>
+  </div>
+</div>
+
+<!-- TOOLTIP MODAL -->
+<div id="tipModal"><div class="tip-box"><div class="tip-title" id="tipTitle">—</div><div class="tip-body" id="tipBody" style="white-space:pre-line">—</div><button class="tip-close" onclick="$('tipModal').style.display='none'">Got It</button></div></div>
+
+<div id="saveFlash" class="save-flash">✓ Saved</div>
+<script>
+'use strict';
+const perf=()=>{try{return performance.now();}catch(e){return Date.now();}};
+
+// ═══ STATE ═══
+const DX={
+  gate:0,setup:{},baseline:{},gemba:{checks:{},blind:false,abnormal:'',timestamp:'',notes:''},
+  ergoSteps:[],cycles:[[]],curCycle:0,
+  running:false,frozen:false,raf:null,tStart:null,tAccum:0,stepStart:null,
+  quickNotes:[],variation:{},varOverrides:{},waste:{},g5notes:'',
+  eracs:{},ctMethod:'avg',wasteType:{},
+  kata:{targetCT:'',targetDate:'',conditions:[],successCriteria:'',obstacles:[],experiments:[],
+        weeklyTracking:[]},  // ITEM 4
+  // ── After-state fields (already in file per spec) ──
+  afterStudies:[],afterStudyMode:false,afterStudyDraft:null,_asOrig:null,
+};
+
+const $=id=>document.getElementById(id);
+const fmtMs=ms=>{const s=ms/1000,m=Math.floor(s/60);return`${String(m).padStart(2,'0')}:${(s%60).toFixed(1).padStart(4,'0')}`;};
+const fmtS=s=>`${(+s||0).toFixed(2)}s`;
+const elapsed=()=>{let ms=DX.tAccum;if(DX.tStart!==null)ms+=perf()-DX.tStart;return ms;};
+
+function showTip(id,title,body){$('tipTitle').textContent=title;$('tipBody').textContent=body;$('tipModal').style.display='flex';}
+
+// ═══ PROGRESS BAR ═══
+const PROG_HTML=(active)=>{
+  const gates=['Setup','Baseline','Capture','Variation','Waste','Output','Kata'];
+  const bars=gates.map((_,i)=>{const g=i+1;const cls=g<active?'done':g===active?'active':'';return`<div class="prog-gate ${cls}"></div>`;}).join('');
+  const lbls=gates.map((l,i)=>{const g=i+1;const cls=g<active?'done':g===active?'active':'';return`<div class="prog-lbl ${cls}">${l}</div>`;}).join('');
+  const ts=DX.gemba.timestamp?`<span class="ts-badge"><span class="dot-live"></span>${DX.gemba.timestamp}</span>`:'';
+  const proc=DX.setup&&DX.setup.process?DX.setup.process:'';
+  // AFTER-STATE badge
+  const afterBadge=DX.afterStudyMode?`<span style="font-family:var(--mono);font-size:9px;background:var(--amber);color:#fff;border-radius:3px;padding:2px 8px;font-weight:700;letter-spacing:.5px">AFTER-STATE · Re-study ${DX.afterStudies.length+1}</span>`:'';
+  const saveBtn=proc?`<button onclick="quickSaveJSON()" style="font-family:var(--mono);font-size:9px;letter-spacing:.5px;background:var(--amber);border:1px solid var(--amber2);border-radius:3px;padding:4px 11px;color:#fff;cursor:pointer;-webkit-appearance:none;flex-shrink:0;font-weight:700">⬇ Save Backup</button>`:'';
+  return`<div class="prog-wrap"><div class="prog-top"><div><div class="prog-name">Process <em>Dx</em></div><div class="prog-sub">Muri · Mura · Muda</div></div><div style="display:flex;align-items:center;gap:8px">${afterBadge}${ts}${saveBtn}</div></div><div class="prog-gates">${bars}</div><div class="prog-labels">${lbls}</div></div>`;
+};
+
+// ═══ NAVIGATION ═══
+function goHome(){document.querySelectorAll('.scr').forEach(s=>s.classList.remove('on'));$('S0').classList.add('on');}
+
+function goGate(n){
+  document.querySelectorAll('.scr').forEach(s=>s.classList.remove('on'));
+  $('S'+n).classList.add('on');DX.gate=n;
+  for(let g=1;g<=7;g++){const el=$('prog'+g);if(el)el.innerHTML=PROG_HTML(n);}
+  // After-state overlay logic
+  const g1l=$('g1AfterLock'),g2l=$('g2AfterLock');
+  if(g1l)g1l.style.display=(DX.afterStudyMode&&n===1)?'block':'none';
+  if(g2l){
+    if(DX.afterStudyMode&&n===2){
+      g2l.style.display='block';
+      const ref=$('g2AfterRef');
+      if(ref&&DX._asOrig)ref.innerHTML=`Original Baseline CT: <strong>${DX._asOrig.baseline&&DX._asOrig.baseline.ct?DX._asOrig.baseline.ct+'s':'—'}</strong> &nbsp;|&nbsp; Takt: <strong>${DX.setup.takt||'—'}s</strong>`;
+    } else g2l.style.display='none';
+  }
+  if(n===2)calcBaseline();
+  if(n===3)renderCapScreen();
+  if(n===4)renderVariation();
+  if(n===5)renderWasteScreen();
+  if(n===6){renderOutput();renderProgressLog();renderAfterStateComparison();}
+  if(n===7){renderKataGate();}
+  window.scrollTo(0,0);
+}
+
+function startNew(){
+  Object.assign(DX,{
+    gate:0,setup:{},baseline:{},gemba:{checks:{},blind:false,abnormal:'',timestamp:'',notes:''},
+    ergoSteps:[],cycles:[[]],curCycle:0,running:false,frozen:false,raf:null,tStart:null,tAccum:0,stepStart:null,
+    quickNotes:[],variation:{},varOverrides:{},waste:{},g5notes:'',eracs:{},ctMethod:'avg',wasteType:{},
+    kata:{targetCT:'',targetDate:'',conditions:[],successCriteria:'',obstacles:[],experiments:[],weeklyTracking:[]},
+    afterStudies:[],afterStudyMode:false,afterStudyDraft:null,_asOrig:null,
+    afterStudy:{cycles:[],variation:{},captured:false,ctLog:[]},
+  });
+  $('g1date').value=new Date().toLocaleDateString('en-US');
+  goGate(1);
+}
+
+// ═══ AFTER-STATE FUNCTIONS ═══
+function startAfterStudy(){
+  DX._asOrig={
+    ergoSteps:JSON.parse(JSON.stringify(DX.ergoSteps)),
+    cycles:JSON.parse(JSON.stringify(DX.cycles)),
+    waste:JSON.parse(JSON.stringify(DX.waste)),
+    wasteType:JSON.parse(JSON.stringify(DX.wasteType||{})),
+    variation:JSON.parse(JSON.stringify(DX.variation||{})),
+    baseline:JSON.parse(JSON.stringify(DX.baseline||{})),
+  };
+  DX.afterStudyDraft={
+    ergoSteps:JSON.parse(JSON.stringify(DX.ergoSteps)),
+    cycles:[[]],variation:{},waste:{},wasteType:{},eliminated:{},
+  };
+  DX.ergoSteps=DX.afterStudyDraft.ergoSteps;
+  DX.cycles=DX.afterStudyDraft.cycles;
+  DX.variation=DX.afterStudyDraft.variation;
+  DX.waste=DX.afterStudyDraft.waste;
+  DX.wasteType=DX.afterStudyDraft.wasteType;
+  DX.curCycle=0;DX.tAccum=0;DX.tStart=null;DX.stepStart=null;
+  DX.afterStudyMode=true;
+  autosave();goGate(1);
+}
+
+function cancelAfterStudy(){
+  if(!DX._asOrig)return;
+  DX.ergoSteps=DX._asOrig.ergoSteps;DX.cycles=DX._asOrig.cycles;
+  DX.variation=DX._asOrig.variation;DX.waste=DX._asOrig.waste;DX.wasteType=DX._asOrig.wasteType;
+  DX.afterStudyMode=false;DX.afterStudyDraft=null;DX._asOrig=null;
+  autosave();goGate(6);
+}
+
+function commitAfterStudy(){
+  if(!DX._asOrig)return;
+  const afterCycles=(DX.cycles||[]).slice(1).filter(c=>c&&c.length>0);
+  const stepNames=DX.ergoSteps.map(s=>s.name);
+  const afterCTs={};
+  stepNames.forEach(name=>{
+    const durs=afterCycles.map(cyc=>{const s=cyc.find(x=>x.name===name&&!x._elimSkip);return s?s.dur:null;}).filter(d=>d!==null);
+    afterCTs[name]=durs.length?durs.reduce((a,b)=>a+b,0)/durs.length:null;
+  });
+  const record={
+    date:new Date().toLocaleDateString('en-US'),expNum:DX.afterStudies.length+1,
+    ergoSteps:JSON.parse(JSON.stringify(DX.ergoSteps)),
+    cycles:JSON.parse(JSON.stringify(DX.cycles)),
+    variation:JSON.parse(JSON.stringify(DX.variation)),
+    waste:JSON.parse(JSON.stringify(DX.waste)),
+    wasteType:JSON.parse(JSON.stringify(DX.wasteType||{})),
+    eliminated:JSON.parse(JSON.stringify((DX.afterStudyDraft&&DX.afterStudyDraft.eliminated)||{})),
+    afterCTs,
+  };
+  DX.afterStudies.push(record);
+  DX.ergoSteps=DX._asOrig.ergoSteps;DX.cycles=DX._asOrig.cycles;
+  DX.variation=DX._asOrig.variation;DX.waste=DX._asOrig.waste;DX.wasteType=DX._asOrig.wasteType;
+  DX.afterStudyMode=false;DX.afterStudyDraft=null;DX._asOrig=null;
+  autosave();goGate(6);
+}
+
+function toggleStepEliminated(stepName){
+  if(!DX.afterStudyDraft)return;
+  if(!DX.afterStudyDraft.eliminated)DX.afterStudyDraft.eliminated={};
+  DX.afterStudyDraft.eliminated[stepName]=!DX.afterStudyDraft.eliminated[stepName];
+  DX.waste[stepName]=DX.afterStudyDraft.eliminated[stepName]?'elim':null;
+  autosave();
+}
+
+function isElim(stepName){return !!(DX.afterStudyDraft&&DX.afterStudyDraft.eliminated&&DX.afterStudyDraft.eliminated[stepName]);}
+
+// ═══ AFTER-STATE COMPARISON RENDER ═══
+function renderAfterStateComparison(){
+  const el=$('afterStudySection');if(!el)return;
+  // Show/hide buttons
+  const btn=$('afterStudyBtn'),commit=$('commitAfterBtn'),cancel=$('cancelAfterBtn'),wrap=$('afterStudyBtnWrap');
+  if(DX.afterStudyMode){if(btn)btn.style.display='none';if(commit)commit.style.display='inline-flex';if(cancel)cancel.style.display='inline-flex';}
+  else{if(btn)btn.style.display='inline-flex';if(commit)commit.style.display='none';if(cancel)cancel.style.display='none';}
+  if(wrap)wrap.style.display='flex';
+  if(!DX.afterStudies||!DX.afterStudies.length){el.innerHTML='';return;}
+  const latest=DX.afterStudies[DX.afterStudies.length-1];
+  const origVar=(DX._asOrig&&DX._asOrig.variation)||{};
+  const names=DX.ergoSteps.map(s=>s.name);
+  const fmt$=n=>n>=1000?'$'+(n/1000).toFixed(1)+'K':'$'+n.toFixed(0);
+  let origTotal=0,afterTotal=0;
+  const rows=names.map((name,i)=>{
+    const origCT=(origVar[name]&&origVar[name].avg)||0;origTotal+=origCT;
+    const afterCT=latest.afterCTs&&latest.afterCTs[name]!=null?latest.afterCTs[name]:null;
+    if(afterCT!==null)afterTotal+=afterCT;
+    const elim=latest.eliminated&&latest.eliminated[name];
+    const delta=afterCT!==null&&!elim?afterCT-origCT:null;
+    const clsChg=latest.waste&&DX._asOrig&&latest.waste[name]!==DX._asOrig.waste[name];
+    return`<tr style="background:${i%2===0?'var(--s1)':'var(--s2)'}${elim?';opacity:.5':''}">
+      <td style="padding:7px 9px;font-size:12px;color:var(--forest)">${elim?`<span style="text-decoration:line-through;color:var(--muted2)">${name}</span> <span style="font-family:var(--mono);font-size:9px;color:var(--amber);border:1px solid var(--amber);border-radius:3px;padding:1px 5px">ELIM</span>`:name}</td>
+      <td style="padding:7px 9px;font-family:var(--mono);font-size:11px;text-align:center">${origCT>0?origCT.toFixed(1)+'s':'—'}</td>
+      <td style="padding:7px 9px;font-family:var(--mono);font-size:11px;text-align:center;color:${elim?'var(--muted2)':afterCT!==null?'var(--green)':'var(--muted)'}">${elim?'—':afterCT!==null?afterCT.toFixed(1)+'s':'—'}</td>
+      <td style="padding:7px 9px;font-family:var(--mono);font-size:11px;text-align:center;color:${delta!==null?(delta<0?'var(--green)':'var(--red)'):'var(--muted)'}">${elim?'Eliminated':delta!==null?(delta<0?'−'+Math.abs(delta).toFixed(1)+'s':'+'+delta.toFixed(1)+'s'):'—'}</td>
+      <td style="padding:7px 9px;font-size:10px;color:var(--muted)">${clsChg?'Class. changed':'—'}</td>
+    </tr>`;
+  }).join('');
+  const totalDelta=afterTotal-origTotal;
+  const takt=DX.setup.takt||0;
+  el.innerHTML=`<div style="border-top:2px solid var(--amber);padding-top:16px;margin-top:8px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+      <div style="font-family:var(--head);font-size:14px;font-weight:800;color:var(--amber);text-transform:uppercase;letter-spacing:.5px">After-State Comparison — Exp ${latest.expNum} · ${latest.date}</div>
+      <button onclick="startAfterStudy()" class="btn-primary btn-amber" style="font-size:11px;padding:8px 14px;flex:0">+ New Re-Study</button>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px">
+      <div style="background:var(--s1);border:1px solid var(--br);border-radius:var(--r);padding:10px 14px;flex:1;min-width:80px"><div style="font-family:var(--mono);font-size:8px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:2px">Before CT</div><div style="font-family:var(--mono);font-size:18px;font-weight:700;color:var(--forest)">${origTotal.toFixed(1)}s</div></div>
+      <div style="background:${totalDelta<0?'var(--gdim)':'var(--rdim)'};border:1px solid ${totalDelta<0?'rgba(64,145,108,.25)':'rgba(185,28,28,.25)'};border-radius:var(--r);padding:10px 14px;flex:1;min-width:80px"><div style="font-family:var(--mono);font-size:8px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:2px">After CT</div><div style="font-family:var(--mono);font-size:18px;font-weight:700;color:${totalDelta<0?'var(--green)':'var(--red)'}">${afterTotal.toFixed(1)}s</div></div>
+      <div style="background:${totalDelta<0?'var(--gdim)':'var(--rdim)'};border:1px solid ${totalDelta<0?'rgba(64,145,108,.25)':'rgba(185,28,28,.25)'};border-radius:var(--r);padding:10px 14px;flex:1;min-width:80px"><div style="font-family:var(--mono);font-size:8px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:2px">Δ CT</div><div style="font-family:var(--mono);font-size:18px;font-weight:700;color:${totalDelta<0?'var(--green)':'var(--red)'}">${totalDelta<0?'−':'+'}${Math.abs(totalDelta).toFixed(1)}s</div></div>
+      ${takt?`<div style="background:${afterTotal<=takt?'var(--gdim)':'var(--rdim)'};border:1px solid ${afterTotal<=takt?'rgba(64,145,108,.25)':'rgba(185,28,28,.25)'};border-radius:var(--r);padding:10px 14px;flex:1;min-width:80px"><div style="font-family:var(--mono);font-size:8px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:2px">vs Takt</div><div style="font-family:var(--mono);font-size:18px;font-weight:700;color:${afterTotal<=takt?'var(--green)':'var(--red)'}">${afterTotal<=takt?'✓ Under':'+'+(afterTotal-takt).toFixed(1)+'s'}</div></div>`:''}
+    </div>
+    <div style="overflow-x:auto;border:1px solid var(--br);border-radius:var(--r)">
+      <table style="width:100%;border-collapse:collapse;font-family:var(--mono);font-size:11px">
+        <thead><tr style="background:var(--forest)"><th style="padding:7px 9px;color:rgba(255,255,255,.8);text-align:left;font-weight:500;font-size:9px;letter-spacing:.5px">Step</th><th style="padding:7px 9px;color:rgba(255,255,255,.8);font-weight:500;font-size:9px;letter-spacing:.5px;text-align:center">Before</th><th style="padding:7px 9px;color:rgba(255,255,255,.8);font-weight:500;font-size:9px;letter-spacing:.5px;text-align:center">After</th><th style="padding:7px 9px;color:rgba(255,255,255,.8);font-weight:500;font-size:9px;letter-spacing:.5px;text-align:center">Δ</th><th style="padding:7px 9px;color:rgba(255,255,255,.8);font-weight:500;font-size:9px;letter-spacing:.5px">Changes</th></tr></thead>
+        <tbody>${rows}</tbody>
+        <tfoot><tr style="background:var(--forest2)"><td style="padding:7px 9px;color:#fff;font-weight:700">TOTAL</td><td style="padding:7px 9px;color:var(--greenlt);text-align:center">${origTotal.toFixed(1)}s</td><td style="padding:7px 9px;color:var(--greenlt);text-align:center">${afterTotal.toFixed(1)}s</td><td style="padding:7px 9px;color:${totalDelta<0?'var(--greenlt)':'#ef4444'};text-align:center">${totalDelta<0?'−':'+'}${Math.abs(totalDelta).toFixed(1)}s</td><td style="padding:7px 9px;color:rgba(255,255,255,.6)">${takt?'Takt: '+takt+'s':''}</td></tr></tfoot>
+      </table>
+    </div>
+  </div>`;
+}
+
+// ═══ GATE 1 ═══
+function gate1Next(){
+  if(DX.afterStudyMode){goGate(2);return;}
+  const proc=$('g1proc').value.trim(),analyst=$('g1analyst').value.trim(),takt=parseFloat($('g1takt').value);
+  const missing=[];
+  if(!proc){$('g1proc').classList.add('err');missing.push('Process / Station');}else $('g1proc').classList.remove('err');
+  if(!analyst){$('g1analyst').classList.add('err');missing.push('Analyst');}else $('g1analyst').classList.remove('err');
+  if(!takt||takt<=0){$('g1takt').classList.add('err');missing.push('Takt Time');}else $('g1takt').classList.remove('err');
+  const errEl=$('g1err');
+  if(missing.length){if(errEl){errEl.style.display='block';errEl.innerHTML='Required: '+missing.join(' · ');}return;}
+  if(errEl)errEl.style.display='none';
+  const shiftsDay=parseInt($('g1shiftsday').value)||1,daysWeek=parseInt($('g1daysweek').value)||5,weeks=parseInt($('g1weeks').value)||50;
+  DX.setup={process:proc,dept:$('g1dept').value.trim(),analyst,date:$('g1date').value.trim()||new Date().toLocaleDateString('en-US'),operator:$('g1operator').value.trim(),takt,shiftMin:parseFloat($('g1shiftmin').value)||455,heads:parseFloat($('g1heads').value)||1,rate:parseFloat($('g1rate').value)||0,shiftsDay,daysWeek,weeks,annualShifts:shiftsDay*daysWeek*weeks};
+  DX.setup.target=Math.floor((DX.setup.shiftMin*60)/DX.setup.takt);
+  autosave();goGate(2);
+}
+
+// ═══ GATE 2 ═══
+function calcBaseline(){
+  const ct=parseFloat($('g2ct').value);
+  const{takt,shiftMin,heads,rate,annualShifts}=DX.setup;if(!takt)return;
+  if(!ct){['bcCTvTval','bcGapVal','bcCostVal','bcAnnualVal'].forEach(id=>{const e=$(id);if(e){e.textContent='—';e.className='calc-val';}});['bcCTvsT','bcGap','bcCost','bcAnnual'].forEach(id=>{const e=$(id);if(e)e.className='calc-box';});$('bcCTvTlbl').textContent='Enter current cycle time above';$('bcGapLbl').textContent='';$('bcCostLbl').textContent='';$('bcAnnualLbl').textContent=(DX.setup.annualShifts||250)+' shifts/yr';return;}
+  const gap=ct-takt,targetUnits=Math.floor((shiftMin*60)/takt),actualUnits=Math.floor((shiftMin*60)/ct),unitsLost=targetUnits-actualUnits;
+  const shiftCost=rate>0&&unitsLost>0?unitsLost*heads*(rate/3600)*ct:0,annualCost=shiftCost*(annualShifts||250);
+  const fmt$=n=>n>=1000?'$'+(n/1000).toFixed(1)+'K':'$'+n.toFixed(0);
+  $('bcCTvsT').className='calc-box '+(gap>0?'alert':'good');$('bcCTvTval').className='calc-val '+(gap>0?'red':'grn');$('bcCTvTval').textContent=(gap>0?'+':'')+gap.toFixed(1)+'s';$('bcCTvTlbl').textContent=gap>0?'Over takt — capacity gap':'Under takt — headroom exists';
+  $('bcGap').className='calc-box '+(unitsLost>0?'alert':'good');$('bcGapVal').className='calc-val '+(unitsLost>0?'red':'grn');$('bcGapVal').textContent=Math.max(0,unitsLost);$('bcGapLbl').textContent='vs target '+targetUnits+' units';
+  $('bcCost').className='calc-box '+(shiftCost>0?'alert':'good');$('bcCostVal').className='calc-val '+(shiftCost>0?'red':'grn');$('bcCostVal').textContent=rate>0?fmt$(shiftCost):'—';$('bcCostLbl').textContent=rate>0?'Labor cost of gap per shift':'Enter labor rate in Gate 1';
+  $('bcAnnual').className='calc-box '+(annualCost>0?'alert':'good');$('bcAnnualVal').className='calc-val '+(annualCost>0?'red':'grn');$('bcAnnualVal').textContent=rate>0?fmt$(annualCost):'—';$('bcAnnualLbl').textContent=(DX.setup.annualShifts||250)+' shifts/yr';
+  DX.baseline={ct,gap,targetUnits,actualUnits,unitsLost,shiftCost,annualCost};
+}
+
+function toggleCbox(el,key){el.classList.toggle('checked');DX.gemba.checks[key]=el.classList.contains('checked');}
+function toggleBlind(el){DX.gemba.blind=!DX.gemba.blind;el.classList.toggle('blind',DX.gemba.blind);el.classList.toggle('checked',false);}
+
+function gate2Next(){
+  if(DX.afterStudyMode){goGate(3);return;}
+  const ct=parseFloat($('g2ct').value);if(!ct||ct<=0){$('g2ct').classList.add('err');$('g2ct').focus();return;}
+  $('g2ct').classList.remove('err');
+  DX.gemba.abnormal=$('g2abnormal').value.trim();DX.gemba.baselineNote=$('g2baselineNote').value.trim();
+  const now=new Date();DX.gemba.timestamp=now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+  $('gembaTS').textContent='Logged '+DX.gemba.timestamp;$('gembaTimestamp').style.display='block';
+  calcBaseline();autosave();goGate(3);
+}
+
+// ═══ GATE 3 — ERGO (ITEMS 1 + 2) ═══
+const ERGO_FLAGS=['POSTURE','FORCE','REPETITION','REACH','VIBRATION','SURFACE','BLIND OPS'];
+const FREQ=['Every Cycle','Frequent','Occasional'];
+const FREQ_LOCK=['Every Cycle','Frequent'];
+
+function renderErgoScreen(){
+  const list=$('ergoStepList');
+  // Gate 3 no longer exists as a standalone screen — ergo is captured inline
+  // This function still runs for after-state eliminated-step management if needed
+  if(!list)return;
+  // ITEM 2: show pre-load note in after-state mode
+  const afterNote=$('ergoAfterNote');
+  if(afterNote)afterNote.style.display=DX.afterStudyMode?'block':'none';
+
+  if(!DX.ergoSteps.length){list.innerHTML='<div class="empty-state">Add steps from your Gemba walk.<br>Flag ergo risk + frequency per step.</div>';$('ergoWarning').innerHTML='';return;}
+  let hardCount=0,softCount=0;
+  DX.ergoSteps.forEach((s,i)=>{
+    const eliminated=isElim(s.name);
+    const hardFlags=(s.flags||[]).filter(f=>FREQ_LOCK.includes(s.freq&&s.freq[f]));
+    const softFlags=(s.flags||[]).filter(f=>!FREQ_LOCK.includes(s.freq&&s.freq[f]));
+    if(!eliminated){if(hardFlags.length)hardCount++;else if(softFlags.length)softCount++;}
+    const cls=eliminated?'ergo-card elim':hardFlags.length?'ergo-card flagged-hard':softFlags.length?'ergo-card flagged-soft':'ergo-card clear';
+
+    // ITEM 2: In afterStudyMode, pre-loaded flags render as amber (on-soft) by default
+    const flagsHTML=ERGO_FLAGS.map(f=>{
+      const on=(s.flags||[]).includes(f);
+      const freq=s.freq&&s.freq[f]?s.freq[f]:'';
+      let cls2;
+      if(on){
+        if(DX.afterStudyMode){cls2='ergo-flag on-soft';}  // amber = pre-loaded, still present
+        else{cls2=FREQ_LOCK.includes(freq)?'ergo-flag on-hard':'ergo-flag on-soft';}
+      } else cls2='ergo-flag';
+      return`<div class="${cls2}" onclick="${eliminated?'':' toggleErgoFlag('+i+',\''+f+'\',this)'}">${f}${on&&freq?` <span style="opacity:.7">(${freq.charAt(0)})</span>`:''}</div>`;
+    }).join('');
+
+    const freqSection=!eliminated&&(s.flags||[]).length?`<div style="margin-top:8px"><div style="font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">How often? — flagged steps only</div><div class="freq-row">${(s.flags||[]).map(f=>`<div style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-right:4px">${f}:</div>${FREQ.map(fr=>`<button class="freq-btn ${s.freq&&s.freq[f]===fr?'sel-'+(FREQ_LOCK.includes(fr)?'ec':'oc')+(fr==='Frequent'?'sel-fr':''):''}" onclick="setFreq(${i},'${f}','${fr}')">${fr}</button>`).join('')}`).join('</div><div style="display:flex;flex-wrap:wrap;gap:5px;align-items:center;margin-top:6px">')}</div></div>`:'';
+
+    const flaggedDesc=eliminated?`<div class="ergo-status" style="background:var(--adim);border:1px solid rgba(217,119,6,.2);color:var(--amber)">✕ Eliminated in after-state</div>`:hardFlags.length?`<div class="ergo-status es-red">🔒 ${hardFlags.length} lock-level risk${hardFlags.length>1?'s':''} — waste classification locked</div>`:softFlags.length?`<div class="ergo-status es-amber">⚠ ${softFlags.length} occasional risk${softFlags.length>1?'s':''} — noted, not locked</div>`:`<div class="ergo-status es-grn">✓ Clear — no ergo flags</div>`;
+
+    // ITEM 1: Eliminated toggle button — only in afterStudyMode
+    const elimBtn=DX.afterStudyMode?`<button class="elim-btn ${eliminated?'on':''}" onclick="toggleStepEliminated('${s.name.replace(/'/g,"\\'")}')">${eliminated?'✓ Eliminated':'Mark Eliminated'}</button>`:'';
+
+    const notesField=`<div style="margin-top:8px"><textarea style="width:100%;font-family:var(--mono);font-size:10px;background:var(--s2);border:1px solid var(--br);border-radius:var(--r);padding:6px 9px;color:var(--slate);resize:none;line-height:1.6" rows="2" placeholder="Step context — describe the exact motion, fixture, reach distance, load… (appears in Phase 1 output)" oninput="DX.ergoSteps[${i}].notes=this.value;autosave()">${s.notes||''}</textarea></div>`;
+    const el=document.createElement('div');el.className=cls;
+    const topRow=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;flex-wrap:wrap"><span class="ergo-step-num">STEP ${String(i+1).padStart(2,'0')}</span>${elimBtn}${DX.afterStudyMode?'':` <button style="margin-left:auto;background:none;border:none;color:var(--muted2);font-size:14px;cursor:pointer" onclick="DX.ergoSteps.splice(${i},1);renderErgoScreen()">✕</button>`}</div>`;
+    el.innerHTML=`${topRow}<div class="ergo-step-name" style="${eliminated?'text-decoration:line-through;color:var(--muted2)':''}">${s.name}</div>${eliminated?'':(`<div class="ergo-flags">${flagsHTML}</div>${freqSection}`)}${flaggedDesc}${eliminated?'':notesField}`;
+    list.appendChild(el);
+  });
+  $('ergoWarning').innerHTML=hardCount>0?`<div class="info-box red"><strong>⚠ ${hardCount} step${hardCount>1?'s':''} with lock-level risk.</strong> Resolve before waste analysis on those steps.</div>`:softCount>0?`<div class="info-box amber"><strong>${softCount} step${softCount>1?'s':''} with occasional risk.</strong> Flagged in output. Waste classification not locked.</div>`:'';
+}
+
+function toggleErgoFlag(idx,flag,el){
+  const s=DX.ergoSteps[idx];if(!s.flags)s.flags=[];if(!s.freq)s.freq={};
+  const i=s.flags.indexOf(flag);if(i>=0){s.flags.splice(i,1);delete s.freq[flag];}else{s.flags.push(flag);s.freq[flag]='Every Cycle';}
+  autosave();
+}
+function setFreq(idx,flag,freq){const s=DX.ergoSteps[idx];if(!s.freq)s.freq={};s.freq[flag]=freq;autosave();}
+
+// ═══ GATE 3 — CAPTURE (ITEM 3) ═══
+const vid=$('vid');
+$('vidInput').addEventListener('change',e=>{const f=e.target.files[0];e.target.value='';if(f)loadVid(f);});
+function loadVid(file){if(vid._url){URL.revokeObjectURL(vid._url);vid._url=null;}vid.pause();vid.removeAttribute('src');vid.load();const url=URL.createObjectURL(file);vid._url=url;vid.onloadedmetadata=()=>{$('vEmpty').style.display='none';vid.style.display='block';vid.onloadedmetadata=null;};vid.onerror=()=>{vid.style.display='none';$('vEmpty').style.display='flex';};vid.src=url;}
+vid.addEventListener('timeupdate',()=>{if(vid.duration)$('pFill').style.width=(vid.currentTime/vid.duration*100)+'%';});
+function flashBtn(btn,msg,ms){if(!btn)return;const orig=btn.textContent;btn.textContent=msg;setTimeout(()=>{btn.textContent=orig;},ms||600);}
+function toggleVidPause(){const btn=this;if(!vid.src&&!vid._url){flashBtn(btn,'No video',800);return;}if(vid.paused||vid.ended){const p=vid.play();if(p&&p.then){p.then(()=>flashBtn(btn,'▶ Playing',500)).catch(()=>flashBtn(btn,'Tap again',800));}else flashBtn(btn,'▶ Playing',500);}else{vid.pause();flashBtn(btn,'⏸ Paused',600);}}
+function vidRw2(){if(!vid.src&&!vid._url)return;vid.pause();vid.currentTime=Math.max(0,(vid.currentTime||0)-2);}
+function vidRwLastStep(){const btn=this;const steps=DX.cycles[DX.curCycle]||[];if(!vid.src&&!vid._url){flashBtn(btn,'No video',700);return;}if(!steps.length){vid.pause();vid.currentTime=Math.max(0,(vid.currentTime||0)-2);return;}const lastElapsed=steps[steps.length-1].elapsed||0;vid.pause();vid.currentTime=Math.max(0,lastElapsed-0.3);flashBtn(btn,'↩ '+lastElapsed.toFixed(1)+'s',900);}
+function toggleAllClear(){DX.ergoAllClear=!DX.ergoAllClear;const btn=$('allClearBtn');const box=$('ergoAllClear');if(DX.ergoAllClear){btn.style.background='var(--green)';btn.style.color='#fff';btn.style.borderColor='var(--green)';if(box)box.style.display='block';$('ergoHint').style.display='none';}else{btn.style.background='var(--s2)';btn.style.color='var(--green)';btn.style.borderColor='var(--green)';if(box)box.style.display='none';$('ergoHint').style.display='block';}}
+
+let quickNoteBuffer=[];
+function saveQuickNote(){const v=$('quickNote').value.trim();if(!v)return;const note={text:v,cycle:DX.curCycle+1,t:fmtS(elapsed()/1000)};quickNoteBuffer.push(note);DX.quickNotes.push(note);$('quickNote').value='';renderCapSteps();}
+
+function renderCapScreen(){renderCapTabs();renderCapSteps();checkCapReady();}
+
+function renderCapTabs(){
+  const tabs=$('capTabs');tabs.querySelectorAll('.ctab').forEach(t=>t.remove());
+  const add=tabs.querySelector('button:not(.ctab)');
+  DX.cycles.forEach((_,i)=>{const t=document.createElement('button');t.className='ctab'+(i===DX.curCycle?' on':'');t.textContent='Cycle '+(i+1)+(i===0?' ⚠':'');t.onclick=()=>capSwitchCycle(i);tabs.insertBefore(t,add);});
+}
+function capSwitchCycle(i){if(DX.running)stopTimer();DX.curCycle=i;DX.stepStart=null;quickNoteBuffer=[];renderCapTabs();renderCapSteps();$('capStart').textContent='▶ Start';$('capStart').disabled=false;$('capStep').disabled=true;$('capEnd').disabled=true;$('capCycle1Warning').style.display=i===0?'block':'none';}
+function capAddCycle(){DX.cycles.push([]);capSwitchCycle(DX.cycles.length-1);}
+
+function renderCapSteps(){
+  const list=$('capStepList');list.innerHTML='';
+  const steps=DX.cycles[DX.curCycle]||[];
+  const notes=DX.quickNotes.filter(n=>n.cycle===DX.curCycle+1);
+  if(!steps.length&&!notes.length){list.innerHTML='<div class="empty-state">Tap ▶ Start.<br>Tap ◼ Step End after each step transition.<br>Video pauses. Name the step. Save &amp; Continue.</div>';$('capSumBar').style.display='none';return;}
+  let total=0;
+  steps.forEach((s,i)=>{
+    // ITEM 3: eliminated steps show as greyed skip cards
+    const elimSkip=s._elimSkip||false;
+    total+=(elimSkip?0:(s.dur||0));
+    const el=document.createElement('div');el.className='step-card'+(elimSkip?' skip-elim':'');
+    el.innerHTML=`<div class="step-card-top"><span class="step-num-tag">STEP ${String(i+1).padStart(2,'0')}</span><span class="step-name-txt" style="${elimSkip?'text-decoration:line-through;color:var(--muted2)':''}"> ${s.name}</span>${elimSkip?'<span style="font-family:var(--mono);font-size:9px;color:var(--amber);border:1px solid var(--amber);border-radius:3px;padding:1px 5px;margin-left:4px">ELIMINATED — skip</span>':''}<button class="step-del" onclick="capDelStep(${i})">✕</button></div>${elimSkip?'':`<div class="step-times"><span>Duration: <b>${fmtS(s.dur)}</b></span><span>Elapsed: <b>${fmtS(s.elapsed)}</b></span></div>`}${s.note?`<div class="note-tag">📝 ${s.note}</div>`:''}`;
+    list.appendChild(el);
+  });
+  notes.forEach(n=>{const el=document.createElement('div');el.style.cssText='font-family:var(--mono);font-size:10px;color:var(--amber);background:var(--adim);border:1px solid rgba(217,119,6,.3);border-radius:var(--r);padding:6px 10px;margin-bottom:5px';el.textContent='📝 @'+n.t+' — '+n.text;list.appendChild(el);});
+  const sb=$('capSumBar');sb.style.display='flex';
+  $('capSumLbl').textContent='Cycle '+(DX.curCycle+1)+(DX.curCycle===0?' (discarded)':'')+' · '+steps.length+' steps';
+  $('capSumVal').textContent=fmtS(total);
+  checkCapReady();
+}
+
+function capDelStep(i){DX.cycles[DX.curCycle].splice(i,1);renderCapSteps();}
+function checkCapReady(){const valid=DX.cycles.slice(1).filter(c=>c.length>0);const need=Math.max(0,2-valid.length);$('capNextBtn').disabled=valid.length<2;if(valid.length>=10)$('capNextBtn').textContent=`Analyze Variation (${valid.length} cycles ✓) →`;else if(valid.length>=2)$('capNextBtn').textContent=`Analyze Variation (${valid.length}/10 cycles) →`;else $('capNextBtn').textContent=`Need ${need} more cycle${need>1?'s':''} to proceed →`;}
+function timerGo(){DX.tStart=perf();const tick=()=>{$('capTimer').textContent=fmtMs(elapsed());DX.raf=requestAnimationFrame(tick);};DX.raf=requestAnimationFrame(tick);}
+function stopTimer(){cancelAnimationFrame(DX.raf);DX.raf=null;if(DX.tStart!==null){DX.tAccum+=perf()-DX.tStart;DX.tStart=null;}}
+function resetTimer(){cancelAnimationFrame(DX.raf);DX.raf=null;DX.tAccum=0;DX.tStart=null;$('capTimer').textContent='00:00.0';}
+function capDoStart(){if(DX.running)return;DX.stepStart=elapsed()/1000;try{if(vid.src&&vid.readyState>=1)vid.play().catch(()=>{});}catch(e){}timerGo();DX.running=true;$('capStart').textContent='▶ Running';$('capStart').disabled=true;$('capStep').disabled=false;$('capEnd').disabled=false;}
+
+function capDoStep(){
+  if(!DX.running)return;
+  stopTimer();try{if(vid.src)vid.pause();}catch(e){}
+  DX.running=false;DX.frozen=true;
+  const endT=elapsed()/1000;const dur=Math.max(0,endT-(DX.stepStart||0));
+  $('csDur').textContent=fmtS(dur);$('csEl').textContent=fmtS(endT);
+  $('csName').value='';$('csNote').value='';
+  if(quickNoteBuffer.length){$('csQuickNotes').style.display='block';$('csQuickNotesList').innerHTML=quickNoteBuffer.map(n=>'• '+n.text).join('<br>');}else{$('csQuickNotes').style.display='none';}
+  buildPriorOptions();DX._pending={dur,elapsed:endT};
+  $('capSheet').style.display='flex';setTimeout(()=>$('csName').focus(),300);
+}
+
+function buildPriorOptions(){
+  const sel=$('priorSel');
+  sel.innerHTML='<option value="">— Select prior —</option>';
+  // In after-state mode: show original study step names at top
+  if(DX.afterStudyMode&&DX._asOrig&&DX._asOrig.cycles){
+    const origNames=[];
+    DX._asOrig.cycles.slice(1).filter(c=>c&&c.length>0).forEach(cyc=>cyc.forEach(s=>{if(!origNames.includes(s.name))origNames.push(s.name);}));
+    if(origNames.length){
+      const grp=document.createElement('optgroup');grp.label='── Original Study Steps ──';
+      origNames.forEach(name=>{const opt=document.createElement('option');opt.value='orig:'+name;opt.textContent=name;grp.appendChild(opt);});
+      sel.appendChild(grp);
+    }
+  }
+  // Current cycles
+  DX.cycles.forEach((cyc,ci)=>cyc.forEach((s,si)=>{const opt=document.createElement('option');opt.value=ci+':'+si;opt.textContent='Cycle '+(ci+1)+' · Step '+(si+1)+' — '+s.name;sel.appendChild(opt);}));
+}
+
+$('priorSel').onchange=function(){
+  const v=this.value;if(!v)return;
+  // After-state: selected from original study step list
+  if(v.startsWith('orig:')){
+    const name=v.slice(5);
+    $('csName').value=name;
+    // Carry over original waste classification
+    if(DX._asOrig){
+      const origWaste=DX._asOrig.waste&&DX._asOrig.waste[name];
+      const origWT=DX._asOrig.wasteType&&DX._asOrig.wasteType[name];
+      if(origWaste){csFlags.waste=origWaste;csFlags.wasteType=origWT||null;_renderCSWaste();}
+      // Carry over original ergo flags
+      const origStep=DX._asOrig.ergoSteps&&DX._asOrig.ergoSteps.find(s=>s.name===name);
+      if(origStep&&origStep.flags&&origStep.flags.length){
+        csFlags.ergo=[...origStep.flags];
+        const topFreq=origStep.flags.length?origStep.freq&&origStep.freq[origStep.flags[0]]||'Every Cycle':'Every Cycle';
+        const freq=$('csErgoFreq');if(freq)freq.value=topFreq;
+        document.querySelectorAll('.csErgoBtn').forEach(btn=>{const flag=btn.dataset.flag;const on=csFlags.ergo.includes(flag);btn.style.borderColor=on?(flag==='BLIND OPS'?'var(--amber)':'var(--red)'):'var(--br)';btn.style.background=on?(flag==='BLIND OPS'?'var(--adim)':'var(--rdim)'):'var(--s2)';btn.style.color=on?(flag==='BLIND OPS'?'var(--amber)':'var(--red)'):'var(--muted)';});
+      }
+    }
+    return;
+  }
+  // Normal: selected from current cycle steps
+  const[ci,si]=v.split(':').map(Number);const s=DX.cycles?.[ci]?.[si];if(!s)return;
+  $('csName').value=s.name;if(s.note)$('csNote').value=s.note;
+  if(s.capturedWaste){csFlags.waste=s.capturedWaste;csFlags.wasteType=s.capturedWasteType||null;_renderCSWaste();}
+  if(s.capturedErgo&&s.capturedErgo.length){csFlags.ergo=[...s.capturedErgo];if(s.capturedErgoFreq){const freq=$('csErgoFreq');if(freq)freq.value=s.capturedErgoFreq;}document.querySelectorAll('.csErgoBtn').forEach(btn=>{const flag=btn.dataset.flag;const on=csFlags.ergo.includes(flag);btn.style.borderColor=on?(flag==='BLIND OPS'?'var(--amber)':'var(--red)'):'var(--br)';btn.style.background=on?(flag==='BLIND OPS'?'var(--adim)':'var(--rdim)'):'var(--s2)';btn.style.color=on?(flag==='BLIND OPS'?'var(--amber)':'var(--red)'):'var(--muted)';});}
+  if(s.qualityCheck){csFlags.quality=true;const qb=$('csQualBtn');if(qb){qb.style.borderColor='var(--green)';qb.style.background='var(--gdim)';qb.style.color='var(--green)';}}
+};
+
+function capSave(){
+  const name=$('csName').value.trim();if(!name){$('csName').style.borderColor='var(--red)';$('csName').focus();return;}
+  $('csName').style.borderColor='';
+  // ITEM 3: check if this step is eliminated in afterStudyMode
+  const elimSkip=DX.afterStudyMode&&isElim(name);
+  const pendingData={name,note:$('csNote').value.trim(),...DX._pending,_elimSkip:elimSkip};
+  pendingData.qualityCheck=csFlags.quality;pendingData.capturedWaste=csFlags.waste;pendingData.capturedWasteType=csFlags.wasteType;
+  pendingData.capturedErgo=csFlags.ergo.length?[...csFlags.ergo]:[];pendingData.capturedErgoFreq=$('csErgoFreq')?$('csErgoFreq').value:'Every Cycle';
+  DX.cycles[DX.curCycle].push(pendingData);
+  if(!elimSkip){
+    let esEntry=DX.ergoSteps.find(s=>s.name===name);if(!esEntry){esEntry={name,flags:[],freq:{}};DX.ergoSteps.push(esEntry);}
+    if(pendingData.capturedErgo&&pendingData.capturedErgo.length){const freq=pendingData.capturedErgoFreq||'Every Cycle';pendingData.capturedErgo.forEach(f=>{if(!esEntry.flags.includes(f))esEntry.flags.push(f);esEntry.freq[f]=freq;});}
+    if(pendingData.capturedWaste&&!DX.waste[name]){DX.waste[name]=pendingData.capturedWaste;if(pendingData.capturedWasteType){if(!DX.wasteType)DX.wasteType={};DX.wasteType[name]=pendingData.capturedWasteType;}}else if(!DX.waste[name])DX.waste[name]=null;
+  }
+  DX.stepStart=DX._pending.elapsed;DX._pending=null;quickNoteBuffer=[];
+  DX.frozen=false;$('capSheet').style.display='none';
+  autosave();try{if(vid.src&&vid.readyState>=1)vid.play().catch(()=>{});}catch(e){}
+  $('capStart').textContent='▶ Resume';$('capStart').disabled=false;$('capStep').disabled=true;
+  resetCSFlags();renderCapSteps();
+}
+
+function capDiscard(){DX.frozen=false;DX._pending=null;quickNoteBuffer=[];$('capSheet').style.display='none';$('capStart').textContent='▶ Resume';$('capStart').disabled=false;$('capStep').disabled=true;resetCSFlags();}
+function capDoEndCycle(){if(DX.running){stopTimer();DX.running=false;}try{if(vid.src)vid.pause();}catch(e){}if(DX.cycles[DX.curCycle].length>0){DX.cycles.push([]);capSwitchCycle(DX.cycles.length-1);}resetTimer();$('capStart').textContent='▶ Start';$('capStart').disabled=false;$('capStep').disabled=true;$('capEnd').disabled=true;renderCapTabs();checkCapReady();}
+function gate3Next(){checkCapReady();if($('capNextBtn').disabled){alert('Complete at least 2 valid cycles (cycles 2 and 3+) before proceeding.');return;}autosave();const f=$('saveFlash');if(f){f.textContent='📥 Capture saved — tap ⬇ Save Backup to download';f.style.color='var(--amber)';f.style.background='var(--adim)';f.style.borderColor='rgba(217,119,6,.3)';f.style.opacity='1';clearTimeout(f._t);f._t=setTimeout(()=>{f.style.opacity='0';},5000);}goGate(4);}
+
+// ═══ GATE 5 — VARIATION ═══
+function renderVariation(){
+  const valid=DX.cycles.slice(1).filter(c=>c.length>0);
+  const stepNames=[];
+  // ITEM 3: exclude eliminated steps from variation analysis
+  valid.forEach(cyc=>cyc.forEach(s=>{if(!s._elimSkip&&!stepNames.includes(s.name))stepNames.push(s.name);}));
+  DX.variation={};const tbody=$('varTbody');tbody.innerHTML='';let anyHigh=false;
+  stepNames.forEach(name=>{
+    const _allDurs=valid.map((cyc)=>{const s=cyc.find(x=>x.name===name&&!x._elimSkip);return s?{dur:s.dur}:null;}).filter(d=>d!==null);
+    const exclForStep=(DX.varOverrides&&DX.varOverrides[name+'_excl'])||[];
+    const durs=_allDurs.filter((_,i)=>!exclForStep.includes(i)).map(d=>d.dur);if(!durs.length)return;
+    const avg=durs.reduce((a,b)=>a+b,0)/durs.length,min=Math.min(...durs),max=Math.max(...durs),cv=avg>0?((max-min)/avg)*100:0;
+    const isShort=avg<5,flagVal=isShort?(max-min)>0.8:cv>15,overridden=DX.varOverrides[name]==='accepted',high=flagVal&&!overridden;
+    if(high)anyHigh=true;
+    const{lr,flag:lrFlag}=computeLowRep(durs);
+    DX.variation[name]={avg,min,max,cv,high,isShort,flagVal,overridden,lowrep:lr,lowrepFlag:lrFlag};
+    const tr=document.createElement('tr');
+    const status=overridden?`<span class="var-flag vf-override">Accepted</span>`:flagVal?`<span class="var-flag vf-warn">⚠ Unstable</span>`:`<span class="var-flag vf-ok">✓ Stable</span>`;
+    const overrideBtn=flagVal&&!overridden?`<br><button class="var-override-btn" onclick="overrideVar('${name}')">Proceed as-is →</button>`:'';
+    const lr_disp=DX.ctMethod==='lowrep'?`<span style="color:var(--amber);font-weight:600">${lr.toFixed(2)}s${lrFlag?' ⚠':''}</span>`:`${lr.toFixed(2)}s`;
+    const exclKey=name+'_excl';const excl=DX.varOverrides[exclKey]||[];
+    const pipHTML=durs.map((d,ci)=>`<span class="cycle-pip ${excl.includes(ci)?'excl':''}" onclick="toggleExclude('${name.replace(/'/g,"\\'")}',${ci})">${d.toFixed(2)}s</span>`).join('');
+    const pipRow=durs.length>1?`<div style="margin-top:4px"><span style="font-family:var(--mono);font-size:8px;color:var(--muted2);letter-spacing:.5px">CYCLES — TAP TO EXCLUDE: </span>${pipHTML}</div>`:'';
+    tr.innerHTML=`<td>${name}${pipRow}</td><td>${avg.toFixed(2)}</td><td>${lr_disp}</td><td>${isShort?'Range: '+(max-min).toFixed(2)+'s':cv.toFixed(1)+'%'}</td><td style="font-size:10px">${isShort?'Abs >0.8s':'CV >15%'}</td><td>${status}${overrideBtn}</td>`;
+    tbody.appendChild(tr);
+  });
+  const avgCTs=valid.map(cyc=>cyc.filter(s=>!s._elimSkip).reduce((a,s)=>a+s.dur,0));
+  const avgCT=avgCTs.length?avgCTs.reduce((a,b)=>a+b,0)/avgCTs.length:0;
+  const effCT=stepNames.reduce((s,n)=>{const vd=DX.variation[n];if(!vd)return s;return s+(DX.ctMethod==='lowrep'?(vd.lowrep||vd.avg):vd.avg);},0)||avgCT;
+  const{takt,shiftMin,rate,heads,annualShifts}=DX.setup;
+  const ctGap=effCT-takt,target=Math.floor((shiftMin*60)/takt),actual=effCT>0?Math.floor((shiftMin*60)/effCT):0,units=target-actual,cost=units>0&&rate>0?units*heads*(rate/3600)*effCT:0;
+  const fmt$=n=>n>=1000?'$'+(n/1000).toFixed(1)+'K':'$'+n.toFixed(0);
+  $('varTaktCalc').innerHTML=`
+    <div class="calc-box ${ctGap>0?'alert':'good'}"><div class="calc-lbl">${DX.ctMethod==='lowrep'?'Low Rep CT':'Avg Study CT'}</div><div class="calc-val ${ctGap>0?'red':'grn'}">${effCT.toFixed(1)}s</div><div style="font-family:var(--mono);font-size:10px;color:var(--muted)">Takt: ${takt}s</div></div>
+    <div class="calc-box ${ctGap>0?'alert':'good'}"><div class="calc-lbl">CT vs Takt</div><div class="calc-val ${ctGap>0?'red':'grn'}">${ctGap>0?'+':''}${ctGap.toFixed(1)}s</div></div>
+    <div class="calc-box ${units>0?'alert':'good'}"><div class="calc-lbl">Units at Risk</div><div class="calc-val ${units>0?'red':'grn'}">${Math.max(0,units)}</div></div>
+    <div class="calc-box ${cost>0?'alert':'good'}"><div class="calc-lbl">$/Shift</div><div class="calc-val ${cost>0?'red':'grn'}">${rate>0?fmt$(cost):'—'}</div></div>`;
+  $('varSummaryBox').innerHTML=anyHigh?`<div class="info-box amber"><strong>⚠ Variation detected.</strong> ${Object.values(DX.variation).filter(v=>v.high).length} step(s) flagged. Document root cause below.</div>`:stepNames.length?`<div class="info-box"><strong>✓ Variation within threshold.</strong> All steps stable. Ready for waste classification.</div>`:'<div class="info-box amber">No step data found. Return to Gate 4.</div>';
+  DX.varAvgCT=effCT;DX.varGap=ctGap;DX.varUnitsGap=units;DX.varShiftCost=cost;
+}
+function overrideVar(name){const reason=prompt(`Accept "${name}" variation and proceed?\n\nEnter your reason:`,'');if(reason===null)return;DX.varOverrides[name]='accepted';DX.variation[name].high=false;DX.variation[name].overridden=true;DX.variation[name].overrideReason=reason||'Accepted by analyst';renderVariation();}
+function gate4Next(){DX.g5notes=$('g5notes').value.trim();autosave();goGate(5);}
+
+// ═══ GATE 6 — WASTE ═══
+const ERACS_MAP={'wst':['E','R','A','C','S'],'va':['S']};
+function renderWasteScreen(){
+  const list=$('wasteStepList');list.innerHTML='';
+  const names=DX.ergoSteps.map(s=>s.name).filter(n=>!isElim(n));
+  if(!names.length){list.innerHTML='<div class="empty-state">No steps found. Return to Gate 3 or 4.</div>';return;}
+  const totalCT=names.reduce((sum,name)=>{const vd=DX.variation[name];return sum+(vd?vd.avg:0);},0);
+  const cls_sum={va:0,inc:0,wst:0,unclassified:0};
+  names.forEach(name=>{const vd=DX.variation[name];const avg=vd?vd.avg:0;const c=DX.waste[name];if(c==='va')cls_sum.va+=avg;else if(c==='inc')cls_sum.inc+=avg;else if(c==='wst')cls_sum.wst+=avg;else cls_sum.unclassified+=avg;});
+  const pct=v=>totalCT>0?Math.round(v/totalCT*100):0;
+  const summaryDiv=document.createElement('div');summaryDiv.style.cssText='background:var(--s1);border:1px solid var(--br);border-radius:var(--r2);padding:12px 14px;margin-bottom:14px;box-shadow:var(--shadow)';
+  summaryDiv.innerHTML=`<div style="font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px">Classification Summary · Total CT: <span style="color:var(--forest);font-weight:600">${totalCT.toFixed(1)}s</span></div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px"><span style="font-family:var(--mono);font-size:11px;color:var(--green);background:var(--gdim);border:1px solid rgba(64,145,108,.25);border-radius:3px;padding:4px 9px">VA: ${cls_sum.va.toFixed(1)}s (${pct(cls_sum.va)}%)</span><span style="font-family:var(--mono);font-size:11px;color:var(--red);background:var(--rdim);border:1px solid rgba(185,28,28,.25);border-radius:3px;padding:4px 9px">Waste: ${(cls_sum.wst+cls_sum.inc).toFixed(1)}s (${pct(cls_sum.wst+cls_sum.inc)}%)</span>${cls_sum.unclassified>0?`<span style="font-family:var(--mono);font-size:11px;color:var(--muted2);background:var(--s2);border:1px solid var(--br);border-radius:3px;padding:4px 9px">Unclassified: ${cls_sum.unclassified.toFixed(1)}s (${pct(cls_sum.unclassified)}%)</span>`:''}</div><div style="height:6px;background:var(--s2);border-radius:3px;overflow:hidden;display:flex"><div style="width:${pct(cls_sum.va)}%;background:var(--green);height:100%;transition:width .3s"></div><div style="width:${pct(cls_sum.wst+cls_sum.inc)}%;background:var(--red);height:100%;transition:width .3s"></div></div>`;
+  list.appendChild(summaryDiv);
+  names.forEach(name=>{
+    const es=DX.ergoSteps.find(s=>s.name===name)||{name,flags:[],freq:{}};
+    const vd=DX.variation[name];const avg=vd?vd.avg:0;const stepPct=totalCT>0?Math.round(avg/totalCT*100):0;
+    const hardErgo=(es.flags||[]).some(f=>FREQ_LOCK.includes(es.freq&&es.freq[f]));const highVar=vd&&vd.high;const locked=hardErgo||highVar;
+    const cur=DX.waste[name];const card=document.createElement('div');card.className='ergo-card'+(locked?' flagged-hard':'');
+    let locks='';
+    if(hardErgo)locks+=`<div class="gate-lock"><span style="font-size:18px">🔒</span><div class="gate-lock-text">Ergo risk (every cycle/frequent): ${(es.flags||[]).filter(f=>FREQ_LOCK.includes(es.freq&&es.freq[f])).join(', ')}. Resolve physical overburden before waste classification.</div></div>`;
+    if(highVar)locks+=`<div class="gate-lock"><span style="font-size:18px">🔒</span><div class="gate-lock-text">High variation (${vd.isShort?'Range '+(vd.max-vd.min).toFixed(2)+'s':vd.cv.toFixed(1)+'% CV'}). Stabilize method consistency first.</div></div>`;
+    const chips=locked?`<div class="ergo-status es-red">🔒 Locked — resolve flags above</div>`:['va','wst'].map((k,idx)=>{const labels=['VA — Value Adding','Waste — NVAA'];const descs=['Customer pays · product transformed','Not valued by customer · eliminate or reduce'];return`<div class="wc-chip ${cur===k?'on-'+k:''}" onclick="setWaste('${name}','${k}',this)"><span class="wd"></span>${labels[idx]}<span style="opacity:.5;margin-left:6px">· ${descs[idx]}</span></div>`;}).join('');
+    const applicableEracs=locked?[]:(ERACS_MAP[cur]||[]);const selectedEracs=DX.eracs[name]||null;
+    const ALL_ERACS_DESC={E:'Eliminate',R:'Rearrange',A:'Add/Subtract',C:'Combine',S:'Simplify'};
+    const selWT=DX.wasteType&&DX.wasteType[name]||null;
+    const WASTE_TYPES={T:'Transport',I:'Inventory',M:'Motion',W:'Waiting',O:'Overproduction',P:'Over-processing',D:'Defects',U:'Unused Skills'};
+    const wasteTypeRow=!locked&&cur==='wst'?`<div style="margin-top:6px"><div style="font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:4px">Waste Type (TIMWOODS):</div><div class="wtype-chips">${Object.entries(WASTE_TYPES).map(([k,v])=>`<button class="wtype-chip ${selWT===k?'on':''}" onclick="setWasteType('${name.replace(/'/g,"\\'")}','${k}')">${k} — ${v}</button>`).join('')}</div></div>`:'';
+    const eracs=!locked&&cur?`<div style="margin-top:8px"><div style="font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:5px">Choose ERACS action:</div><div class="eracs-chips">${applicableEracs.map(l=>`<button class="eracs-chip ${selectedEracs===l?'on':''}" onclick="setEracs('${name.replace(/'/g,"\\'")}','${l}')">${l} — ${ALL_ERACS_DESC[l]||l}</button>`).join('')}</div>${wasteTypeRow}</div>`:'';
+    card.innerHTML=`<div class="ergo-step-num">STEP ${String(names.indexOf(name)+1).padStart(2,'0')}</div><div class="ergo-step-name">${name}</div><div style="display:flex;gap:16px;margin-bottom:10px;padding:6px 10px;background:var(--s2);border-radius:var(--r);border:1px solid var(--br)"><span style="font-family:var(--mono);font-size:11px;color:var(--muted)">AVG&nbsp;<span style="color:var(--forest);font-weight:700">${avg.toFixed(1)}s</span></span><span style="font-family:var(--mono);font-size:11px;color:var(--muted)">%&nbsp;CT&nbsp;<span style="color:var(--forest);font-weight:700">${stepPct}%</span></span><div style="flex:1;display:flex;align-items:center"><div style="height:4px;background:var(--br);border-radius:2px;width:100%;overflow:hidden"><div style="height:100%;background:${cur==='va'?'var(--green)':cur==='wst'?'var(--red)':cur==='inc'?'var(--amber)':'var(--br2)'};width:${stepPct}%;transition:width .3s"></div></div></div></div>${locks}${locked?'':`<div style="display:flex;flex-direction:column;gap:6px;margin-top:8px">${chips}</div>`}${eracs}`;
+    list.appendChild(card);
+  });
+}
+function setWaste(name,type,el){DX.waste[name]=DX.waste[name]===type?null:type;if(!DX.eracs)DX.eracs={};renderWasteScreen();autosave();}
+function gate5Next(){autosave();goGate(6);}
+
+// ═══ GATE 7 — OUTPUT ═══
+function renderOutput(){
+  const{setup,baseline,ergoSteps,variation,waste,varAvgCT}=DX;
+  const rate=setup.rate||0;const fmt$=n=>n>=1000?'$'+(n/1000).toFixed(1)+'K':'$'+n.toFixed(0);
+  $('roiOutput').innerHTML=rate>0&&baseline.annualCost>0?`<div class="roi-box"><div class="roi-lbl">Annual Exposure — Baseline</div><div class="roi-val">${fmt$(baseline.annualCost)}</div><div class="roi-sub">${setup.process} · ${setup.date} · ${setup.shiftsDay} shift${setup.shiftsDay>1?'s':''}/day · ${setup.daysWeek} days/wk · Analyst: ${setup.analyst}</div></div>`:`<div class="roi-box"><div class="roi-lbl">Study Completed</div><div class="roi-val" style="font-size:22px">${setup.process||'—'}</div><div class="roi-sub">${setup.date||'—'} · Analyst: ${setup.analyst||'—'}</div></div>`;
+  const ergoFlagged=ergoSteps.filter(s=>(s.flags||[]).length>0&&!isElim(s.name));
+  const hardErgo=ergoFlagged.filter(s=>(s.flags||[]).some(f=>FREQ_LOCK.includes(s.freq&&s.freq[f])));
+  const softErgo=ergoFlagged.filter(s=>!(s.flags||[]).some(f=>FREQ_LOCK.includes(s.freq&&s.freq[f])));
+  $('phase1Output').innerHTML=`<div class="output-phase"><div class="output-phase-hdr"><div class="phase-num ph1">1</div><div><div class="phase-title">Fix First — Muri (Ergo)</div><div class="phase-sub">Resolve before re-timing. Fix the body before you time the method.</div></div></div>${hardErgo.map(s=>`<div class="output-item"><span class="out-step red">LOCK</span><div class="out-text"><b>${s.name}</b><br>Risks (every cycle/frequent): ${(s.flags||[]).filter(f=>FREQ_LOCK.includes(s.freq&&s.freq[f])).join(', ')}<br>${s.notes?`<span style="color:var(--slate);font-style:italic">${s.notes}</span><br>`:''}Fix the physical condition. Re-study after correction before classifying waste.</div></div>`).join('')}${softErgo.map(s=>`<div class="output-item"><span class="out-step amber">NOTE</span><div class="out-text"><b>${s.name}</b><br>Occasional risks: ${(s.flags||[]).join(', ')}${s.notes?`<br><span style="color:var(--slate);font-style:italic">${s.notes}</span>`:''}</div></div>`).join('')}${!ergoFlagged.length?`<div class="out-empty">✓ No ergonomic risks flagged.</div>`:''}${DX.gemba.abnormal?`<div class="output-item"><span class="out-step amber">COND</span><div class="out-text"><b>Abnormal conditions noted:</b><br>${DX.gemba.abnormal}</div></div>`:''}</div>`;
+  const varFlagged=Object.entries(variation).filter(([,v])=>v.high);
+  const varAccepted=Object.entries(DX.varOverrides||{}).filter(([,v])=>v==='accepted');
+  $('phase2Output').innerHTML=`<div class="output-phase"><div class="output-phase-hdr"><div class="phase-num ph2">2</div><div><div class="phase-title">Stabilize — Mura (Variation)</div><div class="phase-sub">${varFlagged.length} flagged · ${varAccepted.length} accepted by analyst.</div></div></div>${varFlagged.map(([name,v])=>`<div class="output-item"><span class="out-step amber">VAR</span><div class="out-text"><b>${name}</b><br>${v.isShort?`Short cycle (avg ${v.avg.toFixed(2)}s) — Range: ${(v.max-v.min).toFixed(2)}s exceeds 0.8s threshold`:`CV: ${v.cv.toFixed(1)}% (Avg: ${v.avg.toFixed(2)}s)`}<br>Stabilize method before removing waste from this step.</div></div>`).join('')}${varAccepted.map(([name])=>{const v=DX.variation[name]||{};return`<div class="output-item"><span class="out-step" style="color:var(--muted)">ACCPT</span><div class="out-text"><b>${name}</b> — variation accepted by analyst.<br>Reason: ${v.overrideReason||'Not stated'}</div></div>`;}).join('')}${!varFlagged.length&&!varAccepted.length?`<div class="out-empty">✓ All steps within variation threshold.</div>`:''}${DX.g5notes?`<div class="output-item"><span class="out-step">NOTES</span><div class="out-text">${DX.g5notes}</div></div>`:''}</div>`;
+  const wstItems=Object.entries(waste).filter(([,v])=>v==='wst'||v==='inc');
+  const eracs_fn=name=>(DX.eracs&&DX.eracs[name])||'—';
+  $('phase3Output').innerHTML=`<div class="output-phase"><div class="output-phase-hdr"><div class="phase-num ph3">3</div><div><div class="phase-title">Remove Waste — Muda</div><div class="phase-sub">${wstItems.length} waste step${wstItems.length!==1?'s':''}</div></div></div>${wstItems.map(([name])=>{const wt=DX.wasteType&&DX.wasteType[name];const WTLBL={T:'Transport',I:'Inventory',M:'Motion',W:'Waiting',O:'Overproduction',P:'Over-processing',D:'Defects',U:'Unused Skills'};return`<div class="output-item"><span class="out-step red">WASTE</span><div class="out-text"><b>${name}</b>${wt?` <span style="font-family:var(--mono);font-size:9px;color:var(--red);background:var(--rdim);border:1px solid rgba(185,28,28,.2);border-radius:3px;padding:1px 5px">${WTLBL[wt]||wt}</span>`:''}<br>ERACS: <span style="color:var(--forest);font-weight:600">${eracs_fn(name)}</span></div></div>`;}).join('')}${!wstItems.length?`<div class="out-empty">${Object.values(waste).some(v=>v)?'All steps classified as VA.':'Return to Gate 6 to classify.'}</div>`:''}</div>`;
+  const valid=DX.cycles.slice(1).filter(c=>c&&c.length>0);
+  $('studyMeta').innerHTML=`Process: ${setup.process||'—'} · Dept: ${setup.dept||'—'}<br>Analyst: ${setup.analyst||'—'} · Date: ${setup.date||'—'} · Operator: ${setup.operator||'—'}<br>Takt: ${setup.takt}s · Baseline CT: ${baseline.ct||'—'}s · Study Avg CT: ${varAvgCT?varAvgCT.toFixed(1)+'s':'—'}<br>Schedule: ${setup.shiftsDay||1} shift${setup.shiftsDay>1?'s':''}/day · ${setup.daysWeek||5} days/wk · ${setup.annualShifts||250} shifts/yr<br>Valid Cycles: ${valid.length} · Steps: ${DX.ergoSteps.length}${DX.afterStudies.length?` · After-Studies: ${DX.afterStudies.length}`:''}${DX.gemba.baselineNote?`<br><strong>Baseline context:</strong> ${DX.gemba.baselineNote}`:''}${DX.gemba.abnormal?`<br><strong>Abnormal conditions:</strong> ${DX.gemba.abnormal}`:''}${DX.g5notes?`<br><strong>Variation notes:</strong> ${DX.g5notes}`:''}`;
+  // Render capture observations — all quick notes grouped by step
+  const captureEl=$('captureObservations');
+  if(captureEl){
+    const allQN=(DX.quickNotes&&DX.quickNotes.length)?DX.quickNotes:[];
+    const stepNames=DX.ergoSteps.map(s=>s.name);
+    if(allQN.length){
+      const byStep={};const unlinked=[];
+      allQN.forEach(n=>{
+        const linked=stepNames.find(s=>n.text.toLowerCase().includes(s.toLowerCase().substring(0,Math.min(8,s.length))));
+        if(linked){if(!byStep[linked])byStep[linked]=[];byStep[linked].push(n);}
+        else unlinked.push(n);
+      });
+      let html=`<div style="border-top:2px solid var(--forest);padding-top:16px;margin-top:8px"><div style="font-family:var(--head);font-size:14px;font-weight:800;color:var(--forest);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Capture Observations</div>`;
+      Object.entries(byStep).forEach(([step,notes])=>{html+=`<div style="margin-bottom:8px"><div style="font-family:var(--mono);font-size:9px;color:var(--green);background:var(--gdim);border:1px solid rgba(64,145,108,.3);border-radius:3px;padding:2px 8px;display:inline-block;margin-bottom:4px;letter-spacing:.5px">${step}</div>${notes.map(n=>`<div style="font-family:var(--mono);font-size:11px;color:var(--slate);padding:4px 8px;background:var(--s2);border-radius:3px;margin-bottom:3px">C${n.cycle} @${n.t} — ${n.text}</div>`).join('')}</div>`;});
+      if(unlinked.length)html+=`<div style="margin-bottom:8px"><div style="font-family:var(--mono);font-size:9px;color:var(--muted2);background:var(--s2);border:1px solid var(--br);border-radius:3px;padding:2px 8px;display:inline-block;margin-bottom:4px;letter-spacing:.5px">Unlinked</div>${unlinked.map(n=>`<div style="font-family:var(--mono);font-size:11px;color:var(--slate);padding:4px 8px;background:var(--s2);border-radius:3px;margin-bottom:3px">C${n.cycle} @${n.t} — ${n.text}</div>`).join('')}</div>`;
+      html+='</div>';captureEl.innerHTML=html;
+    } else captureEl.innerHTML='';
+  }
+}
+
+// ═══ TIME STUDY TABLE ═══
+function renderTimeStudyTable(){
+  const el=$('timeStudyTable');if(!el)return;
+  const names=DX.ergoSteps.map(s=>s.name).filter(n=>!isElim(n));
+  if(!names.length){el.innerHTML='';return;}
+  const totalCT=names.reduce((sum,name)=>{const vd=DX.variation[name];return sum+(vd?vd.avg:0);},0);
+  if(totalCT===0){el.innerHTML='';return;}
+  const takt=DX.setup.takt||0;const ctGap=totalCT-takt;
+  const clsColor={'va':'var(--green)','inc':'var(--amber)','wst':'var(--red)'};
+  const rowsHTML=names.map((name,i)=>{
+    const avg=stepCT(name);const stepPct=totalCT>0?Math.round(avg/totalCT*100):0;
+    const cls=DX.waste[name];const selectedAct=DX.eracs&&DX.eracs[name];
+    const autoRec=cls?(ERACS_MAP[cls]||[]).join(', '):'—';
+    const eracs=selectedAct?`<strong style="color:var(--forest)">${selectedAct}</strong> <span style="opacity:.5;font-size:10px">(${autoRec})</span>`:autoRec;
+    const wt=DX.wasteType&&DX.wasteType[name];const WTLABEL={T:'Transport',I:'Inventory',M:'Motion',W:'Waiting',O:'Overproduction',P:'Over-processing',D:'Defects',U:'Unused Skills'};
+    const clsDisplay=cls?`${cls==='va'?'VA':'Waste'}${wt?' — '+WTLABEL[wt]:''}`:' — ';
+    const es=DX.ergoSteps.find(s=>s.name===name)||{flags:[],freq:{}};
+    const notes=[];
+    if((es.flags||[]).length)notes.push('Ergo: '+(es.flags||[]).join(', '));
+    const vd=DX.variation[name];
+    if(vd&&vd.high)notes.push(vd.isShort?`Var range ${(vd.max-vd.min).toFixed(2)}s`:`CV ${vd.cv.toFixed(1)}%`);
+    if(vd&&vd.overridden)notes.push('Var accepted');
+    // Step notes from capture sheet — aggregate unique non-empty notes across all valid cycles
+    const validCycles=DX.cycles.slice(1).filter(c=>c&&c.length>0);
+    const stepNotes=[...new Set(validCycles.flatMap(cyc=>{const s=cyc.find(x=>x.name===name);return s&&s.note?[s.note]:[];}).filter(Boolean))];
+    if(stepNotes.length)notes.push(...stepNotes);
+    // Quick notes logged during capture — show if text mentions step or show all if no step association
+    const qNotes=DX.quickNotes&&DX.quickNotes.length?[...new Set(DX.quickNotes.filter(n=>{const txt=(n.text||'').toLowerCase();return txt.includes(name.toLowerCase().substring(0,8));}).map(n=>n.text))]:[];
+    if(qNotes.length)notes.push(...qNotes);
+    const bgEven=i%2===0?'var(--s1)':'var(--s2)';const barColor=cls?clsColor[cls]:'var(--br2)';
+    return`<tr><td style="padding:8px 10px;border-bottom:1px solid var(--br);background:${bgEven}"><span style="font-family:var(--mono);font-size:9px;color:var(--green);background:var(--gdim);border:1px solid rgba(64,145,108,.25);border-radius:3px;padding:2px 5px;letter-spacing:.5px;margin-right:6px">${String(i+1).padStart(2,'0')}</span>${name}</td><td style="padding:8px 10px;border-bottom:1px solid var(--br);font-family:var(--mono);font-size:12px;font-weight:700;color:var(--forest);text-align:center;background:${bgEven}">${avg.toFixed(1)}<div style="height:3px;background:var(--br);border-radius:2px;margin-top:3px;overflow:hidden"><div style="height:100%;background:${barColor};width:${stepPct}%"></div></div></td><td style="padding:8px 10px;border-bottom:1px solid var(--br);font-family:var(--mono);font-size:12px;text-align:center;color:var(--slate);background:${bgEven}">${stepPct}%</td><td style="padding:8px 10px;border-bottom:1px solid var(--br);font-family:var(--mono);font-size:10px;font-weight:600;color:${cls?clsColor[cls]:'var(--muted2)'};background:${bgEven}">${clsDisplay}</td><td style="padding:8px 10px;border-bottom:1px solid var(--br);font-family:var(--mono);font-size:10px;color:var(--forest);font-weight:600;background:${bgEven}">${eracs}</td><td style="padding:8px 10px;border-bottom:1px solid var(--br);font-size:11px;color:var(--muted);background:${bgEven}">${notes.join(' · ')||'—'}</td></tr>`;
+  }).join('');
+  const taktLine=takt>0?`Takt: ${takt}s · Gap: ${ctGap>0?'+':''}${ctGap.toFixed(1)}s`:'Takt: not set';
+  el.innerHTML=`<div class="slbl">Time Study Record — Step Detail</div><div style="overflow-x:auto;border:1px solid var(--br);border-radius:var(--r);box-shadow:var(--shadow);margin-bottom:8px"><table class="ts-table"><thead><tr><th>STEP</th><th class="center">AVG (s)</th><th class="center">% CT</th><th>CLASSIFICATION</th><th>ERACS</th><th>NOTES</th></tr></thead><tbody>${rowsHTML}</tbody><tfoot><tr><td style="color:#fff;font-weight:700">TOTAL</td><td style="text-align:center;color:var(--greenlt);font-size:13px;font-weight:700">${totalCT.toFixed(1)}</td><td style="text-align:center;color:rgba(255,255,255,.6)">100%</td><td colspan="3" style="color:rgba(255,255,255,.55);font-size:10px">${taktLine}</td></tr></tfoot></table></div>`;
+}
+
+// ═══ ITEM 4 — WEEKLY TRACKING ═══
+function renderWeeklyTracking(){
+  const el=$('weeklyTrackingSection');if(!el)return;
+  if(!DX.kata)DX.kata={targetCT:'',targetDate:'',conditions:[],successCriteria:'',obstacles:[],experiments:[],weeklyTracking:[]};
+  if(!DX.kata.weeklyTracking)DX.kata.weeklyTracking=[];
+  const rows=DX.kata.weeklyTracking;
+  const targetCT=parseFloat(DX.kata.targetCT)||0;
+  const takt=DX.setup&&DX.setup.takt||0;
+  const baseline=DX.baseline&&DX.baseline.ct?parseFloat(DX.baseline.ct):0;
+  const rowsHTML=rows.map((r,i)=>{
+    const ct=parseFloat(r.ct)||0;
+    const gap=targetCT&&ct?ct-targetCT:null;
+    const improving=baseline&&ct?ct<baseline:null;
+    const bg=i%2===0?'var(--s1)':'var(--s2)';
+    return`<tr style="background:${bg}">
+      <td style="padding:5px 7px;font-family:var(--mono);font-size:10px;font-weight:700;color:var(--forest);text-align:center;border-bottom:1px solid var(--br);width:36px">${r.week||i+1}</td>
+      <td style="padding:3px 5px;border-bottom:1px solid var(--br)"><input class="wt-input" type="text" value="${r.date||''}" oninput="updateWT(${i},'date',this.value)" placeholder="e.g. Apr 7"></td>
+      <td style="padding:3px 5px;border-bottom:1px solid var(--br)"><input class="wt-input" type="number" step="0.1" value="${r.ct||''}" oninput="updateWT(${i},'ct',this.value)" placeholder="—" style="color:${improving===true?'var(--green)':improving===false?'var(--red)':'var(--txt)'}"></td>
+      <td style="padding:5px 7px;font-family:var(--mono);font-size:10px;text-align:center;color:var(--muted);border-bottom:1px solid var(--br)">${targetCT||'—'}</td>
+      <td style="padding:5px 7px;font-family:var(--mono);font-size:10px;text-align:center;color:${gap!==null?(gap<=0?'var(--green)':'var(--red)'):'var(--muted)'};border-bottom:1px solid var(--br)">${gap!==null?(gap<=0?'−'+Math.abs(gap).toFixed(1)+'s':'+'+gap.toFixed(1)+'s'):'—'}</td>
+      <td style="padding:3px 5px;border-bottom:1px solid var(--br)"><input class="wt-input" type="number" value="${r.wasteOpen||''}" oninput="updateWT(${i},'wasteOpen',this.value)" placeholder="—"></td>
+      <td style="padding:3px 5px;border-bottom:1px solid var(--br)"><input class="wt-input" type="text" value="${r.notes||''}" oninput="updateWT(${i},'notes',this.value)" placeholder="What changed?"></td>
+      <td style="padding:3px 5px;border-bottom:1px solid var(--br)"><button onclick="deleteWT(${i})" style="background:none;border:none;color:var(--muted2);font-size:11px;cursor:pointer;padding:4px">✕</button></td>
+    </tr>`;
+  }).join('');
+  el.innerHTML=`<div style="border-top:2px solid var(--forest);padding-top:16px;margin-top:8px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+      <div style="font-family:var(--head);font-size:14px;font-weight:800;color:var(--forest);text-transform:uppercase;letter-spacing:.5px">Weekly Tracking</div>
+      ${targetCT?`<span style="font-family:var(--mono);font-size:10px;color:var(--muted);background:var(--s2);border:1px solid var(--br);border-radius:3px;padding:4px 9px">Target CT: <strong style="color:var(--forest)">${targetCT}s</strong>${takt?' · Takt: '+takt+'s':''}</span>`:''}
+    </div>
+    ${rows.length?`<div style="overflow-x:auto;margin-bottom:10px;border:1px solid var(--br);border-radius:var(--r)"><table class="wt-table"><thead><tr><th style="text-align:center;width:36px">WK</th><th style="min-width:80px">Date</th><th style="min-width:80px">Actual CT (s)</th><th style="min-width:70px;text-align:center">Target CT</th><th style="min-width:60px;text-align:center">Gap</th><th style="min-width:60px">Waste Open</th><th style="min-width:140px">Notes</th><th style="width:32px"></th></tr></thead><tbody>${rowsHTML}</tbody></table></div>`:'<div class="empty-state" style="padding:14px">No weeks logged yet. Tap + Add Week to start tracking.</div>'}
+    <button onclick="addWT()" style="width:100%;font-family:var(--head);font-size:13px;font-weight:700;padding:10px;background:var(--s2);border:1px dashed var(--br2);color:var(--muted);border-radius:var(--r);cursor:pointer;-webkit-appearance:none;letter-spacing:.5px">＋ Add Week</button>
+  </div>`;
+}
+function addWT(){if(!DX.kata.weeklyTracking)DX.kata.weeklyTracking=[];const wk=DX.kata.weeklyTracking.length+1;DX.kata.weeklyTracking.push({week:wk,date:'',ct:'',wasteOpen:'',notes:''});renderWeeklyTracking();autosave();}
+function updateWT(i,field,val){if(!DX.kata.weeklyTracking||!DX.kata.weeklyTracking[i])return;DX.kata.weeklyTracking[i][field]=val;autosave();}
+function deleteWT(i){DX.kata.weeklyTracking.splice(i,1);renderWeeklyTracking();autosave();}
+
+// ═══ STEP MODAL ═══
+function showAddStepModal(){$('stepModalName').value='';$('stepModal').style.display='flex';setTimeout(()=>$('stepModalName').focus(),200);}
+function closeStepModal(){$('stepModal').style.display='none';}
+function saveStepModal(){const name=$('stepModalName').value.trim();if(!name){$('stepModalName').style.borderColor='var(--red)';$('stepModalName').focus();return;}$('stepModalName').style.borderColor='';if(!DX.ergoSteps.find(s=>s.name===name)){DX.ergoSteps.push({name,flags:[],freq:{}});}if(!DX.waste[name])DX.waste[name]=null;closeStepModal();autosave();}
+
+// ═══ JSON ═══
+function quickSaveJSON(){if(!DX.setup||!DX.setup.process)return;const state={app:'ProcessDx',version:'2.1',exportedAt:new Date().toISOString(),...DX};const proc=(DX.setup.process||'Study').replace(/[^a-zA-Z0-9]+/g,'_').replace(/^_|_$/g,'');const fn=`${proc}_Study.json`;const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(state,null,2)],{type:'application/json'}));a.download=fn;document.body.appendChild(a);a.click();a.remove();_showSaveStatus('✓ JSON downloaded');}
+function exportJSON(){const state={app:'ProcessDx',version:'2.1',exportedAt:new Date().toISOString(),...DX};const proc=(DX.setup.process||'ProcessDx').replace(/[^a-z0-9\-_]+/gi,'_');const d=new Date(),p=n=>String(n).padStart(2,'0');const fn=`${proc}_${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}_ProcessDx.json`;const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(state,null,2)],{type:'application/json'}));a.download=fn;document.body.appendChild(a);a.click();a.remove();}
+$('resumeInput').addEventListener('change',async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;try{const obj=JSON.parse(await f.text());if(obj.app!=='ProcessDx')throw new Error('Not a Process Dx file');Object.assign(DX,obj);if(!DX.afterStudies)DX.afterStudies=[];if(!DX.kata.weeklyTracking)DX.kata.weeklyTracking=[];goGate(DX.gate||7);}catch(err){alert('Could not load: '+(err.message||err));}});
+
+$('g1date').value=new Date().toLocaleDateString('en-US');
+checkResume();
+
+// ═══ STOPWATCH (Gate 2) ═══
+const SW={running:false,tStart:null,tAccum:0,raf:null,laps:[]};
+const swFmt=ms=>{const t=ms/1000,m=Math.floor(t/60);return`${m}:${(t%60).toFixed(1).padStart(4,'0')}`;};
+const swElapsed=()=>{let ms=SW.tAccum;if(SW.tStart!==null)ms+=perf()-SW.tStart;return ms;};
+function swTick(){$('swDisplay').textContent=swFmt(swElapsed());SW.raf=requestAnimationFrame(swTick);}
+function swToggle(){if(SW.running){cancelAnimationFrame(SW.raf);SW.raf=null;SW.tAccum+=perf()-SW.tStart;SW.tStart=null;SW.running=false;$('swStartBtn').textContent='▶ Resume';$('swStartBtn').style.background='var(--amber)';$('swUseBtn').disabled=false;$('swUseBtn').style.opacity='1';}else{SW.tStart=perf();SW.running=true;$('swStartBtn').textContent='⏸ Stop';$('swStartBtn').style.background='var(--red)';swTick();}}
+function swLap(){const totalMs=swElapsed();const prevTotal=SW.laps.reduce((a,b)=>a+b,0);const lapMs=totalMs-prevTotal;if(lapMs<300)return;SW.laps.push(lapMs);renderSwLaps();const avg=SW.laps.reduce((a,b)=>a+b,0)/SW.laps.length/1000;$('g2ct').value=avg.toFixed(1);calcBaseline();$('swUseBtn').disabled=false;$('swUseBtn').style.opacity='1';}
+function renderSwLaps(){const el=$('swLaps');el.innerHTML=SW.laps.map((ms,i)=>`<span style="font-family:var(--mono);font-size:10px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);border-radius:3px;padding:3px 8px;color:rgba(255,255,255,.7)">L${i+1}: ${swFmt(ms)}</span>`).join('');if(SW.laps.length>1){const avg=SW.laps.reduce((a,b)=>a+b,0)/SW.laps.length;el.innerHTML+=`<span style="font-family:var(--mono);font-size:10px;background:rgba(64,145,108,.2);border:1px solid rgba(116,198,157,.3);border-radius:3px;padding:3px 8px;color:var(--greenlt)">Avg: ${swFmt(avg)}</span>`;$('swAvgNote').style.display='block';$('swLapCount').textContent=SW.laps.length;}else $('swAvgNote').style.display='none';}
+function swReset(){cancelAnimationFrame(SW.raf);SW.raf=null;SW.running=false;SW.tStart=null;SW.tAccum=0;SW.laps=[];$('swDisplay').textContent='0:00.0';$('swStartBtn').textContent='▶ Start';$('swStartBtn').style.background='var(--amber)';$('swUseBtn').disabled=true;$('swUseBtn').style.opacity='.3';$('swLaps').innerHTML='';$('swAvgNote').style.display='none';}
+function swUse(){let secs;if(SW.laps.length>1){secs=SW.laps.reduce((a,b)=>a+b,0)/SW.laps.length/1000;}else secs=swElapsed()/1000;if(secs<0.5)return;$('g2ct').value=secs.toFixed(1);calcBaseline();$('g2ct').style.borderColor='var(--green)';setTimeout(()=>$('g2ct').style.borderColor='',1500);}
+function setBn(val){DX.setup.bottleneck=val;['Yes','No','Unk'].forEach(k=>{const btn=$('btnBn'+k);if(!btn)return;btn.style.borderColor='var(--br)';btn.style.background='var(--s2)';btn.style.color='var(--muted)';});if(val===true){$('btnBnYes').style.borderColor='var(--green)';$('btnBnYes').style.background='var(--gdim)';$('btnBnYes').style.color='var(--green)';$('bnWarning').style.display='none';}else if(val===false){$('btnBnNo').style.borderColor='var(--red)';$('btnBnNo').style.background='var(--rdim)';$('btnBnNo').style.color='var(--red)';$('bnWarning').style.display='block';}else{$('btnBnUnk').style.borderColor='var(--amber)';$('btnBnUnk').style.background='var(--adim)';$('btnBnUnk').style.color='var(--amber)';$('bnWarning').style.display='none';}}
+
+// ═══ CAPTURE SHEET FLAGS ═══
+const csFlags={quality:false,waste:null,wasteType:null,ergo:[],ergoFreq:'Every Cycle'};
+function setCSWaste(type){csFlags.waste=csFlags.waste===type?null:type;if(csFlags.waste!=='wst'){csFlags.wasteType=null;}_renderCSWaste();}
+function _renderCSWaste(){const ids={va:'csWcVa',wst:'csWcWst'};const colors={va:'var(--green)',wst:'var(--red)'};Object.entries(ids).forEach(([k,id])=>{const b=$(id);if(!b)return;const on=csFlags.waste===k||(k==='wst'&&csFlags.waste==='inc');b.style.borderColor=on?colors[k]:'var(--br)';b.style.background=on?`rgba(${k==='va'?'64,145,108':'185,28,28'},.1)`:'var(--s2)';b.style.color=on?colors[k]:'var(--muted)';b.style.fontWeight=on?'800':'700';});const wtr=$('csWasteTypeRow');if(wtr)wtr.style.display=csFlags.waste==='wst'?'block':'none';const chips=$('csWasteTypeChips');if(chips&&csFlags.waste==='wst'){const WTYPES={T:'Transport',I:'Inventory',M:'Motion',W:'Waiting',O:'Overproduction',P:'Over-processing',D:'Defects',U:'Unused Skills'};chips.innerHTML=Object.entries(WTYPES).map(([k,v])=>{const on=csFlags.wasteType===k;return`<button style="font-family:var(--mono);font-size:9px;font-weight:600;padding:4px 8px;border:1px solid ${on?'var(--red)':'var(--br)'};border-radius:3px;background:${on?'var(--rdim)':'var(--s2)'};color:${on?'var(--red)':'var(--muted)'};cursor:pointer;-webkit-appearance:none;letter-spacing:.3px" onclick="csFlags.wasteType=csFlags.wasteType==='${k}'?null:'${k}';_renderCSWaste()">${k} — ${v}</button>`;}).join('');}}
+function toggleCSErgo(btn){const flag=btn.dataset.flag;const idx=csFlags.ergo.indexOf(flag);if(idx>=0){csFlags.ergo.splice(idx,1);btn.style.borderColor='var(--br)';btn.style.background='var(--s2)';btn.style.color=flag==='BLIND OPS'?'var(--amber)':'var(--muted)';}else{csFlags.ergo.push(flag);btn.style.borderColor='var(--red)';btn.style.background='var(--rdim)';btn.style.color='var(--red)';if(flag==='BLIND OPS'){btn.style.borderColor='var(--amber)';btn.style.background='var(--adim)';btn.style.color='var(--amber)';}}}
+function toggleCSQual(){csFlags.quality=!csFlags.quality;const b=$('csQualBtn');if(!b)return;b.style.borderColor=csFlags.quality?'var(--green)':'var(--br)';b.style.background=csFlags.quality?'var(--gdim)':'var(--s2)';b.style.color=csFlags.quality?'var(--green)':'var(--muted)';}
+function resetCSFlags(){csFlags.waste=null;csFlags.wasteType=null;csFlags.ergo=[];csFlags.quality=false;csFlags.ergoFreq='Every Cycle';['csWcVa','csWcWst'].forEach(id=>{const b=$(id);if(!b)return;b.style.borderColor='var(--br)';b.style.background='var(--s2)';b.style.color='var(--muted)';b.style.fontWeight='700';});const wtr=$('csWasteTypeRow');if(wtr)wtr.style.display='none';document.querySelectorAll('.csErgoBtn').forEach(b=>{b.style.borderColor='var(--br)';b.style.background='var(--s2)';b.style.color=b.dataset.flag==='BLIND OPS'?'var(--amber)':'var(--muted)';});const qb=$('csQualBtn');if(qb){qb.style.borderColor='var(--br)';qb.style.background='var(--s2)';qb.style.color='var(--muted)';}}
+
+// ═══ CT LOG / PROGRESS ═══
+function addCTLog(){if(!DX.setup||!DX.setup.takt)return;const ctVal=parseFloat($('ctLogInput').value);const units=parseInt($('ctLogUnits').value)||0;const note=($('ctLogNote').value||'').trim();if(!ctVal||ctVal<=0){$('ctLogInput').style.borderColor='var(--red)';return;}$('ctLogInput').style.borderColor='';if(!DX.afterStudy)DX.afterStudy={cycles:[],variation:{},captured:false,ctLog:[]};if(!DX.afterStudy.ctLog)DX.afterStudy.ctLog=[];DX.afterStudy.ctLog.push({date:new Date().toLocaleDateString('en-US'),ct:ctVal,units,note});$('ctLogInput').value='';$('ctLogUnits').value='';$('ctLogNote').value='';renderProgressLog();autosave();}
+function deleteCTLog(i){if(DX.afterStudy&&DX.afterStudy.ctLog)DX.afterStudy.ctLog.splice(i,1);renderProgressLog();autosave();}
+function renderProgressLog(){
+  const el=$('progressLog');if(!el)return;
+  const baseline=DX.baseline&&DX.baseline.ct?parseFloat(DX.baseline.ct):0,takt=DX.setup&&DX.setup.takt?parseFloat(DX.setup.takt):0;
+  const log=(DX.afterStudy&&DX.afterStudy.ctLog)||[];
+  const latestCT=log.length?log[log.length-1].ct:null,delta=baseline&&latestCT?baseline-latestCT:null;
+  const rowsHTML=log.map((e,i)=>{const d=baseline?baseline-e.ct:null;const imp=d!==null&&d>=0;return`<tr><td style="font-family:var(--mono);font-size:10px">${e.date}</td><td style="font-family:var(--mono);font-size:11px;font-weight:700;color:${d===null?'var(--forest)':imp?'var(--green)':'var(--red)'}">${e.ct.toFixed(1)}s</td><td style="font-family:var(--mono);font-size:10px;color:${d===null?'var(--muted)':imp?'var(--green)':'var(--red)'}">${d===null?'—':imp?'-'+d.toFixed(1)+'s':'+'+Math.abs(d).toFixed(1)+'s'}</td><td style="font-family:var(--mono);font-size:10px;color:var(--muted)">${e.units||'—'}</td><td style="font-size:11px;color:var(--slate)">${e.note||''}</td><td><button onclick="deleteCTLog(${i})" style="background:none;border:none;color:var(--muted2);font-size:11px;cursor:pointer">✕</button></td></tr>`;}).join('');
+  el.innerHTML=`<div style="border-top:2px solid var(--forest);padding-top:16px;margin-top:16px"><div style="font-family:var(--head);font-size:14px;font-weight:800;color:var(--forest);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">Progress Log</div>${log.length?`<div style="overflow-x:auto;margin-bottom:12px"><table style="width:100%;border-collapse:collapse"><thead><tr style="border-bottom:2px solid var(--forest)"><th style="font-family:var(--mono);font-size:9px;text-align:left;padding:4px 6px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px">Date</th><th style="font-family:var(--mono);font-size:9px;text-align:left;padding:4px 6px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px">CT</th><th style="font-family:var(--mono);font-size:9px;text-align:left;padding:4px 6px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px">Δ vs Baseline</th><th style="font-family:var(--mono);font-size:9px;text-align:left;padding:4px 6px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px">Units</th><th style="font-family:var(--mono);font-size:9px;text-align:left;padding:4px 6px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px">Note</th><th></th></tr></thead><tbody>${rowsHTML}</tbody></table></div>`:''}
+  <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;background:var(--s2);border:1px solid var(--br);border-radius:var(--r);padding:12px">
+    <div style="flex:0 0 90px"><div style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:.8px;text-transform:uppercase;margin-bottom:4px">CT (sec)*</div><input id="ctLogInput" type="number" step="0.1" placeholder="e.g. 118.5" style="font-family:var(--mono);font-size:12px;width:100%;border:1px solid var(--br);border-radius:4px;padding:8px;background:#fff;color:var(--forest)"></div>
+    <div style="flex:0 0 80px"><div style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:.8px;text-transform:uppercase;margin-bottom:4px">Units/shift</div><input id="ctLogUnits" type="number" placeholder="e.g. 230" style="font-family:var(--mono);font-size:12px;width:100%;border:1px solid var(--br);border-radius:4px;padding:8px;background:#fff;color:var(--forest)"></div>
+    <div style="flex:1;min-width:120px"><div style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:.8px;text-transform:uppercase;margin-bottom:4px">Note (optional)</div><input id="ctLogNote" placeholder="e.g. Relocated part rack" style="font-family:var(--mono);font-size:12px;width:100%;border:1px solid var(--br);border-radius:4px;padding:8px;background:#fff;color:var(--forest)"></div>
+    <button onclick="addCTLog()" style="font-family:var(--head);font-size:12px;font-weight:700;padding:10px 16px;background:var(--forest);color:#fff;border:none;border-radius:var(--r);cursor:pointer;-webkit-appearance:none;flex-shrink:0;margin-bottom:1px">+ Log Week</button>
+  </div></div>`;}
+
+// ═══ AUTOSAVE / RESUME ═══
+const SAVE_KEY='pdx_autosave';
+function _showSaveStatus(msg,warn){const f=$('saveFlash');if(!f)return;f.textContent=msg;f.style.color=warn?'var(--amber)':'var(--green)';f.style.background=warn?'var(--adim)':'var(--gdim)';f.style.borderColor=warn?'rgba(217,119,6,.3)':'rgba(64,145,108,.3)';f.style.opacity='1';clearTimeout(f._t);f._t=setTimeout(()=>f.style.opacity='0',warn?3500:1500);}
+function autosave(){try{localStorage.setItem(SAVE_KEY,JSON.stringify(DX));_showSaveStatus('✓ Saved');return;}catch(e){}try{sessionStorage.setItem(SAVE_KEY,JSON.stringify(DX));_showSaveStatus('✓ Saved (session)');return;}catch(e){}_showSaveStatus('⚠ Use ⬇ JSON to save',true);}
+function checkResume(){let s=null;try{s=localStorage.getItem(SAVE_KEY);}catch(e){}if(!s)try{s=sessionStorage.getItem(SAVE_KEY);}catch(e){}if(!s)return;try{const obj=JSON.parse(s);if(!obj||!obj.setup||!obj.setup.process)return;window._savedState=obj;const wrap=$('resumeBtnWrap');if(wrap)wrap.style.display='block';const hint=$('resumeHint');if(hint)hint.textContent=`${obj.setup.process} · Gate ${obj.gate||1} · ${obj.setup.date||''}`;}catch(e){}}
+function doResume(){if(!window._savedState)return;const obj=window._savedState;Object.assign(DX,obj);if(!DX.afterStudies)DX.afterStudies=[];if(obj.kata)DX.kata=Object.assign({targetCT:'',targetDate:'',conditions:[],successCriteria:'',obstacles:[],experiments:[],weeklyTracking:[]},obj.kata);if(!DX.kata.weeklyTracking)DX.kata.weeklyTracking=[];if(obj.eracs)DX.eracs=obj.eracs;goGate(DX.gate||7);}
+function clearSave(){try{localStorage.removeItem(SAVE_KEY);}catch(e){}try{sessionStorage.removeItem(SAVE_KEY);}catch(e){}window._savedState=null;const wrap=$('resumeBtnWrap');if(wrap)wrap.style.display='none';}
+
+// ═══ TAKT CALCULATOR ═══
+function _showTaktResult(sm,uph,ups,t){const res=$('taktCalcResult');if(!t||t<=0){res.style.display='none';return;}res.style.display='block';const lines=[];lines.push(`Takt = <strong>${t}s</strong>`);if(uph){lines.push(`3600 ÷ ${uph} u/hr = ${t}s`);lines.push(`Units/shift: <strong>${Math.round(uph*(sm/60))}</strong>`);}if(ups)lines.push(`(${sm} min × 60) ÷ ${ups} = ${t}s`);res.innerHTML=lines.join('<br>');window._taktCalcVal=t;}
+function calcTaktFromHr(){const uph=parseFloat($('g1uph').value),sm=parseFloat($('g1taktShiftMin').value)||455;if(!uph||uph<=0){$('taktCalcResult').style.display='none';return;}const t=Math.round(3600/uph*10)/10;$('g1upshift').value='';_showTaktResult(sm,uph,null,t);}
+function calcTaktFromShift(){const ups=parseFloat($('g1upshift').value),sm=parseFloat($('g1taktShiftMin').value)||455;if(!ups||ups<=0){$('taktCalcResult').style.display='none';return;}const t=Math.round((sm*60)/ups*10)/10;$('g1uph').value='';_showTaktResult(sm,null,ups,t);}
+function calcTakt(){calcTaktFromHr();}
+function applyTakt(){const sm=parseFloat($('g1taktShiftMin').value)||455,t=window._taktCalcVal;if(!t||t<=0)return;$('g1takt').value=t;$('g1shiftmin').value=sm;$('g1takt').style.borderColor='var(--green)';setTimeout(()=>$('g1takt').style.borderColor='',1500);}
+
+// ═══ CT METHOD ═══
+function computeLowRep(durs){if(!durs||!durs.length)return{lr:0,flag:true};const s=[...durs].sort((a,b)=>a-b);if(s.length<2){const avg=durs.reduce((a,b)=>a+b,0)/durs.length;return{lr:avg,flag:true};}for(let i=0;i<s.length-1;i++){if(s[i+1]<=s[i]*1.10)return{lr:(s[i]+s[i+1])/2,flag:false};}const avg=durs.reduce((a,b)=>a+b,0)/durs.length;return{lr:avg,flag:true};}
+function stepCT(name){const vd=DX.variation[name];if(!vd)return 0;return DX.ctMethod==='lowrep'?(vd.lowrep||vd.avg):vd.avg;}
+function toggleCtMethod(btn){DX.ctMethod=DX.ctMethod==='avg'?'lowrep':'avg';const isLR=DX.ctMethod==='lowrep';btn.textContent=isLR?'Method: Lowest Repeatable ▾':'Method: Average ▾';btn.className='ctmethod-toggle'+(isLR?' lowrep':'');const note=$('ctMethodNote');if(note)note.style.display=isLR?'block':'none';renderVariation();autosave();}
+
+// ═══ ERACS / WASTE TYPE ═══
+function setWasteType(name,code){if(!DX.wasteType)DX.wasteType={};DX.wasteType[name]=DX.wasteType[name]===code?null:code;renderWasteScreen();autosave();}
+function setEracs(name,letter){DX.eracs[name]=DX.eracs[name]===letter?null:letter;renderWasteScreen();autosave();}
+
+// ═══ VARIATION OUTLIER EXCLUSION ═══
+function toggleExclude(name,ci){const key=name+'_excl';if(!DX.varOverrides)DX.varOverrides={};let excl=DX.varOverrides[key]||[];const pos=excl.indexOf(ci);if(pos>=0)excl.splice(pos,1);else excl.push(ci);DX.varOverrides[key]=excl;renderVariation();autosave();}
+
+// ═══ KATA SECTION ═══
+let _autoObsCache=[];
+function _buildAutoObsHTML(){
+  _autoObsCache=_kataAutoObstacles();
+  if(!_autoObsCache.length)return '<div style="font-family:var(--mono);font-size:10px;color:var(--muted2);padding:4px 0;margin-bottom:4px">Complete Gates 5 &amp; 6 — obstacles auto-populate from data.</div>';
+  const html=_autoObsCache.map((o,i)=>`<div class="kata-obs auto"><span style="width:15px;height:15px;flex-shrink:0;margin-top:2px;text-align:center;font-size:11px;color:var(--muted2)">•</span><span class="kata-obs-txt">${o.text}</span><span class="kata-obs-src">${o.src||'Auto'}</span><button onclick="importAutoObsByIdx(${i})" style="font-family:var(--mono);font-size:8px;color:var(--green);background:var(--gdim);border:1px solid rgba(64,145,108,.3);border-radius:3px;padding:2px 6px;cursor:pointer;flex-shrink:0;letter-spacing:.3px">+ Add</button></div>`).join('');
+  return`<div style="font-family:var(--mono);font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:4px">From study data — tap + to add to your list:</div>${html}<div style="border-top:1px solid var(--br);margin:8px 0"></div>`;
+}
+function importAutoObsByIdx(i){const o=_autoObsCache[i];if(!o)return;if(!DX.kata.obstacles)DX.kata.obstacles=[];if(DX.kata.obstacles.find(x=>x.text===o.text))return;DX.kata.obstacles.push({text:o.text,src:o.src||'Auto',resolved:false,auto:false});renderKataSection();autosave();}
+function _kataAutoObstacles(){
+  const obs=[];
+  Object.entries(DX.variation||{}).forEach(([name,v])=>{if(v.high)obs.push({text:`Stabilize method: ${name} (${v.isShort?'range '+(v.max-v.min).toFixed(2)+'s':'CV '+v.cv.toFixed(1)+'%'})`,src:'Variation',resolved:false,auto:true});});
+  (DX.ergoSteps||[]).forEach(s=>{const hardFlags=(s.flags||[]).filter(f=>['Every Cycle','Frequent'].includes(s.freq&&s.freq[f]));if(hardFlags.length)obs.push({text:`Resolve ergo risk: ${s.name} — ${hardFlags.join(', ')}`,src:'Ergo',resolved:false,auto:true});});
+  Object.entries(DX.waste||{}).forEach(([name,v])=>{if(v==='wst'){const ct=stepCT(name);obs.push({text:`Eliminate or reduce: ${name} (${ct.toFixed(1)}s)`,src:'Waste',resolved:false,auto:true});}});
+  return obs;
+}
+function _getStudySteps(){const varKeys=Object.keys(DX.variation||{});const ergoKeys=(DX.ergoSteps||[]).map(s=>s.name);return[...new Set([...varKeys,...ergoKeys])];}
+function renderKataSection(){
+  const el=$('kataSection');if(!el)return;
+  const names=DX.ergoSteps.map(s=>s.name);
+  if(!names.length){el.innerHTML='';return;}
+  const k=DX.kata;const totalCT=names.reduce((s,n)=>s+stepCT(n),0);const takt=DX.setup.takt||0;const{setup,baseline}=DX;
+  const wstTime=names.filter(n=>DX.waste[n]==='wst').reduce((s,n)=>s+stepCT(n),0);
+  const incTime=names.filter(n=>DX.waste[n]==='inc').reduce((s,n)=>s+stepCT(n),0);
+  const vaTime=names.filter(n=>DX.waste[n]==='va').reduce((s,n)=>s+stepCT(n),0);
+  const expHTML=(k.experiments||[]).map((e,i)=>{
+    const stepOpts=_getStudySteps();
+    const stepSel=`<select onchange="updateKataExp(${i},'step',this.value)" style="font-family:var(--mono);font-size:9px;width:100%;background:transparent;border:none;color:var(--forest);padding:2px 0;-webkit-appearance:auto"><option value="">— select —</option>${stepOpts.map(s=>`<option value="${s.replace(/"/g,'&quot;')}" ${e.step===s?'selected':''}>${s}</option>`).join('')}<option value="__custom__" ${e.step==='__custom__'||(!stepOpts.includes(e.step)&&e.step?'selected':'')}>Custom...</option></select>${(!stepOpts.includes(e.step)&&e.step&&e.step!=='__custom__')?`<input value="${e.step}" oninput="updateKataExp(${i},'step',this.value)" style="font-family:var(--mono);font-size:9px;width:100%;border:none;border-top:1px solid var(--br);margin-top:2px;padding:2px 0;background:transparent;color:var(--forest)" placeholder="Enter step name">`:''}`;
+    return`<tr><td contenteditable="true" oninput="updateKataExp(${i},'date',this.textContent)">${e.date||''}</td><td style="padding:4px 6px">${stepSel}</td><td contenteditable="true" oninput="updateKataExp(${i},'hypothesis',this.textContent)">${e.hypothesis||''}</td><td contenteditable="true" oninput="updateKataExp(${i},'expected',this.textContent)">${e.expected||''}</td><td contenteditable="true" oninput="updateKataExp(${i},'result',this.textContent)">${e.result||''}</td><td contenteditable="true" oninput="updateKataExp(${i},'learned',this.textContent)">${e.learned||''}</td><td contenteditable="true" oninput="updateKataExp(${i},'next',this.textContent)">${e.next||''}</td><td><button onclick="deleteKataExp(${i})" style="background:none;border:none;color:var(--muted2);font-size:12px;cursor:pointer">✕</button></td></tr>`;
+  }).join('');
+  el.innerHTML=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:6px"><div style="font-family:var(--head);font-size:11px;font-weight:800;color:var(--forest);text-transform:uppercase;letter-spacing:2px;border-bottom:2px solid var(--forest);flex:1;padding-bottom:4px">Improvement Kata Record</div><button onclick="window.print()" style="font-family:var(--mono);font-size:9px;border:1px solid var(--forest);background:var(--forest);color:#fff;border-radius:4px;padding:5px 10px;cursor:pointer;letter-spacing:.5px">🖨 Print Kata</button></div>
+  <div class="kata-card"><div class="kata-hdr">1 — Current State <span style="font-family:var(--mono);font-size:9px;font-weight:400;color:var(--muted);letter-spacing:.5px;text-transform:none">Auto-populated</span></div><div style="font-family:var(--mono);font-size:10px;color:var(--muted);line-height:2;background:var(--s2);border:1px solid var(--br);border-radius:var(--r);padding:10px 13px">Process: <strong style="color:var(--forest)">${setup.process||'—'}</strong> · Analyst: ${setup.analyst||'—'} · Date: ${setup.date||'—'}<br>Baseline CT: <strong>${baseline.ct||'—'}s</strong> · Study CT: <strong style="color:${totalCT>takt?'var(--red)':'var(--green)'}">${totalCT.toFixed(1)}s</strong> · Takt: <strong>${takt||'—'}s</strong><br>VA: ${vaTime.toFixed(1)}s · Incidental: ${incTime.toFixed(1)}s · Waste: <strong style="color:var(--red)">${wstTime.toFixed(1)}s</strong></div></div>
+  <div class="kata-card"><div class="kata-hdr">2 — Target State</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px"><div><div class="kata-lbl">Target CT (sec)</div><input class="kata-field" type="number" value="${k.targetCT||''}" placeholder="e.g. ${takt?Math.ceil(takt*0.95):''}" oninput="DX.kata.targetCT=this.value;autosave()"></div><div><div class="kata-lbl">Target Date</div><input class="kata-field" type="text" value="${k.targetDate||''}" placeholder="e.g. Apr 30" oninput="DX.kata.targetDate=this.value;autosave()"></div></div>
+  <div style="font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:6px">Target Conditions</div>${(k.conditions||[]).map((c,ci)=>`<div style="display:flex;gap:6px;margin-bottom:6px;align-items:flex-start"><div style="flex:1.5"><input class="kata-field" value="${(c.condition||'').replace(/"/g,'&quot;')}" placeholder="Condition" oninput="DX.kata.conditions[${ci}].condition=this.value;autosave()"></div><div style="flex:1"><input class="kata-field" value="${(c.measurement||'').replace(/"/g,'&quot;')}" placeholder="Measurement" oninput="DX.kata.conditions[${ci}].measurement=this.value;autosave()"></div><button onclick="removeKataCondition(${ci})" style="background:none;border:none;color:var(--muted2);font-size:14px;cursor:pointer;padding:10px 4px;flex-shrink:0">✕</button></div>`).join('')}
+  <button onclick="addKataCondition()" style="width:100%;font-family:var(--head);font-size:12px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:9px;background:var(--s2);border:1px dashed var(--br2);color:var(--muted);border-radius:var(--r);cursor:pointer;-webkit-appearance:none;margin-bottom:12px">＋ Add Condition + Measurement</button>
+  <div><div class="kata-lbl">Success Criteria</div><textarea class="kata-field" rows="2" placeholder="e.g. 5 consecutive cycles at or under target CT." oninput="DX.kata.successCriteria=this.value;autosave()">${k.successCriteria||''}</textarea></div></div>
+  <div class="kata-card"><div class="kata-hdr">3 — Obstacles</div>${_buildAutoObsHTML()}${(k.obstacles||[]).map((o,i)=>`<div class="kata-obs ${o.resolved?'resolved':''}"><input type="checkbox" ${o.resolved?'checked':''} onchange="DX.kata.obstacles[${i}].resolved=this.checked;renderKataSection();autosave()" style="width:15px;height:15px;accent-color:var(--green);flex-shrink:0;margin-top:2px;cursor:pointer"><span class="kata-obs-txt">${o.text}</span><span class="kata-obs-src">${o.src||'User'}</span><button onclick="deleteKataObs(${i})" style="background:none;border:none;color:var(--muted2);font-size:12px;cursor:pointer;flex-shrink:0">✕</button></div>`).join('')}
+  <div style="display:flex;gap:8px;margin-top:8px"><input id="obsInput" class="kata-field" style="flex:1;margin-bottom:0" type="text" placeholder="Add obstacle…" onkeydown="if(event.key==='Enter'){addKataObs();event.preventDefault()}"><button onclick="addKataObs()" style="font-family:var(--head);font-size:12px;font-weight:700;padding:9px 14px;background:var(--forest2);color:#fff;border:none;border-radius:var(--r);cursor:pointer;white-space:nowrap;-webkit-appearance:none">+ Add</button></div></div>
+  <div class="kata-card"><div class="kata-hdr">4 — Experiment Record <span style="font-family:var(--mono);font-size:9px;font-weight:400;color:var(--muted);letter-spacing:.5px;text-transform:none">tap cells to edit</span></div><div style="overflow-x:auto"><table class="kata-exp-table"><thead><tr><th style="min-width:70px">Date</th><th style="min-width:110px">Step</th><th style="min-width:130px">What we will change</th><th style="min-width:130px">Expected (metric)</th><th style="min-width:120px">What happened?</th><th style="min-width:120px">What learned?</th><th style="min-width:100px">Next step</th><th style="width:28px"></th></tr></thead><tbody id="kataExpBody">${expHTML}</tbody></table></div><button onclick="addKataExp()" style="font-family:var(--head);font-size:12px;font-weight:700;padding:10px 18px;background:var(--s2);border:1px dashed var(--br2);color:var(--muted);border-radius:var(--r);cursor:pointer;width:100%;margin-top:4px;letter-spacing:.5px;-webkit-appearance:none">＋ Add Experiment</button></div>`;
+}
+function addKataCondition(){if(!DX.kata.conditions)DX.kata.conditions=[];DX.kata.conditions.push({condition:'',measurement:''});renderKataSection();autosave();}
+function removeKataCondition(i){DX.kata.conditions.splice(i,1);renderKataSection();autosave();}
+function addKataObs(){const inp=$('obsInput');if(!inp)return;const txt=inp.value.trim();if(!txt)return;DX.kata.obstacles.push({text:txt,resolved:false,auto:false,src:'User'});inp.value='';renderKataSection();autosave();}
+function deleteKataObs(i){DX.kata.obstacles.splice(i,1);renderKataSection();autosave();}
+function addKataExp(){DX.kata.experiments.push({date:'',step:'',hypothesis:'',expected:'',result:'',learned:'',next:''});renderKataSection();autosave();}
+function updateKataExp(i,field,val){if(DX.kata.experiments[i])DX.kata.experiments[i][field]=val;autosave();}
+function deleteKataExp(i){DX.kata.experiments.splice(i,1);renderKataSection();autosave();}
+
+// ═══ KATA EXPORTS ═══
+function _kataHeader(title){const{setup,baseline,kata}=DX;return`Process: <strong>${setup.process||'—'}</strong> | Analyst: <strong>${setup.analyst||'—'}</strong> | Date: <strong>${setup.date||'—'}</strong><br>Baseline CT: <strong>${baseline.ct||'—'}s</strong> | Study CT: <strong>${DX.varAvgCT?DX.varAvgCT.toFixed(1)+'s':'—'}</strong> | Takt: <strong>${setup.takt||'—'}s</strong> | Target CT: <strong>${kata.targetCT||'—'}s</strong>${DX.gemba.baselineNote?`<br><em style="color:#5A7A66">Baseline context: ${DX.gemba.baselineNote}</em>`:''}`;}
+function _autoObstaclesList(){
+  const obs=[];
+  Object.entries(DX.variation||{}).forEach(([name,v])=>{if(v.high)obs.push(`Stabilize: ${name} — ${v.isShort?'range '+(v.max-v.min).toFixed(2)+'s':'CV '+v.cv.toFixed(1)+'%'}`);});
+  (DX.ergoSteps||[]).forEach(s=>{const hf=(s.flags||[]).filter(f=>['Every Cycle','Frequent'].includes(s.freq&&s.freq[f]));if(hf.length)obs.push(`Resolve ergo: ${s.name} — ${hf.join(', ')}`);});
+  Object.entries(DX.waste||{}).forEach(([name,v])=>{if(v==='wst'){const ct=stepCT(name);obs.push(`Eliminate: ${name} (${ct.toFixed(1)}s)`);}});
+  (DX.kata.obstacles||[]).forEach(o=>obs.push(o.text));
+  return obs;
+}
+function exportKataObstacles(){
+  const{setup,kata}=DX;const obs=_autoObstaclesList();
+  const rows=[];for(let i=1;i<=12;i++){const txt=obs[i-1]||'';rows.push(`<tr><td style="width:36px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700;color:#1B4332;border:1px solid #C3D9C9;padding:10px 8px;background:#F0F7F2">${i}</td><td style="border:1px solid #C3D9C9;padding:10px 12px;font-size:13px;color:#1A2A1F">${txt}</td></tr>`);}
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Obstacles</title><link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800&family=Barlow:wght@400;600&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet"><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Barlow',sans-serif;background:#fff;padding:32px;max-width:700px;margin:0 auto;color:#1A2A1F}.doc-title{font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;color:#1B4332;text-transform:uppercase;border-bottom:3px solid #1B4332;padding-bottom:8px;margin-bottom:6px}.doc-sub{font-family:'IBM Plex Mono',monospace;font-size:9px;color:#5A7A66;letter-spacing:2px;text-transform:uppercase;margin-bottom:16px}.doc-meta{font-size:12px;color:#3D5247;background:#F0F7F2;border:1px solid #C3D9C9;border-radius:4px;padding:10px 14px;margin-bottom:20px;line-height:2}table{width:100%;border-collapse:collapse}@media print{body{padding:16px}}</style></head><body><div class="doc-title">Obstacles / Obstáculos</div><div class="doc-sub">Improvement Kata — File 1 of 3 · Process Dx</div><div class="doc-meta">${_kataHeader('')}</div><table>${rows.join('')}</table></body></html>`;
+  _downloadHTML(html,`Obstacles_${(setup.process||'ProcessDx').replace(/\s+/g,'_')}.html`);
+}
+function exportKataExp(){
+  const{setup,kata}=DX;const obs=_autoObstaclesList();const topObs=obs[0]||'';
+  const allRows=[...(kata.experiments||[])];while(allRows.length<8)allRows.push({date:'',hypothesis:'',expected:'',result:'',learned:''});
+  const rowsHTML=allRows.map((e,i)=>`<tr style="background:${i%2===0?'#fff':'#F0F7F2'}"><td style="border:1px solid #C3D9C9;padding:8px;font-family:'IBM Plex Mono',monospace;font-size:11px;min-width:70px;vertical-align:top">${e.date||''}</td><td style="border:1px solid #C3D9C9;padding:8px;font-size:12px;min-width:140px;vertical-align:top">${e.hypothesis||''}</td><td style="border:1px solid #C3D9C9;padding:8px;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;color:#1B4332;min-width:130px;vertical-align:top">${e.expected||''}</td><td style="border:1px solid #C3D9C9;padding:8px;font-size:11px;color:#5A7A66;vertical-align:top">—</td><td style="border:1px solid #C3D9C9;padding:8px;font-size:12px;min-width:130px;vertical-align:top">${e.result||''}</td><td style="border:1px solid #C3D9C9;padding:8px;font-size:12px;min-width:130px;vertical-align:top">${e.learned||''}</td></tr>`).join('');
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Experimenting Record</title><link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800&family=Barlow:wght@400;600&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet"><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Barlow',sans-serif;background:#fff;padding:32px;max-width:900px;margin:0 auto;color:#1A2A1F}.doc-title{font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;color:#1B4332;text-transform:uppercase;border-bottom:3px solid #1B4332;padding-bottom:8px;margin-bottom:6px}.doc-sub{font-family:'IBM Plex Mono',monospace;font-size:9px;color:#5A7A66;letter-spacing:2px;text-transform:uppercase;margin-bottom:16px}.doc-meta{font-size:12px;color:#3D5247;background:#F0F7F2;border:1px solid #C3D9C9;border-radius:4px;padding:10px 14px;margin-bottom:8px;line-height:2}.obs-bar{background:#1B4332;color:#fff;padding:8px 14px;border-radius:4px;font-size:12px;margin-bottom:16px;display:flex;align-items:center;gap:10px}.obs-label{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:1.5px;opacity:.7}table{width:100%;border-collapse:collapse}th{background:#1B4332;color:rgba(255,255,255,.85);padding:9px 8px;text-align:left;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.8px;font-weight:500}@media print{body{padding:12px}}</style></head><body><div class="doc-title">Experimenting Record</div><div class="doc-sub">Improvement Kata — File 2 of 3 · Process Dx</div><div class="doc-meta">${_kataHeader('')}</div><div class="obs-bar"><span class="obs-label">CURRENT OBSTACLE:</span><span>${topObs||'See Obstacles document'}</span></div><table><thead><tr><th>Date &amp; Step</th><th>What will you change?</th><th>Expected (metric)</th><th>Coaching cycle</th><th>What happened?</th><th>What learned?</th></tr></thead><tbody>${rowsHTML}</tbody></table></body></html>`;
+  _downloadHTML(html,`Experimenting_Record_${(setup.process||'ProcessDx').replace(/\s+/g,'_')}.html`);
+}
+
+// ITEM 4 — exportTargetSheet updated with weekly tracking rows
+function exportTargetSheet(){
+  const{setup,kata,baseline}=DX;
+  const names=DX.ergoSteps.map(s=>s.name).filter(n=>!isElim(n));
+  const currentCT=names.reduce((s,n)=>s+stepCT(n),0);
+  const takt=setup.takt||0;const annShifts=setup.annualShifts||250;const rate=setup.rate||0;const heads=setup.heads||1;const shiftMin=setup.shiftMin||455;
+  const fmt$=n=>n>=1000?'$'+(n/1000).toFixed(1)+'K':'$'+n.toFixed(0);
+  const unitsNow=takt>0?Math.floor((shiftMin*60)/currentCT):0;
+  const targetCTnum=parseFloat(kata.targetCT)||0;
+  const unitsTarget=targetCTnum>0?Math.floor((shiftMin*60)/targetCTnum):0;
+  const annualExpNow=rate>0&&currentCT>takt?((Math.floor((shiftMin*60)/takt)-unitsNow)*heads*(rate/3600)*currentCT*annShifts):0;
+  const annualExpTarget=rate>0&&targetCTnum>0&&targetCTnum<currentCT?((unitsTarget-unitsNow)*heads*(rate/3600)*currentCT*annShifts):0;
+  const outcomeRows=[{label:'Cycle Time (seconds)',current:currentCT.toFixed(1)+'s',target:targetCTnum?targetCTnum.toFixed(1)+'s':''},{label:'CT vs Takt',current:takt>0?(currentCT-takt).toFixed(1)+'s gap':'—',target:takt>0?'≤ '+takt+'s':''},{label:'Units / Shift',current:unitsNow||'—',target:unitsTarget||''},{label:'Annual Exposure ($)',current:annualExpNow>0?fmt$(annualExpNow):'—',target:annualExpTarget>0?'Save '+fmt$(annualExpTarget):''}];
+  const procRows=[];
+  names.forEach(n=>{const cls=DX.waste[n];if(cls==='wst'||cls==='inc'){const ct=stepCT(n);const pct=currentCT>0?Math.round(ct/currentCT*100):0;const vd=DX.variation[n];const cv=vd?vd.cv.toFixed(1)+'%':'—';const wt=DX.wasteType&&DX.wasteType[n];const WTLBL={T:'Transport',I:'Inventory',M:'Motion',W:'Waiting',O:'Overproduction',P:'Over-processing',D:'Defects',U:'Unused Skills'};const eracs=(DX.eracs&&DX.eracs[n])||'—';
+    // Pull step notes from capture
+    const validC=DX.cycles.slice(1).filter(c=>c&&c.length>0);const stepNt=[...new Set(validC.flatMap(cyc=>{const s=cyc.find(x=>x.name===n);return s&&s.note?[s.note]:[];}).filter(Boolean))];
+    const noteStr=[`CV: ${cv}`,`ERACS: ${eracs}`, ...stepNt].join(' · ');
+    procRows.push({label:`${cls==='wst'?'[W]':'[I]'} ${n}${wt?' ('+WTLBL[wt]+')':''}`,current:`${ct.toFixed(1)}s (${pct}%)`,target:'',note:noteStr});}});
+  Object.entries(DX.variation||{}).forEach(([n,v])=>{if(v.high&&DX.waste[n]!=='wst'&&DX.waste[n]!=='inc')procRows.push({label:`[VAR] ${n}`,current:v.isShort?`Range ${(v.max-v.min).toFixed(2)}s`:`CV ${v.cv.toFixed(1)}%`,target:'Stabilize',note:`Avg: ${v.avg.toFixed(2)}s`});});
+  (DX.ergoSteps||[]).forEach(s=>{const hf=(s.flags||[]).filter(f=>['Every Cycle','Frequent'].includes(s.freq&&s.freq[f]));if(hf.length)procRows.push({label:`[ERGO] ${s.name}`,current:hf.join(', '),target:'Resolve',note:'Lock-level risk'});});
+  (kata.conditions||[]).forEach(c=>{if(c.condition)procRows.push({label:`[COND] ${c.condition}`,current:'',target:c.measurement||'',note:''});});
+  while(procRows.length<8)procRows.push({label:'',current:'',target:'',note:''});
+  const wkCols=Array.from({length:8},()=>`<th style="text-align:center;min-width:55px;background:#2D6A4F">WK</th>`).join('');
+  const makeRows=(rows,showNote=false)=>rows.map(r=>`<tr><td style="border:1px solid #C3D9C9;padding:7px 10px;font-size:12px">${r.label}</td>${showNote?`<td style="border:1px solid #C3D9C9;padding:7px 8px;font-family:'IBM Plex Mono',monospace;font-size:9px;color:#8AAD95">${r.note||''}</td>`:''}<td style="border:2px solid #40916C;padding:7px 8px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;color:#40916C;background:#F0F7F2">${r.current||''}</td><td style="border:2px solid #2D6A4F;padding:7px 8px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;color:#2D6A4F;background:#E8F2EB">${r.target||''}</td>${Array.from({length:8},()=>`<td style="border:1px solid #C3D9C9;padding:7px;text-align:center"></td>`).join('')}</tr>`).join('');
+  // ITEM 4 — weekly tracking rows for export
+  const wtRows=(kata.weeklyTracking||[]).filter(r=>r.date||r.ct);
+  const wtHTML=wtRows.length?`<h3 style="font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:800;color:#1B4332;text-transform:uppercase;margin:16px 0 8px">Weekly Tracking</h3><table style="width:100%;border-collapse:collapse;margin-bottom:16px"><thead><tr><th style="background:#1B4332;color:rgba(255,255,255,.8);padding:8px;font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:500">WK</th><th style="background:#1B4332;color:rgba(255,255,255,.8);padding:8px;font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:500">Date</th><th style="background:#1B4332;color:rgba(255,255,255,.8);padding:8px;font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:500">Actual CT</th><th style="background:#1B4332;color:rgba(255,255,255,.8);padding:8px;font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:500">Target CT</th><th style="background:#1B4332;color:rgba(255,255,255,.8);padding:8px;font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:500">Gap</th><th style="background:#1B4332;color:rgba(255,255,255,.8);padding:8px;font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:500">Waste Open</th><th style="background:#1B4332;color:rgba(255,255,255,.8);padding:8px;font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:500">Notes</th></tr></thead><tbody>${wtRows.map((r,i)=>{const ct=parseFloat(r.ct)||0;const tgt=targetCTnum;const gap=ct&&tgt?ct-tgt:null;const bg=i%2===0?'#fff':'#F0F7F2';return`<tr style="background:${bg}"><td style="border:1px solid #C3D9C9;padding:7px 8px;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;text-align:center">${r.week||i+1}</td><td style="border:1px solid #C3D9C9;padding:7px 8px;font-family:'IBM Plex Mono',monospace;font-size:10px">${r.date||''}</td><td style="border:1px solid #C3D9C9;padding:7px 8px;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;color:${gap!==null?(gap<=0?'#40916C':'#B91C1C'):'#1B4332'}">${ct?ct.toFixed(1)+'s':'—'}</td><td style="border:1px solid #C3D9C9;padding:7px 8px;font-family:'IBM Plex Mono',monospace;font-size:10px;text-align:center;color:#2D6A4F">${tgt?tgt.toFixed(1)+'s':'—'}</td><td style="border:1px solid #C3D9C9;padding:7px 8px;font-family:'IBM Plex Mono',monospace;font-size:10px;text-align:center;color:${gap!==null?(gap<=0?'#40916C':'#B91C1C'):'#8AAD95'}">${gap!==null?(gap<=0?'−'+Math.abs(gap).toFixed(1)+'s':'+'+gap.toFixed(1)+'s'):'—'}</td><td style="border:1px solid #C3D9C9;padding:7px 8px;font-family:'IBM Plex Mono',monospace;font-size:10px;text-align:center">${r.wasteOpen||'—'}</td><td style="border:1px solid #C3D9C9;padding:7px 8px;font-size:11px">${r.notes||''}</td></tr>`;}).join('')}</tbody></table>`:'';
+  const conditionsHTML=(kata.conditions||[]).length?`<h3 style="font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:800;color:#1B4332;text-transform:uppercase;margin:16px 0 8px">Target Conditions</h3><table style="width:100%;border-collapse:collapse;margin-bottom:16px"><thead><tr><th style="background:#1B4332;color:rgba(255,255,255,.8);padding:8px 10px;text-align:left;font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:500">Condition</th><th style="background:#1B4332;color:rgba(255,255,255,.8);padding:8px 10px;text-align:left;font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:500">Measurement</th></tr></thead><tbody>${(kata.conditions||[]).map((c,i)=>`<tr style="background:${i%2===0?'#fff':'#F0F7F2'}"><td style="border:1px solid #C3D9C9;padding:8px 10px;font-size:12px">${c.condition||''}</td><td style="border:1px solid #C3D9C9;padding:8px 10px;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;color:#1B4332">${c.measurement||''}</td></tr>`).join('')}</tbody></table>`:'';
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Target Sheet — ${setup.process||'Process Dx'}</title><link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800&family=Barlow:wght@400;600&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet"><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Barlow',sans-serif;background:#fff;padding:24px;color:#1A2A1F}.doc-title{font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;color:#1B4332;text-transform:uppercase;border-bottom:3px solid #1B4332;padding-bottom:8px;margin-bottom:6px}.doc-sub{font-family:'IBM Plex Mono',monospace;font-size:9px;color:#5A7A66;letter-spacing:2px;text-transform:uppercase;margin-bottom:14px}.owner-bar{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}.owner-field{background:#F0F7F2;border:1px solid #C3D9C9;border-radius:4px;padding:8px 12px}.owner-lbl{font-family:'IBM Plex Mono',monospace;font-size:8px;color:#8AAD95;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:2px}.owner-val{font-size:13px;font-weight:600;color:#1B4332}.section-hdr{background:#1B4332;color:#fff;padding:7px 12px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:1px;margin-bottom:0;font-weight:500}table{width:100%;border-collapse:collapse;margin-bottom:14px}th{background:#1B4332;color:rgba(255,255,255,.85);padding:8px 8px;text-align:left;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.5px;font-weight:500}@media print{body{padding:10px}}</style></head><body><div class="doc-title">Target Sheet</div><div class="doc-sub">Improvement Kata — File 3 of 3 · Process Dx</div><div class="owner-bar"><div class="owner-field"><div class="owner-lbl">Owner / Learner</div><div class="owner-val">${setup.analyst||'—'}</div></div><div class="owner-field"><div class="owner-lbl">Coach</div><div class="owner-val">&nbsp;</div></div><div class="owner-field"><div class="owner-lbl">Process</div><div class="owner-val">${setup.process||'—'}</div></div><div class="owner-field"><div class="owner-lbl">Target Date</div><div class="owner-val">${kata.targetDate||'—'}</div></div></div>${conditionsHTML}<div class="section-hdr">Outcome Metrics (Results)</div><table><thead><tr><th style="min-width:200px">Metric</th><th style="min-width:110px;background:#40916C">Current State</th><th style="min-width:110px;background:#2D6A4F">Target</th>${wkCols}</tr></thead><tbody>${makeRows(outcomeRows)}</tbody></table><div class="section-hdr">Process Metrics</div><table><thead><tr><th>Step / Metric</th><th style="min-width:80px;font-size:8px">Note / Type</th><th style="min-width:110px;background:#40916C">Current</th><th style="min-width:110px;background:#2D6A4F">Target</th>${wkCols}</tr></thead><tbody>${makeRows(procRows,true)}</tbody></table>${wtHTML}</body></html>`;
+  _downloadHTML(html,`Target_Sheet_${(setup.process||'ProcessDx').replace(/\s+/g,'_')}.html`);
+}
+
+function _downloadHTML(html,filename){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([html],{type:'text/html'}));a.download=filename;document.body.appendChild(a);a.click();a.remove();}
+
+// ═══ COACH'S NOTES ═══
+let coachCallback=null,coachSkip=false;
+const COACH_NOTES={
+  1:{icon:'🎯',eyebrow:"Coach's Note — Gate 1",title:'Start at the Bottleneck',body:'<strong>Before you time a single step — find the bottleneck.</strong><br><br>The Theory of Constraints says it plainly: the line\'s output is limited by one station. Improving any other station does not change the line\'s output.<br><br>Look for <strong>WIP piling up</strong> in front of a station. Look for the <strong>longest cycle time</strong> on the line.<br><br><strong>Start there. Not wherever is easiest.</strong>'},
+  2:{icon:'👁',eyebrow:"Coach's Note — Gate 2",title:'Observe Before You Time',body:'<strong>Taiichi Ohno had one rule: stand and watch for one hour before you touch anything.</strong><br><br>The baseline cycle time is the single most important number in this study. It\'s your before. Without a credible before number, you can\'t prove any after.<br><br>Enter what you actually observed. Not what the standard says. What you saw with your own eyes.'},
+  3:{icon:'🦺',eyebrow:"Coach's Note — Gate 3",title:'Fix the Body First',body:'<strong>You cannot standardize a process that injures your operator.</strong><br><br>If the method requires an awkward posture, excessive force, or repetitive strain — that IS the problem. Not the cycle time.<br><br><strong>Flag it. Fix it. Re-study. In that order.</strong>'},
+  4:{icon:'⏱',eyebrow:"Coach's Note — Gate 4",title:'How to Capture Properly',body:'<strong>Cycle 1 is always wrong. Plan for it.</strong><br><br>The Hawthorne Effect is real: operators change their pace when observed. Capture Cycle 1 anyway — the system discards it automatically.<br><br><strong>Minimum 3 valid cycles.</strong> Use quick notes to log observations without stopping the timer.'},
+  5:{icon:'📊',eyebrow:"Coach's Note — Gate 5",title:'Variation Before Waste',body:'<strong>If a process varies by 30% cycle to cycle, you don\'t have one process. You have several.</strong><br><br>Removing waste from an unstable process is pointless — variation will mask whatever you removed.<br><br>High variation tells you something is wrong with the method, material, or machine. Address that root cause first.'},
+  6:{icon:'🗑',eyebrow:"Coach's Note — Gate 6",title:'ERACS — What It Actually Means',body:'<strong>E — Eliminate:</strong> Remove entirely. No customer value.<br><strong>R — Rearrange:</strong> Wrong sequence? Reorder first.<br><strong>A — Add/Subtract:</strong> Combine or split steps.<br><strong>C — Combine:</strong> Two ops simultaneously?<br><strong>S — Simplify:</strong> Last resort if you can\'t do E, R, A, or C.<br><br><strong>Apply E before C before S. Simplifying waste is still waste.</strong>'},
+};
+function showCoach(n,cb){if(coachSkip){if(cb)cb();return;}const note=COACH_NOTES[n];if(!note){if(cb)cb();return;}coachCallback=cb||null;$('coachEyebrow').textContent=note.eyebrow;$('coachIcon').textContent=note.icon;$('coachTitle').textContent=note.title;$('coachBody').innerHTML=note.body;const yt=$('coachYT');if(note.yt){yt.innerHTML=note.yt;yt.style.display='block';}else yt.style.display='none';$('coachSkipToggle').checked=false;$('coachOverlay').style.display='flex';}
+function dismissCoach(){$('coachOverlay').style.display='none';if(coachCallback){const cb=coachCallback;coachCallback=null;cb();}}
+function setCoachSkip(val){coachSkip=val;}
+
+// ═══ YAMAZUMI ═══
+let yamStepStates={};
+function initYamStates(){yamStepStates={};DX.ergoSteps.forEach(s=>{yamStepStates[s.name]={active:true,scale:1.0};});}
+function yamResetAll(){Object.keys(yamStepStates).forEach(k=>{yamStepStates[k]={active:true,scale:1.0};});renderYamazumi();renderYamSliders();}
+function renderYamSliders(){
+  const el=$('yamSliders');if(!el)return;el.innerHTML='';
+  const stepNames=DX.ergoSteps.map(s=>s.name).filter(n=>!isElim(n));
+  if(!stepNames.length){el.innerHTML='<div class="empty-state">Complete capture in Gate 4 first.</div>';return;}
+  stepNames.forEach(name=>{const avg=stepCT(name);const state=yamStepStates[name]||{active:true,scale:1.0};const wc=DX.waste[name];const wcColor=wc==='va'?'var(--green)':wc==='wst'?'var(--red)':wc==='inc'?'var(--amber)':'var(--muted)';const card=document.createElement('div');card.style.cssText='background:var(--s1);border:1px solid var(--br);border-radius:var(--r);padding:10px 12px;margin-bottom:8px;display:flex;align-items:center;gap:10px';card.innerHTML=`<div style="width:10px;height:10px;border-radius:50%;background:${wcColor};flex-shrink:0"></div><div style="flex:1;min-width:0"><div style="font-family:var(--head);font-size:12px;font-weight:700;color:var(--forest);text-transform:uppercase;letter-spacing:.3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${name}</div><div style="display:flex;align-items:center;gap:8px;margin-top:4px"><input type="range" min="0" max="100" value="${Math.round(state.scale*100)}" ${!state.active?'disabled':''} oninput="setYamScale('${name.replace(/'/g,"\\'")}',this.value)" style="flex:1;accent-color:var(--green);height:4px"><span style="font-family:var(--mono);font-size:10px;color:var(--muted);min-width:45px;text-align:right" id="yamScale_${name.replace(/\s+/g,'_')}">${(avg*state.scale).toFixed(1)}s</span></div></div><button onclick="toggleYamStep('${name.replace(/'/g,"\\'")}\')" style="font-family:var(--mono);font-size:9px;padding:5px 9px;border:1px solid ${state.active?'var(--green)':'var(--br)'};background:${state.active?'var(--gdim)':'var(--s2)'};color:${state.active?'var(--green)':'var(--muted2)'};border-radius:3px;cursor:pointer;flex-shrink:0;letter-spacing:.5px">${state.active?'ON':'OFF'}</button>`;el.appendChild(card);});
+}
+function setYamScale(name,val){if(!yamStepStates[name])yamStepStates[name]={active:true,scale:1.0};yamStepStates[name].scale=parseInt(val)/100;const avg=stepCT(name);const key='yamScale_'+name.replace(/\s+/g,'_');const el=$(key);if(el)el.textContent=(avg*yamStepStates[name].scale).toFixed(1)+'s';renderYamazumi();}
+function toggleYamStep(name){if(!yamStepStates[name])yamStepStates[name]={active:true,scale:1.0};yamStepStates[name].active=!yamStepStates[name].active;renderYamSliders();renderYamazumi();}
+function renderYamazumi(){
+  const cv=$('yamCanvas');if(!cv)return;const ctx=cv.getContext('2d');const dpr=window.devicePixelRatio||1;const cssW=cv.clientWidth||360;const cssH=220;cv.width=Math.floor(cssW*dpr);cv.height=Math.floor(cssH*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,cssW,cssH);
+  const stepNames=DX.ergoSteps.map(s=>s.name).filter(n=>!isElim(n));
+  if(!stepNames.length){ctx.fillStyle='rgba(255,255,255,.2)';ctx.font=`12px monospace`;ctx.fillText('Complete capture to see chart',20,cssH/2);return;}
+  const stepData=stepNames.map(name=>{const avg=stepCT(name);const state=yamStepStates[name]||{active:true,scale:1.0};return{name,avg,curDur:avg,futureDur:state.active?avg*state.scale:0,wc:DX.waste[name],active:state.active};});
+  const takt=DX.setup.takt||0;const curTotal=stepData.reduce((a,s)=>a+s.curDur,0);const futureTotal=stepData.reduce((a,s)=>a+s.futureDur,0);const maxVal=Math.max(curTotal,futureTotal,takt)*1.15||1;
+  const padL=44,padR=10,padT=14,padB=32,w=cssW-padL-padR,h=cssH-padT-padB;
+  ctx.strokeStyle='rgba(255,255,255,.06)';ctx.lineWidth=1;for(let g=0;g<=4;g++){const y=padT+h-(h*g/4);ctx.beginPath();ctx.moveTo(padL,y);ctx.lineTo(padL+w,y);ctx.stroke();ctx.fillStyle='rgba(255,255,255,.4)';ctx.font='10px monospace';const v=maxVal*g/4;ctx.fillText(v>=60?(v/60).toFixed(1)+'m':v.toFixed(0)+'s',6,y+3);}
+  const barW=Math.min(80,w/2.6),gap=(w-barW*2)/3;const barColors={'va':'#40916C','inc':'#D97706','wst':'#B91C1C','null':'#6B7280'};
+  let yBase=padT+h;stepData.forEach(s=>{if(s.curDur<=0)return;const segH=(s.curDur/maxVal)*h;yBase-=segH;ctx.fillStyle=barColors[s.wc||'null']||'#6B7280';ctx.fillRect(padL+gap,yBase,barW,segH);if(segH>14){ctx.fillStyle='rgba(255,255,255,.7)';ctx.font='9px monospace';ctx.fillText(s.name.substring(0,10),padL+gap+2,yBase+segH-3);}});
+  yBase=padT+h;stepData.forEach(s=>{if(s.futureDur<=0)return;const segH=(s.futureDur/maxVal)*h;yBase-=segH;ctx.fillStyle=barColors[s.wc||'null']||'#6B7280';ctx.globalAlpha=0.65;ctx.fillRect(padL+gap*2+barW,yBase,barW,segH);ctx.globalAlpha=1;});
+  ctx.fillStyle='rgba(255,255,255,.55)';ctx.font='10px monospace';ctx.fillText('CURRENT',padL+gap,padT+h+18);ctx.fillText('FUTURE',padL+gap*2+barW,padT+h+18);
+  ctx.fillStyle='rgba(255,255,255,.7)';ctx.font='bold 11px monospace';const curY=padT+h-(curTotal/maxVal)*h-4;const futY=padT+h-(futureTotal/maxVal)*h-4;ctx.fillText(curTotal.toFixed(1)+'s',padL+gap+barW+2,Math.max(curY,padT+12));ctx.fillStyle=futureTotal<takt?'#74C69D':'#F87171';ctx.fillText(futureTotal.toFixed(1)+'s',padL+gap*2+barW*2+2,Math.max(futY,padT+12));
+  if(takt>0){const taktY=padT+h-(takt/maxVal)*h;ctx.strokeStyle='#F59E0B';ctx.lineWidth=2;ctx.setLineDash([6,4]);ctx.beginPath();ctx.moveTo(padL,taktY);ctx.lineTo(padL+w,taktY);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle='#F59E0B';ctx.font='bold 10px monospace';ctx.fillText('TAKT '+takt+'s',padL+w-60,taktY-3);}
+  const usedCls=new Set(stepNames.map(n=>DX.waste[n]||'null'));
+  const legendDefs=[{c:'#40916C',l:'Value Creating',k:'va'},{c:'#D97706',l:'Incidental',k:'inc'},{c:'#B91C1C',l:'Waste',k:'wst'},{c:'#6B7280',l:'Unclassified',k:'null'}];
+  const activeLegend=legendDefs.filter(x=>usedCls.has(x.k));
+  if(takt>0)activeLegend.push({c:'#F59E0B',l:'Takt'});
+  $('yamLegend').innerHTML=activeLegend.map(x=>`<span style="display:inline-flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:${x.c};display:inline-block"></span><span>${x.l}</span></span>`).join('');
+  const saving=curTotal-futureTotal;const savingPct=curTotal>0?((saving/curTotal)*100).toFixed(0):0;const taktEl=$('yamCTDisplay');if(taktEl)taktEl.textContent=`Current: ${curTotal.toFixed(1)}s → Future: ${futureTotal.toFixed(1)}s (${saving>0?'-':''}${saving.toFixed(1)}s, ${savingPct}%) · Takt: ${takt}s`;
+}
+
+// ── Patch renderOutput to run Yamazumi + Table + Kata ──
+const _origRenderOutput=renderOutput;
+window.renderOutput=function(){_origRenderOutput();initYamStates();renderYamazumi();renderYamSliders();renderTimeStudyTable();};
+function renderKataGate(){
+  renderKataSection();renderProgressLog();renderWeeklyTracking();
+  // Mirror studyMeta into studyMeta2
+  const m=$('studyMeta');const m2=$('studyMeta2');if(m&&m2)m2.innerHTML=m.innerHTML;
+}
+
+// Print styles
+const printStyle=document.createElement('style');
+printStyle.textContent=`@media print{#coachOverlay,#tipModal,#stepModal,#capSheet,.foot,#prog6,#prog7,.cap-bar,.quick-note-bar,.cycle-tabs,#yamSliders,#phase1Output,#phase2Output,#phase3Output,#studyMeta{display:none!important}#kataSection{display:block!important}.kata-card{break-inside:avoid}.scr.on{min-height:auto}.scroll{overflow:visible;padding-bottom:0}body{background:#fff}canvas{max-width:100%}}`;
+document.head.appendChild(printStyle);
+
+</script>
+<div id="saveFlash" class="save-flash">✓ Saved</div>
+</body>
+</html>
