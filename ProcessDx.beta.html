@@ -1,0 +1,2548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#1B4332">
+<title>Process Dx</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F0F7F2;
+  --s1:#FFFFFF;
+  --s2:#E8F2EB;
+  --s3:#D8EBE0;
+  --br:#C3D9C9;
+  --br2:#A8C9B0;
+  --forest:#1B4332;
+  --forest2:#2D6A4F;
+  --green:#40916C;
+  --greenlt:#74C69D;
+  --gdim:rgba(64,145,108,.1);
+  --amber:#D97706;
+  --amber2:#F59E0B;
+  --adim:rgba(217,119,6,.1);
+  --red:#B91C1C;
+  --rdim:rgba(185,28,28,.08);
+  --txt:#1A2A1F;
+  --slate:#3D5247;
+  --muted:#5A7A66;
+  --muted2:#8AAD95;
+  --mono:'IBM Plex Mono',monospace;
+  --head:'Barlow Condensed',sans-serif;
+  --body:'Barlow',sans-serif;
+  --r:6px;--r2:10px;--r3:14px;
+  --sb:env(safe-area-inset-bottom,0px);
+  --st:env(safe-area-inset-top,0px);
+  --shadow:0 1px 3px rgba(0,0,0,.07);
+  --shadow2:0 4px 12px rgba(0,0,0,.1);
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{background:var(--bg);color:var(--txt);font-family:var(--body);min-height:100%;-webkit-font-smoothing:antialiased}
+body{overscroll-behavior:none}
+
+/* ── PROGRESS ── */
+.prog-wrap{background:var(--forest);padding:10px 16px;padding-top:calc(10px + var(--st));flex-shrink:0}
+.prog-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.prog-name{font-family:var(--head);font-size:18px;font-weight:800;color:#fff;text-transform:uppercase;letter-spacing:.5px}
+.prog-name em{color:var(--greenlt);font-style:normal}
+.prog-sub{font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.45);letter-spacing:1.5px}
+.prog-gates{display:flex;gap:3px}
+.prog-gate{height:4px;flex:1;border-radius:2px;background:rgba(255,255,255,.15);transition:background .3s}
+.prog-gate.done{background:var(--greenlt)}
+.prog-gate.active{background:var(--amber2)}
+.prog-labels{display:flex;justify-content:space-between;margin-top:4px}
+.prog-lbl{font-family:var(--mono);font-size:8px;color:rgba(255,255,255,.3);letter-spacing:.5px;flex:1;text-align:center}
+.prog-lbl.active{color:var(--amber2)}
+.prog-lbl.done{color:rgba(255,255,255,.55)}
+.ts-badge{font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.6);background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:3px;padding:4px 8px;display:inline-flex;align-items:center;gap:5px}
+.dot-live{width:6px;height:6px;border-radius:50%;background:#ef4444;animation:blink .9s infinite;flex-shrink:0}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.15}}
+
+/* ── SCREENS ── */
+.scr{display:none;flex-direction:column;min-height:100vh}
+.scr.on{display:flex}
+.scroll{flex:1;overflow-y:auto;padding:16px 18px;-webkit-overflow-scrolling:touch;padding-bottom:110px}
+
+/* ── GATE HEADER ── */
+.gate-hdr{background:var(--s1);border-bottom:1px solid var(--br);padding:14px 18px;flex-shrink:0;box-shadow:var(--shadow)}
+.gate-tag{font-family:var(--mono);font-size:9px;letter-spacing:2px;color:var(--green);text-transform:uppercase;margin-bottom:2px}
+.gate-title{font-family:var(--head);font-size:22px;font-weight:800;color:var(--forest);text-transform:uppercase;letter-spacing:.5px;line-height:1}
+.gate-desc{font-size:13px;color:var(--muted);margin-top:4px;line-height:1.5}
+
+/* ── SECTION LABELS ── */
+.slbl{display:flex;align-items:center;gap:8px;font-family:var(--head);font-size:11px;font-weight:700;color:var(--forest);text-transform:uppercase;letter-spacing:2px;border-bottom:2px solid var(--forest);padding-bottom:4px;margin:18px 0 12px}
+.slbl:first-child{margin-top:0}
+.qbtn{width:18px;height:18px;border-radius:50%;background:var(--forest);color:#fff;font-family:var(--mono);font-size:10px;font-weight:600;border:none;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;opacity:.7}
+.qbtn:active{opacity:1}
+
+/* ── FORM ── */
+.fg{margin-bottom:12px}
+.fg label{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:4px}
+.fg input,.fg select,.fg textarea{width:100%;background:var(--s1);border:1px solid var(--br);border-radius:var(--r);color:var(--txt);font-family:var(--body);font-size:15px;padding:10px 11px;-webkit-appearance:none;transition:border-color .12s;box-shadow:inset 0 1px 2px rgba(0,0,0,.03)}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--green)}
+.fg input.err{border-color:var(--red)!important}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.frow3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+
+/* ── CALC BOXES ── */
+.calc-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
+.calc-box{background:var(--s1);border:1px solid var(--br);border-radius:var(--r2);padding:12px 14px;box-shadow:var(--shadow)}
+.calc-box.alert{border-color:var(--red);background:var(--rdim)}
+.calc-box.good{border-color:var(--green);background:var(--gdim)}
+.calc-lbl{font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px}
+.calc-val{font-family:var(--mono);font-size:20px;font-weight:600;color:var(--forest);letter-spacing:.5px}
+.calc-val.red{color:var(--red)}
+.calc-val.grn{color:var(--green)}
+.calc-unit{font-size:11px;color:var(--muted);font-weight:400}
+
+/* ── CLICK BOXES (Gate 2) ── */
+.cbox-item{display:flex;align-items:flex-start;gap:12px;background:var(--s1);border:1px solid var(--br);border-radius:var(--r);padding:12px 14px;margin-bottom:8px;cursor:pointer;transition:all .15s;box-shadow:var(--shadow)}
+.cbox-item.checked{border-color:var(--green);background:var(--gdim)}
+.cbox-item.blind{border-color:var(--amber);background:var(--adim)}
+.cbox{width:24px;height:24px;border:2px solid var(--br2);border-radius:4px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px;transition:all .15s;margin-top:1px}
+.cbox-item.checked .cbox{background:var(--green);border-color:var(--green);color:#fff}
+.cbox-item.blind .cbox{background:var(--amber);border-color:var(--amber);color:#fff}
+.cbox-body{flex:1}
+.cbox-title{font-weight:600;font-size:13px;color:var(--forest);margin-bottom:2px;display:flex;align-items:center;gap:6px}
+.cbox-desc{font-size:12px;color:var(--muted);line-height:1.5}
+.blind-badge{font-family:var(--mono);font-size:9px;color:var(--amber);background:var(--adim);border:1px solid rgba(217,119,6,.3);border-radius:3px;padding:1px 6px;letter-spacing:.5px}
+
+/* ── ERGO ── */
+.ergo-card{background:var(--s1);border:1px solid var(--br);border-radius:var(--r2);padding:14px;margin-bottom:10px;box-shadow:var(--shadow)}
+.ergo-card.flagged-hard{border-color:var(--red);background:var(--rdim)}
+.ergo-card.flagged-soft{border-color:var(--amber);background:var(--adim)}
+.ergo-card.clear{border-color:var(--green);background:var(--gdim)}
+.ergo-step-num{font-family:var(--mono);font-size:9px;color:var(--green);background:var(--gdim);border:1px solid rgba(64,145,108,.3);border-radius:3px;padding:2px 7px;display:inline-block;margin-bottom:5px;letter-spacing:1px}
+.ergo-step-name{font-family:var(--head);font-size:15px;font-weight:700;color:var(--forest);text-transform:uppercase;letter-spacing:.3px;margin-bottom:10px}
+.ergo-flags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.ergo-flag{font-family:var(--mono);font-size:10px;padding:6px 11px;border:1px solid var(--br);border-radius:4px;background:var(--s2);color:var(--muted);cursor:pointer;transition:all .12s}
+.ergo-flag.on-hard{border-color:var(--red);color:var(--red);background:var(--rdim)}
+.ergo-flag.on-soft{border-color:var(--amber);color:var(--amber);background:var(--adim)}
+.freq-row{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}
+.freq-btn{font-family:var(--mono);font-size:9px;padding:4px 9px;border:1px solid var(--br);border-radius:3px;background:var(--s2);color:var(--muted);cursor:pointer;transition:all .12s;letter-spacing:.5px}
+.freq-btn.sel-ec{border-color:var(--red);color:var(--red);background:var(--rdim)}
+.freq-btn.sel-fr{border-color:var(--amber);color:var(--amber);background:var(--adim)}
+.freq-btn.sel-oc{border-color:var(--green);color:var(--green);background:var(--gdim)}
+.ergo-status{font-family:var(--mono);font-size:10px;margin-top:6px;padding:5px 10px;border-radius:4px;display:inline-block}
+.es-red{color:var(--red);background:var(--rdim);border:1px solid rgba(185,28,28,.2)}
+.es-amber{color:var(--amber);background:var(--adim);border:1px solid rgba(217,119,6,.2)}
+.es-grn{color:var(--green);background:var(--gdim);border:1px solid rgba(64,145,108,.2)}
+
+/* ── STEP CARDS ── */
+.step-card{background:var(--s1);border:1px solid var(--br);border-radius:var(--r);padding:10px 12px;margin-bottom:7px;box-shadow:var(--shadow)}
+.step-card-top{display:flex;align-items:center;gap:8px;margin-bottom:3px}
+.step-num-tag{font-family:var(--mono);font-size:9px;color:var(--green);background:var(--gdim);border:1px solid rgba(64,145,108,.3);border-radius:3px;padding:2px 7px;letter-spacing:1px;flex-shrink:0}
+.step-name-txt{font-weight:600;font-size:13px;color:var(--forest);flex:1}
+.step-del{background:none;border:none;color:var(--muted2);font-size:16px;padding:2px 5px;cursor:pointer}
+.step-times{font-family:var(--mono);font-size:10px;color:var(--muted);display:flex;flex-wrap:wrap;gap:8px;margin-top:3px}
+.step-times b{color:var(--forest2);font-weight:500}
+
+/* ── VARIATION TABLE ── */
+.var-table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:11px}
+.var-table th{background:var(--forest);color:rgba(255,255,255,.8);padding:8px 10px;text-align:left;font-weight:500;letter-spacing:.5px}
+.var-table td{padding:8px 10px;border-bottom:1px solid var(--br);color:var(--txt);background:var(--s1)}
+.var-table tr:nth-child(even) td{background:var(--s2)}
+.var-flag{display:inline-block;padding:2px 8px;border-radius:3px;font-size:9px;letter-spacing:.5px}
+.vf-ok{color:var(--green);background:var(--gdim);border:1px solid rgba(64,145,108,.25)}
+.vf-warn{color:var(--red);background:var(--rdim);border:1px solid rgba(185,28,28,.25)}
+.vf-override{color:var(--amber);background:var(--adim);border:1px solid rgba(217,119,6,.25)}
+.var-override-btn{font-family:var(--mono);font-size:10px;color:var(--amber);border:1px solid rgba(217,119,6,.4);background:var(--adim);border-radius:4px;padding:4px 10px;cursor:pointer;margin-top:6px;display:inline-block}
+
+/* ── WASTE CHIPS ── */
+.wc-chip{font-family:var(--mono);font-size:10px;border-radius:4px;padding:8px 13px;cursor:pointer;display:flex;align-items:center;gap:6px;border:1px solid var(--br);background:var(--s2);color:var(--muted);transition:all .12s;user-select:none}
+.wc-chip .wd{width:7px;height:7px;border-radius:50%;background:var(--br2);flex-shrink:0}
+.wc-chip.locked{opacity:.3;pointer-events:none}
+.wc-chip.on-va{border-color:var(--green);color:var(--green);background:var(--gdim)}
+.wc-chip.on-va .wd{background:var(--green)}
+.wc-chip.on-inc{border-color:var(--amber);color:var(--amber);background:var(--adim)}
+.wc-chip.on-inc .wd{background:var(--amber)}
+.wc-chip.on-wst{border-color:var(--red);color:var(--red);background:var(--rdim)}
+.wc-chip.on-wst .wd{background:var(--red)}
+
+/* ── OUTPUT ── */
+.output-phase{background:var(--s1);border:1px solid var(--br);border-radius:var(--r2);padding:14px;margin-bottom:12px;box-shadow:var(--shadow)}
+.output-phase-hdr{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.phase-num{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--head);font-size:16px;font-weight:800;color:#fff;flex-shrink:0}
+.ph1{background:var(--red)}
+.ph2{background:var(--amber)}
+.ph3{background:var(--green)}
+.phase-title{font-family:var(--head);font-size:16px;font-weight:800;color:var(--forest);text-transform:uppercase;letter-spacing:.5px}
+.phase-sub{font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:1px}
+.output-item{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--br)}
+.output-item:last-child{border-bottom:none;padding-bottom:0}
+.out-step{font-family:var(--mono);font-size:9px;color:var(--green);background:var(--gdim);border:1px solid rgba(64,145,108,.25);border-radius:3px;padding:2px 6px;flex-shrink:0;margin-top:2px;letter-spacing:.5px}
+.out-step.red{color:var(--red);background:var(--rdim);border-color:rgba(185,28,28,.25)}
+.out-step.amber{color:var(--amber);background:var(--adim);border-color:rgba(217,119,6,.25)}
+.out-text{font-size:13px;color:var(--slate);line-height:1.5}
+.out-text b{color:var(--forest);font-weight:600}
+.out-empty{font-family:var(--mono);font-size:11px;color:var(--green);padding:6px 0;letter-spacing:.3px}
+.roi-box{background:var(--forest);border-radius:var(--r2);padding:16px 18px;margin-bottom:16px}
+.roi-lbl{font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.45);letter-spacing:2px;text-transform:uppercase;margin-bottom:4px}
+.roi-val{font-family:var(--head);font-size:32px;font-weight:800;color:var(--greenlt);letter-spacing:.5px;line-height:1}
+.roi-sub{font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.45);margin-top:4px}
+
+/* ── VIDEO ZONE ── */
+.vzone{background:#0a0a0a;flex:1;display:flex;flex-direction:column;min-height:0;border-radius:var(--r);overflow:hidden}
+#vid{width:100%;flex:1;object-fit:contain;display:none;background:#000}
+.vempty{flex:1;height:220px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px}
+.vei{font-size:28px;opacity:.2}
+.vet{font-family:var(--head);font-size:14px;font-weight:700;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:1px}
+.ves{font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.25);text-align:center;line-height:1.8;letter-spacing:.5px}
+.vpick-btn{font-family:var(--mono);font-size:11px;letter-spacing:1px;text-transform:uppercase;padding:9px 18px;background:var(--green);color:#fff;border:none;border-radius:var(--r);cursor:pointer;margin-top:4px}
+.ptrack{height:3px;background:rgba(255,255,255,.12);flex-shrink:0}
+.pfill{height:100%;background:var(--amber2);width:0%;transition:width .1s linear}
+
+/* ── CAPTURE CONTROLS ── */
+.cap-bar{background:var(--forest);padding:10px 14px;display:flex;gap:8px;flex-shrink:0;flex-wrap:wrap;align-items:center}
+.cap-btn{font-family:var(--head);font-size:12px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;padding:9px 12px;border-radius:var(--r);border:2px solid transparent;cursor:pointer;transition:opacity .1s;-webkit-appearance:none}
+.cap-btn:active{opacity:.75}
+.cap-btn:disabled{opacity:.25}
+.cap-go{background:var(--amber);color:#fff;border-color:var(--amber);flex:2}
+.cap-step{background:transparent;color:#fff;border-color:#fff;flex:1.5}
+.cap-end{background:transparent;color:#ef4444;border-color:#ef4444;flex:1}
+.cap-timer{font-family:var(--mono);font-size:20px;color:var(--amber2);background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);border-radius:4px;padding:5px 12px;text-align:center;flex-shrink:0;letter-spacing:.5px}
+.quick-note-bar{background:var(--forest2);padding:6px 14px;display:flex;gap:8px;align-items:center;flex-shrink:0}
+.qn-input{flex:1;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:var(--r);color:#fff;font-family:var(--mono);font-size:12px;padding:7px 11px}
+.qn-input::placeholder{color:rgba(255,255,255,.35)}
+.qn-input:focus{outline:none;border-color:var(--amber2)}
+.qn-save{background:var(--green);color:#fff;border:none;border-radius:var(--r);padding:7px 12px;font-family:var(--mono);font-size:10px;cursor:pointer;letter-spacing:.5px;flex-shrink:0}
+.cycle-tabs{display:flex;gap:5px;padding:6px 12px;background:var(--s2);border-bottom:1px solid var(--br);overflow-x:auto}
+.cycle-tabs::-webkit-scrollbar{display:none}
+.ctab{font-family:var(--mono);font-size:9px;padding:4px 10px;border:1px solid var(--br);border-radius:3px;background:transparent;color:var(--muted);cursor:pointer;letter-spacing:.5px;-webkit-appearance:none}
+.ctab.on{border-color:var(--green);color:var(--green);background:var(--gdim)}
+.note-tag{font-family:var(--mono);font-size:9px;color:var(--amber);background:var(--adim);border:1px solid rgba(217,119,6,.3);border-radius:3px;padding:2px 6px;display:inline-block;margin-top:3px;letter-spacing:.5px}
+
+/* ── BUTTONS ── */
+.foot{position:fixed;bottom:0;left:0;right:0;background:var(--s1);border-top:2px solid var(--forest);padding:10px 18px;padding-bottom:calc(10px + var(--sb));display:flex;gap:10px;z-index:100;box-shadow:0 -4px 12px rgba(0,0,0,.08)}
+.btn-primary{flex:2;background:var(--forest);color:#fff;font-family:var(--head);font-size:16px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:14px;border:none;border-radius:var(--r);cursor:pointer;-webkit-appearance:none}
+.btn-primary:active{filter:brightness(.9)}
+.btn-primary:disabled{opacity:.3}
+.btn-secondary{flex:1;background:transparent;color:var(--muted);font-family:var(--head);font-size:13px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:14px;border:1px solid var(--br);border-radius:var(--r);cursor:pointer;-webkit-appearance:none}
+.btn-secondary:active{background:var(--s2)}
+.btn-amber{background:var(--amber)!important;color:#fff!important;border-color:var(--amber)!important}
+.btn-grn{background:var(--green)!important;color:#fff!important;border-color:var(--green)!important}
+
+/* ── INFO BOXES ── */
+.info-box{background:var(--s2);border:1px solid var(--br);border-left:3px solid var(--green);border-radius:var(--r);padding:12px 14px;margin-bottom:14px;font-size:13px;color:var(--slate);line-height:1.6}
+.info-box strong{color:var(--forest);font-weight:600}
+.info-box.amber{border-left-color:var(--amber);background:var(--adim)}
+.info-box.red{border-left-color:var(--red);background:var(--rdim)}
+.gate-lock{display:flex;align-items:flex-start;gap:8px;background:var(--rdim);border:1px solid rgba(185,28,28,.25);border-radius:var(--r);padding:10px 14px;margin-bottom:8px}
+.gate-lock-text{font-family:var(--mono);font-size:11px;color:var(--red);line-height:1.5;letter-spacing:.3px}
+.empty-state{text-align:center;padding:32px 16px;font-family:var(--mono);font-size:11px;color:var(--muted2);letter-spacing:.5px}
+
+/* ── TOOLTIP MODAL ── */
+/* ── COACH NOTE OVERLAY ── */
+#coachOverlay{display:none;position:fixed;inset:0;background:rgba(27,67,50,.82);z-index:500;align-items:flex-end;backdrop-filter:blur(6px)}
+.coach-box{background:var(--s1);border-top:4px solid var(--amber);border-radius:16px 16px 0 0;padding:20px 20px calc(24px + var(--sb));width:100%;max-height:82vh;overflow-y:auto}
+.coach-eyebrow{font-family:var(--mono);font-size:9px;letter-spacing:2px;color:var(--amber);text-transform:uppercase;margin-bottom:6px}
+.coach-icon{font-size:28px;margin-bottom:8px}
+.coach-title{font-family:var(--head);font-size:22px;font-weight:800;color:var(--forest);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px}
+.coach-body{font-size:14px;color:var(--slate);line-height:1.8;margin-bottom:14px}
+.coach-body strong{color:var(--forest)}
+.coach-yt{background:var(--s2);border:1px solid var(--br);border-left:3px solid var(--amber);border-radius:var(--r);padding:10px 14px;margin-bottom:14px;font-family:var(--mono);font-size:11px;color:var(--muted);line-height:1.6}
+.coach-yt strong{color:var(--amber);font-weight:600}
+.coach-skip{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11px;color:var(--muted);cursor:pointer;margin-bottom:14px;user-select:none}
+.coach-skip input[type=checkbox]{width:15px;height:15px;accent-color:var(--green);cursor:pointer}
+#tipModal{display:none;position:fixed;inset:0;background:rgba(27,67,50,.6);z-index:400;align-items:center;justify-content:center;padding:20px}
+.tip-box{background:var(--s1);border:1px solid var(--br);border-top:3px solid var(--green);border-radius:var(--r3);padding:20px;max-width:420px;width:100%;box-shadow:var(--shadow2)}
+.tip-title{font-family:var(--head);font-size:16px;font-weight:800;color:var(--forest);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px}
+.tip-body{font-size:13px;color:var(--slate);line-height:1.7}
+.tip-close{margin-top:14px;background:var(--forest);color:#fff;font-family:var(--head);font-size:13px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:10px;border:none;border-radius:var(--r);cursor:pointer;width:100%}
+
+/* ── STEP + CAP MODALS ── */
+#stepModal,#capSheet{display:none;position:fixed;inset:0;background:rgba(27,67,50,.6);z-index:300;align-items:flex-end;backdrop-filter:blur(4px)}
+.sheet-inner{background:var(--s1);border-top:3px solid var(--amber);border-radius:14px 14px 0 0;padding:16px 18px;width:100%;max-height:85vh;overflow-y:auto;padding-bottom:calc(20px + var(--sb))}
+.sheet-grip{width:36px;height:4px;background:var(--br);border-radius:2px;margin:0 auto 14px}
+.sheet-title{font-family:var(--head);font-size:14px;font-weight:800;text-transform:uppercase;letter-spacing:2px;margin-bottom:12px}
+
+/* ── TIME STUDY TABLE ── */
+.ts-table{width:100%;border-collapse:collapse;font-size:13px;color:var(--txt)}
+.ts-table th{background:var(--forest);color:rgba(255,255,255,.8);padding:9px 10px;text-align:left;font-family:var(--mono);font-size:9px;letter-spacing:1px;font-weight:500}
+.ts-table th.center{text-align:center}
+.ts-table td{padding:8px 10px;border-bottom:1px solid var(--br);vertical-align:middle}
+.ts-table tbody tr:nth-child(even) td{background:var(--s2)}
+.ts-table tbody tr:nth-child(odd) td{background:var(--s1)}
+.ts-table tfoot td{background:var(--forest);color:rgba(255,255,255,.9);padding:9px 10px;font-family:var(--mono);font-size:11px;font-weight:600}
+.ts-pct-bar{height:4px;border-radius:2px;margin-top:4px;min-width:4px;transition:width .3s}
+/* ── KATA CARD ── */
+.kata-card{background:var(--s1);border:1px solid var(--br);border-radius:var(--r2);padding:16px;margin-bottom:12px;box-shadow:var(--shadow)}
+.kata-hdr{font-family:var(--head);font-size:11px;font-weight:800;color:var(--forest);text-transform:uppercase;letter-spacing:2px;border-bottom:2px solid var(--forest);padding-bottom:4px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between}
+.kata-lbl{font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:3px}
+.kata-field{width:100%;background:var(--s2);border:1px solid var(--br);border-radius:var(--r);font-family:var(--body);font-size:13px;color:var(--txt);padding:8px 10px;resize:none}
+.kata-field:focus{outline:none;border-color:var(--green)}
+.kata-obs{display:flex;align-items:flex-start;gap:8px;padding:7px 10px;border-radius:var(--r);margin-bottom:5px;border:1px solid var(--br);background:var(--s2)}
+.kata-obs.resolved .kata-obs-txt{text-decoration:line-through;opacity:.5}
+.kata-obs-txt{flex:1;font-size:12px;color:var(--slate);line-height:1.5}
+.kata-obs.auto .kata-obs-txt{color:var(--muted)}
+.kata-obs-src{font-family:var(--mono);font-size:8px;padding:1px 5px;border-radius:2px;background:var(--gdim);color:var(--green);border:1px solid rgba(64,145,108,.2);flex-shrink:0;margin-top:2px;letter-spacing:.5px}
+.kata-obs.auto .kata-obs-src{background:var(--s3);color:var(--muted);border-color:var(--br)}
+.kata-exp-table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:8px}
+.kata-exp-table th{background:var(--forest2);color:rgba(255,255,255,.8);padding:7px 8px;text-align:left;font-family:var(--mono);font-size:9px;letter-spacing:.8px;font-weight:500}
+.kata-exp-table td{padding:7px 8px;border-bottom:1px solid var(--br);vertical-align:top;background:var(--s1)}
+.kata-exp-table tr:nth-child(even) td{background:var(--s2)}
+.kata-exp-table td[contenteditable]{cursor:text;min-height:28px;outline:none}
+.kata-exp-table td[contenteditable]:focus{background:#fff;box-shadow:inset 0 0 0 1px var(--green)}
+.eracs-chips{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}
+.eracs-chip{font-family:var(--mono);font-size:10px;font-weight:600;padding:5px 11px;border:1px solid var(--br);border-radius:4px;background:var(--s2);color:var(--muted);cursor:pointer;transition:all .12s;letter-spacing:.5px;-webkit-appearance:none}
+.eracs-chip.on{border-color:var(--forest);background:var(--forest);color:#fff}
+.ctmethod-toggle{font-family:var(--mono);font-size:10px;border:1px solid var(--br2);background:var(--s2);color:var(--muted);border-radius:4px;padding:5px 12px;cursor:pointer;letter-spacing:.5px;-webkit-appearance:none}
+.ctmethod-toggle.lowrep{border-color:var(--amber);color:var(--amber);background:var(--adim)}
+.save-flash{position:fixed;bottom:calc(70px + var(--sb));right:14px;font-family:var(--mono);font-size:9px;color:var(--green);background:var(--gdim);border:1px solid rgba(64,145,108,.3);border-radius:3px;padding:3px 8px;z-index:200;letter-spacing:.5px;opacity:0;transition:opacity .3s;pointer-events:none}
+
+/* ── V6 ADDITIONS ── */
+.wtype-chips{display:flex;gap:4px;flex-wrap:wrap;margin-top:5px}
+.wtype-chip{font-family:var(--mono);font-size:9px;font-weight:600;padding:4px 8px;border:1px solid var(--br);border-radius:3px;background:var(--s2);color:var(--muted);cursor:pointer;transition:all .12s;letter-spacing:.3px;-webkit-appearance:none}
+.wtype-chip.on{border-color:var(--red);background:var(--rdim);color:var(--red)}
+.cycle-pip{display:inline-flex;align-items:center;gap:2px;font-family:var(--mono);font-size:9px;padding:3px 7px;border:1px solid var(--br);border-radius:3px;background:var(--s1);color:var(--muted);cursor:pointer;margin:2px;transition:all .12s}
+.cycle-pip.excl{text-decoration:line-through;opacity:.35;background:var(--rdim);border-color:rgba(185,28,28,.2)}
+.cycle-pip:hover{border-color:var(--red);color:var(--red)}
+
+</style>
+</head>
+<body>
+
+<!-- ════ WELCOME ════ -->
+<div class="scr on" id="S0" style="align-items:center;justify-content:center;padding:32px 24px;background-image:repeating-linear-gradient(0deg,transparent,transparent 23px,rgba(27,67,50,.04) 23px,rgba(27,67,50,.04) 24px)">
+  <div style="width:100%;max-width:360px">
+    <div style="font-family:var(--head);font-size:54px;font-weight:800;color:var(--forest);text-transform:uppercase;letter-spacing:-1px;line-height:1;margin-bottom:2px">Process <em style="color:var(--green);font-style:normal">Dx</em></div>
+    <div style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:3px;text-transform:uppercase;border-bottom:2px solid var(--forest);padding-bottom:8px;margin-bottom:16px">Muri · Mura · Muda</div>
+    <div style="font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.5px;margin-bottom:24px;line-height:2">
+      Seven gates. Right sequence.<br>
+      <span style="color:var(--red)">Fix overburden first.</span><br>
+      <span style="color:var(--amber)">Stabilize variation second.</span><br>
+      <span style="color:var(--green)">Remove waste third.</span>
+    </div>
+    <div id="resumeBtnWrap" style="display:none;margin-bottom:12px">
+      <button id="resumeBtn" class="btn-primary" style="width:100%;background:var(--amber);border-color:var(--amber);font-size:16px;padding:16px" onclick="doResume()">↩ Resume Last Study →</button>
+      <div id="resumeHint" style="font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;margin-top:5px;padding:4px;background:var(--gdim);border-radius:4px"></div>
+      <button onclick="clearSave()" style="width:100%;font-family:var(--mono);font-size:9px;color:var(--muted2);background:none;border:none;cursor:pointer;margin-top:4px;padding:4px;letter-spacing:.5px">✕ Discard saved study and start fresh</button>
+    </div>
+    <button class="btn-primary" style="width:100%;margin-bottom:8px;font-size:18px" onclick="startNew()">Begin Diagnostic →</button>
+    <button class="btn-secondary" style="width:100%" onclick="$('resumeInput').click()">Load Saved Study (JSON)</button>
+    <input type="file" id="resumeInput" accept="application/json" style="display:none">
+  </div>
+</div>
+
+<!-- ════ GATE 1: SETUP ════ -->
+<div class="scr" id="S1">
+  <div id="prog1"></div>
+  <div class="gate-hdr">
+    <div class="gate-tag">Gate 1 of 7</div>
+    <div class="gate-title">Study Setup</div>
+    <div class="gate-desc">Process information, time standards, and cost basis before you touch the floor.</div>
+  </div>
+  <div class="scroll">
+    <div class="slbl">Process Information</div>
+    <div class="frow">
+      <div class="fg"><label>Process / Station *</label><input type="text" id="g1proc" placeholder="e.g. Frame Assembly"/></div>
+      <div class="fg"><label>Department</label><input type="text" id="g1dept" placeholder="e.g. Assembly"/></div>
+    </div>
+    <div class="frow">
+      <div class="fg"><label>Analyst *</label><input type="text" id="g1analyst" placeholder="Your name"/></div>
+      <div class="fg"><label>Date</label><input type="text" id="g1date"/></div>
+    </div>
+    <div class="fg"><label>Operator / Subject</label><input type="text" id="g1operator" placeholder="Name or ID — optional"/></div>
+    <div class="fg" style="margin-top:4px"><label style="font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px;display:flex;align-items:center;gap:6px">Is this the line bottleneck station? <button class="qbtn" onclick="showTip('bottleneck','Start at the Bottleneck','The Theory of Constraints (Goldratt) states that improving a non-bottleneck station does not improve line output. Only improving the bottleneck moves the number.\n\nBefore doing a time study on any station, ask: is this the station that limits the line\'s output?\n\nIf no — stop. Study the bottleneck first. A perfectly optimized non-bottleneck is waste of improvement effort.\n\nThe bottleneck is usually the station with the longest cycle time OR the station with the most WIP piling up in front of it.')">?</button></label>
+      <div style="display:flex;gap:8px">
+        <button id="btnBnYes" style="flex:1;padding:10px;font-family:var(--head);font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;border-radius:var(--r);border:2px solid var(--br);background:var(--s2);color:var(--muted);cursor:pointer;-webkit-appearance:none" onclick="setBn(true)">Yes — Bottleneck</button>
+        <button id="btnBnNo" style="flex:1;padding:10px;font-family:var(--head);font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;border-radius:var(--r);border:2px solid var(--br);background:var(--s2);color:var(--muted);cursor:pointer;-webkit-appearance:none" onclick="setBn(false)">No — Not Bottleneck</button>
+        <button id="btnBnUnk" style="flex:1;padding:10px;font-family:var(--head);font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;border-radius:var(--r);border:2px solid var(--br);background:var(--s2);color:var(--muted);cursor:pointer;-webkit-appearance:none" onclick="setBn(null)">Unknown</button>
+      </div>
+      <div id="bnWarning" style="display:none;margin-top:8px" class="info-box red"><strong>⚠ Non-bottleneck station.</strong> Improving this station may not change line output. Identify and study the bottleneck first before investing improvement effort here.</div>
+    </div>
+    <div style="background:var(--s2);border:1px solid var(--br);border-radius:var(--r);padding:11px 13px;margin-bottom:12px">
+      <div style="font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px">Takt Calculator</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+        <div class="fg" style="margin-bottom:0"><label>Shift Minutes</label><input type="number" id="g1taktShiftMin" placeholder="e.g. 455" oninput="calcTakt()"/></div>
+        <div class="fg" style="margin-bottom:0"><label>Units/Hour</label><input type="number" id="g1uph" placeholder="e.g. 95" oninput="calcTaktFromHr()"/></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr auto;gap:8px;align-items:end">
+        <div class="fg" style="margin-bottom:0"><label>— OR — Total Units / Shift</label><input type="number" id="g1upshift" placeholder="e.g. 720" oninput="calcTaktFromShift()"/></div>
+        <button onclick="applyTakt()" style="font-family:var(--head);font-size:12px;font-weight:700;text-transform:uppercase;padding:10px 14px;background:var(--green);color:#fff;border:none;border-radius:var(--r);cursor:pointer;white-space:nowrap;-webkit-appearance:none;height:40px">→ Use</button>
+      </div>
+      <div id="taktCalcResult" style="font-family:var(--mono);font-size:11px;color:var(--forest);margin-top:7px;display:none;background:var(--gdim);border:1px solid rgba(64,145,108,.3);border-radius:var(--r);padding:7px 10px;line-height:1.9"></div>
+    </div>
+    <div class="slbl">Time Standards <button class="qbtn" onclick="showTip('takt','Takt Time','Takt time = Available time ÷ Customer demand. It sets the pace at which one unit must be completed to meet demand. Example: 480 minutes available ÷ 240 units required = 2 min takt = 120 seconds.\n\nTarget cycle time is typically set at 85–95% of takt to build in buffer for normal variation. A 120-second takt would use a 102–114 second target cycle.')">?</button></div>
+    <div class="frow">
+      <div class="fg"><label>Takt Time (sec) *</label><input type="number" id="g1takt" placeholder="e.g. 120"/></div>
+      <div class="fg"><label>Minutes Per Shift</label><input type="number" id="g1shiftmin" placeholder="e.g. 455"/></div>
+    </div>
+    <div class="slbl">Operating Schedule <button class="qbtn" onclick="showTip('schedule','Operating Schedule','Used to calculate annual cost exposure. A single-shift 5-day plant runs ~1,250 shifts/year. A 24/7 3-shift plant runs ~1,095 shifts/year.\n\nThis matters for the ROI calculation — the same per-shift gap has very different annual impact depending on how many shifts you run.')">?</button></div>
+    <div class="frow3">
+      <div class="fg"><label>Shifts/Day</label><select id="g1shiftsday"><option value="1">1 shift</option><option value="2">2 shifts</option><option value="3">3 shifts</option></select></div>
+      <div class="fg"><label>Days/Week</label><select id="g1daysweek"><option value="5">5 days</option><option value="6">6 days</option><option value="7">7 days</option></select></div>
+      <div class="fg"><label>Weeks/Year</label><input type="number" id="g1weeks" value="50" placeholder="50"/></div>
+    </div>
+    <div class="slbl">Labor Cost <button class="qbtn" onclick="showTip('labor','Labor Cost Basis','Labor rate is the straight-time hourly rate. This is used to calculate the dollar value of the capacity gap identified in Gate 2.\n\nHeadcount should reflect operators assigned to this specific station or cell. If a team of 3 shares a cycle, enter 3.')">?</button></div>
+    <div class="frow">
+      <div class="fg"><label>Headcount on Station</label><input type="number" id="g1heads" placeholder="e.g. 2"/></div>
+      <div class="fg"><label>Labor Rate ($/hr)</label><input type="number" id="g1rate" placeholder="e.g. 20.25" step="0.01"/></div>
+    </div>
+  </div>
+  <div class="foot">
+    <button class="btn-secondary" onclick="goHome()">← Home</button>
+    <button class="btn-primary" onclick="gate1Next()">Confirm Setup →</button>
+  </div>
+</div>
+
+<!-- ════ GATE 2: BASELINE + GEMBA ════ -->
+<div class="scr" id="S2">
+  <div id="prog2"></div>
+  <div class="gate-hdr">
+    <div class="gate-tag">Gate 2 of 7 — Muri Setup</div>
+    <div class="gate-title">Baseline + Gemba Log</div>
+    <div class="gate-desc">Record the before number. Observe before capturing. Confirm conditions are representative.</div>
+  </div>
+  <div class="scroll">
+    <div class="slbl">2A — Baseline Time <button class="qbtn" onclick="showTip('baseline','Baseline Cycle Time','Record the current cycle time before any improvement activity. This is your before number — every result is measured against it.\n\nUse a stopwatch on 3–5 cycles and take the average, or use the supervisor\'s known standard time. Do not use system-generated cycle time without verifying it on the floor.\n\nThis number will remain locked as the study reference.')">?</button></div>
+    <div class="info-box">Before you time anything — record the <strong>current cycle time</strong>. This becomes the locked before number for your ROI calculation.</div>
+
+    <!-- INLINE STOPWATCH -->
+    <div style="background:var(--forest);border-radius:var(--r2);padding:14px 16px;margin-bottom:14px">
+      <div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:2px;margin-bottom:6px">Built-in Stopwatch</div>
+      <div style="font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.55);line-height:1.7;margin-bottom:10px;background:rgba(255,255,255,.06);border-radius:var(--r);padding:9px 11px">
+        <strong style="color:var(--greenlt)">Before you time anything:</strong> watch 2–3 full cycles first. Find a clear, repeatable moment — a pick-up, a placement, a button press — that you can use as the <strong style="color:var(--greenlt)">start and end of every cycle.</strong> That boundary must be identical each time or your lap times won't be comparable.
+      </div>
+      <div style="font-family:var(--mono);font-size:42px;font-weight:600;color:var(--greenlt);text-align:center;letter-spacing:2px;margin-bottom:10px" id="swDisplay">0:00.0</div>
+      <div id="swLaps" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px;min-height:0"></div>
+      <div style="display:flex;gap:8px;margin-bottom:8px">
+        <button id="swStartBtn" onclick="swToggle()" style="flex:2;font-family:var(--head);font-size:15px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:12px;border:none;border-radius:var(--r);background:var(--amber);color:#fff;cursor:pointer;-webkit-appearance:none">▶ Start</button>
+        <button onclick="swLap()" style="flex:1;font-family:var(--head);font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:12px;border:1px solid rgba(255,255,255,.3);border-radius:var(--r);background:transparent;color:#fff;cursor:pointer;-webkit-appearance:none">+ Lap</button>
+        <button onclick="swReset()" style="flex:1;font-family:var(--head);font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:12px;border:1px solid rgba(255,255,255,.2);border-radius:var(--r);background:transparent;color:rgba(255,255,255,.5);cursor:pointer;-webkit-appearance:none">Reset</button>
+      </div>
+      <button id="swUseBtn" onclick="swUse()" disabled style="width:100%;font-family:var(--head);font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:11px;border:none;border-radius:var(--r);background:var(--green);color:#fff;cursor:pointer;opacity:.3;-webkit-appearance:none">✓ Use This Time → Fill CT Field</button>
+      <div id="swAvgNote" style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.4);text-align:center;margin-top:6px;display:none">Avg of <span id="swLapCount">0</span> laps — tap Use This Time to apply</div>
+    </div>
+
+    <div class="frow">
+      <div class="fg"><label>Current Cycle Time (sec) *</label><input type="number" id="g2ct" placeholder="Stopwatch or supervisor standard" oninput="calcBaseline()"/></div>
+      <div class="fg"><label>Actual Units Last Shift</label><input type="number" id="g2actual" placeholder="Optional verification"/></div>
+    </div>
+    <div class="fg"><label>Baseline Notes</label><textarea id="g2baselineNote" rows="2" placeholder="Context — machine condition, known issues, recent changes…"></textarea></div>
+    <div class="calc-grid" id="baselineCalc">
+      <div class="calc-box" id="bcCTvsT"><div class="calc-lbl">CT vs Takt</div><div class="calc-val" id="bcCTvTval">—</div><div style="font-family:var(--mono);font-size:10px;color:var(--muted)" id="bcCTvTlbl">—</div></div>
+      <div class="calc-box" id="bcGap"><div class="calc-lbl">Units at Risk/Shift</div><div class="calc-val" id="bcGapVal">—</div><div style="font-family:var(--mono);font-size:10px;color:var(--muted)" id="bcGapLbl">—</div></div>
+      <div class="calc-box" id="bcCost"><div class="calc-lbl">$/Shift Exposure</div><div class="calc-val" id="bcCostVal">—</div><div style="font-family:var(--mono);font-size:10px;color:var(--muted)" id="bcCostLbl">—</div></div>
+      <div class="calc-box" id="bcAnnual"><div class="calc-lbl">Annual Exposure</div><div class="calc-val" id="bcAnnualVal">—</div><div style="font-family:var(--mono);font-size:10px;color:var(--muted)" id="bcAnnualLbl">—</div></div>
+    </div>
+
+    <div class="slbl">2B — Gemba Observation Log <button class="qbtn" onclick="showTip('gemba','Gemba Observation','Ohno\'s rule: stand and watch for a full cycle before you capture anything. Your eyes must be calibrated first.\n\nTap each item when you have confirmed it. Items will not block you from proceeding, but incomplete items are flagged in your study record.\n\n⚠ Blind Operations: Flag any step where the operator cannot directly see the work point (inserting into a pocket, reaching behind a surface, working in a cavity). These carry higher quality and safety risk and should be noted in your ergo scan.')">?</button></div>
+    <div id="gembaChecklist">
+      <div class="cbox-item" onclick="toggleCbox(this,'cycle')"><div class="cbox">✓</div><div class="cbox-body"><div class="cbox-title">Full cycle observed</div><div class="cbox-desc">Watched at least one complete cycle start to finish without interruption</div></div></div>
+      <div class="cbox-item" onclick="toggleCbox(this,'operator')"><div class="cbox">✓</div><div class="cbox-body"><div class="cbox-title">Operator informed</div><div class="cbox-desc">Operator knows this is improvement work — not a performance review. State that clearly.</div></div></div>
+      <div class="cbox-item" onclick="toggleCbox(this,'material')"><div class="cbox">✓</div><div class="cbox-body"><div class="cbox-title">Material flow confirmed</div><div class="cbox-desc">Materials are staged correctly. Supply is not a constraint during this study.</div></div></div>
+      <div class="cbox-item" onclick="toggleCbox(this,'equipment')"><div class="cbox">✓</div><div class="cbox-body"><div class="cbox-title">Equipment condition noted</div><div class="cbox-desc">No breakdowns or abnormal equipment conditions. Document any deviations below.</div></div></div>
+      <div class="cbox-item" onclick="toggleCbox(this,'quality')"><div class="cbox">✓</div><div class="cbox-body"><div class="cbox-title">Quality standard known</div><div class="cbox-desc">Acceptance criteria for this station is understood before timing begins.</div></div></div>
+      <div class="cbox-item" onclick="toggleCbox(this,'normal')"><div class="cbox">✓</div><div class="cbox-body"><div class="cbox-title">Normal conditions confirmed</div><div class="cbox-desc">Production is representative of a typical shift. If not typical — delay the study.</div></div></div>
+    </div>
+    <div class="fg" style="margin-top:12px"><label>Abnormal Conditions / Additional Notes</label><textarea id="g2abnormal" rows="2" placeholder="Document anything abnormal. If not representative — delay the study and note why."></textarea></div>
+    <div id="gembaTimestamp" style="margin-top:8px;display:none">
+      <span class="ts-badge" style="background:var(--gdim);border-color:rgba(64,145,108,.3);color:var(--forest)">📋 <span id="gembaTS">Logged --:--</span></span>
+    </div>
+  </div>
+  <div class="foot">
+    <button class="btn-secondary" onclick="goGate(1)">← Back</button>
+    <button class="btn-primary" onclick="gate2Next()">Log & Continue →</button>
+  </div>
+</div>
+
+<!-- ════ GATE 3: ERGO SCAN ════ -->
+<div class="scr" id="S3">
+  <div id="prog3"></div>
+  <div class="gate-hdr">
+    <div class="gate-tag">Gate 3 of 7 — Muri (Physical)</div>
+    <div class="gate-title">Ergonomic Scan</div>
+    <div class="gate-desc">Flag ergonomic risk by step and frequency. Every Cycle = locked. Occasional = flagged but not locked.</div>
+  </div>
+  <div class="scroll">
+    <div id="ergoWarning"></div>
+    <div class="info-box" id="ergoHint">Add steps from your Gemba walk. For each step, flag the risk type AND the frequency. <strong>Only Every Cycle or Frequent exposures lock waste classification</strong> — occasional reach into a red zone is noted but does not block you.</div>
+    <div class="slbl">Steps to Evaluate <button class="qbtn" onclick="showTip('ergo','Ergonomic Risk Frequency','Risk frequency matters as much as risk type.\n\n• Every Cycle: exposure happens on every unit — locks waste classification until resolved.\n• Frequent (>50% of cycles): high enough to cause cumulative injury — also locks.\n• Occasional (<50%): noted and flagged in output, but does not lock waste analysis.\n\nExample: reaching into a red zone to retrieve a part that is occasionally mispositioned is occasional. Reaching into a red zone to install every unit is every cycle.\n\nWhen in doubt, flag it. The output will document your judgment call.')">?</button></div>
+    <div id="ergoStepList"></div>
+    <div style="display:flex;gap:8px;margin-bottom:16px">
+      <button style="flex:2;background:var(--s2);border:1px dashed var(--br2);border-radius:var(--r);padding:12px;font-family:var(--mono);font-size:11px;color:var(--muted);cursor:pointer;letter-spacing:.5px;-webkit-appearance:none" onclick="showAddStepModal()">＋ Add Step</button>
+      <button id="allClearBtn" style="flex:1;background:var(--s2);border:1px solid var(--green);border-radius:var(--r);padding:12px;font-family:var(--mono);font-size:10px;color:var(--green);cursor:pointer;letter-spacing:.5px;-webkit-appearance:none;text-align:center" onclick="toggleAllClear()">✓ All Clear</button>
+    </div>
+    <div id="ergoAllClear" style="display:none;background:var(--gdim);border:2px solid var(--green);border-radius:var(--r2);padding:16px;text-align:center;margin-bottom:12px">
+      <div style="font-size:26px;margin-bottom:6px">✅</div>
+      <div style="font-family:var(--head);font-size:15px;font-weight:800;color:var(--forest);text-transform:uppercase;letter-spacing:.5px">No Ergo Issues Observed</div>
+      <div style="font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:4px;line-height:1.6">No ergonomic risks seen during Gemba walk.<br>Step flags can still be added during capture in Gate 4.</div>
+    </div>
+    <div class="slbl">Risk Flag Reference <button class="qbtn" onclick="showTip('ergoref','Ergonomic Risk Types','POSTURE: Awkward angles, bent/twisted back, sustained neck flexion, reaching across midline.\n\nFORCE: High grip force required, push/pull loads, impact tools, torque without support.\n\nREPETITION: Same motion >4x/minute over extended periods, pinch grips, sustained static holds.\n\nREACH: Arm extended beyond elbow distance, work above shoulder height, below knee height.\n\nVIBRATION: Pneumatic/electric tool vibration, whole-body vibration (standing on moving surface).\n\nSURFACE: Standing on concrete without matting, unstable surfaces, ladder or elevated work.\n\nBLIND OPS: Operator cannot see the work point — flagged from Gate 2 if checked there.')">?</button></div>
+    <div style="display:flex;flex-direction:column;gap:5px;font-family:var(--mono);font-size:11px;color:var(--muted);line-height:1.7;background:var(--s1);border:1px solid var(--br);border-radius:var(--r);padding:12px 14px">
+      <div><span style="color:var(--red);font-weight:600">POSTURE</span> — awkward angles, bent back, twisted spine, neck strain</div>
+      <div><span style="color:var(--red);font-weight:600">FORCE</span> — high grip, push/pull loads, impact tools</div>
+      <div><span style="color:var(--red);font-weight:600">REPETITION</span> — same motion &gt;4x/min, pinch grips, static holds</div>
+      <div><span style="color:var(--red);font-weight:600">REACH</span> — extended beyond elbow, above shoulder, below knee</div>
+      <div><span style="color:var(--red);font-weight:600">VIBRATION</span> — tool or whole-body vibration</div>
+      <div><span style="color:var(--red);font-weight:600">SURFACE</span> — concrete, unstable, ladder/elevated work</div>
+      <div><span style="color:var(--amber);font-weight:600">BLIND OPS</span> — operator cannot see the work point</div>
+    </div>
+  </div>
+  <div class="foot">
+    <button class="btn-secondary" onclick="goGate(2)">← Back</button>
+    <button class="btn-primary" onclick="gate3Next()">Confirm Ergo Scan →</button>
+  </div>
+</div>
+
+<!-- ════ GATE 4: CAPTURE ════ -->
+<div class="scr" id="S4">
+  <div id="prog4"></div>
+  <div class="gate-hdr" style="padding-bottom:10px">
+    <div class="gate-tag">Gate 4 of 7 — Mura Setup</div>
+    <div class="gate-title">Cycle Capture</div>
+    <div class="gate-desc">Video-synced or free-running. Minimum 3 cycles. Cycle 1 discarded (Hawthorne).</div>
+  </div>
+  <div class="cap-bar">
+    <button class="cap-btn cap-go" id="capStart" onclick="capDoStart()">▶ Start</button>
+    <button class="cap-btn cap-step" id="capStep" onclick="capDoStep()" disabled>◼ Step End</button>
+    <div class="cap-timer" id="capTimer">00:00.0</div>
+    <button class="cap-btn cap-end" id="capEnd" onclick="capDoEndCycle()" disabled>◉ End Cycle</button>
+  </div>
+  <div class="quick-note-bar">
+    <input type="text" class="qn-input" id="quickNote" placeholder="Quick note — tap mic or type, then →" onkeydown="if(event.key==='Enter')saveQuickNote()"/>
+    <button class="qn-save" onclick="saveQuickNote()">→ Log</button>
+  </div>
+  <div class="cycle-tabs" id="capTabs">
+    <button class="ctab on" data-ci="0">Cycle 1 ⚠</button>
+    <button style="font-family:var(--mono);font-size:9px;padding:4px 9px;border:1px dashed var(--br2);border-radius:3px;background:transparent;color:var(--muted2);cursor:pointer;-webkit-appearance:none" onclick="capAddCycle()">＋ Cycle</button>
+  </div>
+  <div style="background:#0a0a0a;flex-shrink:0;position:relative">
+    <div id="vEmpty" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:28px 16px;min-height:200px">
+      <div style="font-size:32px;opacity:.25">🎬</div>
+      <div style="font-family:var(--head);font-size:14px;font-weight:700;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:1px">Load Video</div>
+      <div style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.25);text-align:center;line-height:1.8">Optional but recommended.<br>Video pauses automatically on Step End.</div>
+      <button class="vpick-btn" onclick="$('vidInput').click()">Choose Video</button>
+    </div>
+    <video id="vid" playsinline webkit-playsinline preload="metadata" style="width:100%;max-height:300px;object-fit:contain;display:none;background:#000"></video>
+    <div class="ptrack"><div class="pfill" id="pFill"></div></div>
+    <div style="display:flex;gap:6px;padding:8px 10px;background:rgba(0,0,0,.6)">
+      <button onclick="toggleVidPause.call(this)" style="flex:2;font-family:var(--mono);font-size:11px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:var(--r);padding:8px;cursor:pointer;letter-spacing:.3px;-webkit-appearance:none">⏸ Pause / Play</button>
+      <button onclick="vidRwLastStep.call(this)" style="flex:2;font-family:var(--mono);font-size:11px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:var(--amber2);border-radius:var(--r);padding:8px;cursor:pointer;letter-spacing:.3px;-webkit-appearance:none">⟲ Last Step End</button>
+      <button onclick="vidRw2.call(this)" style="flex:1;font-family:var(--mono);font-size:11px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.6);border-radius:var(--r);padding:8px;cursor:pointer;letter-spacing:.3px;-webkit-appearance:none">−2s</button>
+    </div>
+    <input type="file" id="vidInput" accept="video/*" style="display:none">
+  </div>
+  <div class="scroll" style="padding-top:10px">
+    <div class="info-box" id="capCycle1Warning">
+      <strong>Cycle 1 will be discarded.</strong> Operators adjust pace when first observed (Hawthorne effect). Capture it — only cycles 2+ are used for analysis.
+    </div>
+    <div id="capStepList"><div class="empty-state">Tap ▶ Start.<br>When operator finishes a step — tap ◼ Step End.<br>Video pauses. Name the step. Save.</div></div>
+    <div id="capSumBar" style="display:none;background:var(--forest);border-radius:var(--r);padding:10px 14px;margin-top:8px;display:flex;justify-content:space-between;align-items:center">
+      <div style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.55)" id="capSumLbl">Cycle 1</div>
+      <div style="font-family:var(--mono);font-size:18px;color:var(--greenlt)" id="capSumVal">0.00s</div>
+    </div>
+  </div>
+  <div class="foot">
+    <button class="btn-secondary" onclick="goGate(3)">← Back</button>
+    <button class="btn-primary" id="capNextBtn" onclick="gate4Next()" disabled>Analyze Variation →</button>
+  </div>
+</div>
+
+<!-- ════ GATE 5: VARIATION ════ -->
+<div class="scr" id="S5">
+  <div id="prog5"></div>
+  <div class="gate-hdr">
+    <div class="gate-tag">Gate 5 of 7 — Mura Analysis</div>
+    <div class="gate-title">Variation Check</div>
+    <div class="gate-desc">Variation is analyzed before waste. Short-cycle steps use an absolute threshold, not a percentage.</div>
+  </div>
+  <div class="scroll">
+    <div id="varSummaryBox"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+      <div style="font-family:var(--mono);font-size:10px;color:var(--muted)">CT basis for all downstream calculations:</div>
+      <button id="ctMethodBtn" class="ctmethod-toggle" onclick="toggleCtMethod(this)">Method: Average ▾</button>
+    </div>
+    <div id="ctMethodNote" style="display:none" class="info-box amber"><strong>Lowest Repeatable mode.</strong> Using the lowest pair of times within 10% of each other. Steps with no repeatable pair use minimum observed. Unstable steps flagged.</div>
+    <div class="slbl">Step Variation — Cycles 2+ <button class="qbtn" onclick="showTip('variation','Variation Thresholds','For steps ≥5 seconds: flagged if cycle-to-cycle variance exceeds 15% (coefficient of variation).\n\nFor steps <5 seconds: a 15% threshold is too sensitive — normal human reaction time causes that level of variation on short operations. These steps are flagged only if the range exceeds 0.8 seconds (roughly one button-press delay).\n\nYou can override any flag with a note — the system will mark it as \"Accepted\" and include your rationale in the output.\n\nHigh variation usually means: method inconsistency, material variation, equipment inconsistency, or the operator is compensating for a problem upstream.')">?</button></div>
+    <div style="overflow-x:auto;border:1px solid var(--br);border-radius:var(--r);margin-bottom:16px">
+      <table class="var-table" id="varTable">
+        <thead><tr><th>Step</th><th>Avg</th><th>Low Rep</th><th>Variance</th><th>Threshold</th><th>Status</th></tr></thead>
+        <tbody id="varTbody"></tbody>
+      </table>
+    </div>
+    <div class="slbl">Cycle Time vs Takt</div>
+    <div class="calc-grid" id="varTaktCalc"></div>
+    <div class="fg"><label>Variation Notes — Root Cause Hypotheses <button class="qbtn" onclick="showTip('varnotes','Root Cause Hypotheses','Common sources of variation at the step level:\n\n• Method inconsistency — operator doing the step differently each cycle (technique, sequence, grip)\n• Material variation — part dimensions, weight, or condition vary\n• Equipment — tool hesitation, inconsistent feeding, clamping variation\n• Upstream — compensating for a problem from the previous step\n• Measurement — the step boundary is ambiguous (you\'re capturing slightly different endpoints)\n\nDocument your hypothesis here. This becomes part of the improvement charter.')">?</button></label>
+      <textarea id="g5notes" rows="3" placeholder="What's driving the variation? Material? Method? Equipment? Document your hypothesis."></textarea></div>
+  </div>
+  <div class="foot">
+    <button class="btn-secondary" onclick="goGate(4)">← Back</button>
+    <button class="btn-primary" onclick="gate5Next()">Proceed to Waste →</button>
+  </div>
+</div>
+
+<!-- ════ GATE 6: WASTE ════ -->
+<div class="scr" id="S6">
+  <div id="prog6"></div>
+  <div class="gate-hdr">
+    <div class="gate-tag">Gate 6 of 7 — Muda</div>
+    <div class="gate-title">Waste Classification</div>
+    <div class="gate-desc">Classify work content. Steps with Every Cycle / Frequent ergo flags or high variation are locked.</div>
+  </div>
+  <div class="scroll">
+    <div class="info-box"><strong>Work Content</strong> — select one per step. Locked steps show the reason. ERACS recommendation auto-generates from your classification. <button class="qbtn" onclick="showTip('waste','Work Content Classification','Value Creating: the customer pays for this step. The product is transformed. Removing it would reduce value to the customer.\n\nIncidental (Required): necessary to complete the job but the customer does not pay for it. Setup, retrieval, repositioning. Target: reduce duration or frequency.\n\nWaste: pure loss. The customer would not pay for it if they knew about it. Walk, wait, rework, search. Target: eliminate.\n\nERACIS recommendation is auto-generated:\n• Waste → Eliminate (E) or Rearrange (R)\n• Incidental → Rearrange (R), Combine (C), Simplify (S)\n• Value Creating → Simplify (S) only')">?</button></div>
+    <div id="wasteStepList"></div>
+  </div>
+  <div class="foot">
+    <button class="btn-secondary" onclick="goGate(5)">← Back</button>
+    <button class="btn-primary" onclick="gate6Next()">Generate Output →</button>
+  </div>
+</div>
+
+<!-- ════ GATE 7: OUTPUT ════ -->
+<div class="scr" id="S7">
+  <div id="prog7"></div>
+  <div class="gate-hdr">
+    <div class="gate-tag">Gate 7 of 7 — Priority Action Plan</div>
+    <div class="gate-title">Diagnostic Output</div>
+    <div class="gate-desc">Fix first. Stabilize second. Remove waste third. Simulate future state on the chart.</div>
+  </div>
+  <div class="scroll">
+    <div id="roiOutput"></div>
+
+    <!-- YAMAZUMI SECTION -->
+    <div class="slbl">Work Balance Chart — Current vs Future State <button class="qbtn" onclick="showTip('yam','Work Balance Chart (Yamazumi)','Yamazumi means \"stacked\" in Japanese. Each bar represents a step. Total bar height = your cycle time.\n\nThe horizontal line = takt time. If your bar is above the line, you are overburdened.\n\nFuture State: tap any step bar to toggle it off (simulating elimination) or drag the slider to reduce its duration. The chart shows your simulated future CT vs takt in real time.\n\nThis is how you build the target condition — not by guessing, but by systematically removing waste from the chart until you\'re below takt.')">?</button></div>
+    <div style="background:var(--s1);border:1px solid var(--br);border-radius:var(--r2);padding:14px;margin-bottom:12px;box-shadow:var(--shadow)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+        <div>
+          <div style="font-family:var(--head);font-size:14px;font-weight:700;color:var(--forest);text-transform:uppercase;letter-spacing:.5px">Step Time Chart</div>
+          <div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:2px" id="yamCTDisplay">Tap a bar to toggle it in/out of future state</div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button onclick="yamResetAll()" style="font-family:var(--mono);font-size:10px;border:1px solid var(--br);background:var(--s2);color:var(--muted);border-radius:4px;padding:5px 10px;cursor:pointer">Reset</button>
+          <button onclick="window.print()" style="font-family:var(--mono);font-size:10px;border:1px solid var(--forest);background:var(--forest);color:#fff;border-radius:4px;padding:5px 10px;cursor:pointer">🖨 Print</button>
+        </div>
+      </div>
+      <canvas id="yamCanvas" style="width:100%;display:block;border-radius:var(--r);background:#0a0a0a;cursor:pointer" height="220"></canvas>
+      <div id="yamLegend" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;font-family:var(--mono);font-size:10px;color:var(--muted)"></div>
+    </div>
+
+    <!-- STEP SLIDERS for future state -->
+    <div class="slbl">Future State — Adjust Step Times</div>
+    <div id="yamSliders" style="margin-bottom:16px"></div>
+
+    <div id="phase1Output"></div>
+    <div id="phase2Output"></div>
+    <div id="phase3Output"></div>
+
+    <!-- TIME STUDY TABLE — populated by renderTimeStudyTable() -->
+    <div id="timeStudyTable" style="margin-bottom:12px"></div>
+
+    <div id="afterSection" style="margin-bottom:12px"></div>
+    <div id="kataSection" style="margin-bottom:12px"></div>
+
+    <div class="slbl">Study Record</div>
+    <div id="studyMeta" style="font-family:var(--mono);font-size:10px;color:var(--muted);line-height:2;background:var(--s1);border:1px solid var(--br);border-radius:var(--r);padding:12px 14px;margin-bottom:80px"></div>
+  </div>
+  <div class="foot">
+    <button class="btn-secondary" style="flex:0.8" onclick="goGate(6)">← Back</button>
+    <div style="display:flex;gap:5px;flex:2">
+      <button class="btn-primary" style="font-size:11px;padding:8px 4px;background:var(--red);letter-spacing:0" onclick="exportKataObstacles()" title="Obstacles list">⬇ Obstacles</button>
+      <button class="btn-primary" style="font-size:11px;padding:8px 4px;background:var(--amber);letter-spacing:0" onclick="exportKataExp()" title="Experimenting record">⬇ Exp. Record</button>
+      <button class="btn-primary btn-grn" style="font-size:11px;padding:8px 4px;letter-spacing:0" onclick="exportTargetSheet()" title="Target sheet">⬇ Target Sheet</button>
+      <button class="btn-secondary" style="flex:0.6;font-size:11px;padding:8px 4px" onclick="exportJSON()" title="Save full study">⬇ JSON</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════ STEP MODAL ════ -->
+<div id="stepModal">
+  <div class="sheet-inner">
+    <div class="sheet-grip"></div>
+    <div class="sheet-title" style="color:var(--forest)">Add Step</div>
+    <div class="fg"><label>Step Name / Description *</label><input type="text" id="stepModalName" placeholder="What does the operator do?"/></div>
+    <div style="display:flex;gap:10px;margin-top:12px">
+      <button class="btn-primary btn-grn" onclick="saveStepModal()">Add Step</button>
+      <button class="btn-secondary" onclick="closeStepModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════ CAPTURE SHEET ════ -->
+<div id="capSheet">
+  <div class="sheet-inner">
+    <div class="sheet-grip"></div>
+    <div class="sheet-title" style="color:var(--red);display:flex;align-items:center;gap:8px"><span class="dot-live"></span>STEP CAPTURED</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:14px">
+      <div style="background:var(--s2);border:1px solid var(--br);border-radius:var(--r);padding:8px 10px"><div style="font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:2px">Duration</div><div style="font-family:var(--mono);font-size:18px;color:var(--green);font-weight:600" id="csDur">—</div></div>
+      <div style="background:var(--s2);border:1px solid var(--br);border-radius:var(--r);padding:8px 10px"><div style="font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:2px">Elapsed</div><div style="font-family:var(--mono);font-size:18px;color:var(--green);font-weight:600" id="csEl">—</div></div>
+    </div>
+    <div class="fg"><label>Step Name * <button class="qbtn" onclick="showTip('stepname','Naming Steps','Use active verb + object. Be specific enough that someone who wasn\'t there would understand what happened.\n\n✓ Good: \"Apply corner key with mallet — lower left\"\n✗ Too vague: \"Assembly\"\n\nFor short repeating steps with only a description change (e.g. same motion on different locations), you can use the Prior Step dropdown to reuse the classification.')">?</button></label><input type="text" id="csName" placeholder="Verb + object" autocomplete="off"/></div>
+    <div class="fg"><label>Notes (optional)</label><input type="text" id="csNote" placeholder="Anything to document about this step"/></div>
+    <div style="margin-bottom:10px">
+      <div style="font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px">Work Classification</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">
+        <button id="csWcVa" onclick="setCSWaste('va')" style="flex:1;font-family:var(--mono);font-size:10px;font-weight:700;padding:8px 6px;border:1px solid var(--br);border-radius:4px;background:var(--s2);color:var(--muted);cursor:pointer;transition:all .12s;-webkit-appearance:none;letter-spacing:.3px">VA</button>
+        <button id="csWcInc" onclick="setCSWaste('inc')" style="flex:1;font-family:var(--mono);font-size:10px;font-weight:700;padding:8px 6px;border:1px solid var(--br);border-radius:4px;background:var(--s2);color:var(--muted);cursor:pointer;transition:all .12s;-webkit-appearance:none;letter-spacing:.3px">NVAA</button>
+        <button id="csWcWst" onclick="setCSWaste('wst')" style="flex:1;font-family:var(--mono);font-size:10px;font-weight:700;padding:8px 6px;border:1px solid var(--br);border-radius:4px;background:var(--s2);color:var(--muted);cursor:pointer;transition:all .12s;-webkit-appearance:none;letter-spacing:.3px">Waste</button>
+      </div>
+      <div id="csWasteTypeRow" style="display:none;margin-bottom:8px">
+        <div style="font-family:var(--mono);font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:4px">Waste Type (TIMWOODS):</div>
+        <div style="display:flex;gap:4px;flex-wrap:wrap" id="csWasteTypeChips"></div>
+      </div>
+      <div style="font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px">Ergo Flags</div>
+      <div style="display:flex;gap:5px;flex-wrap:wrap" id="csErgoFlags">
+        <button class="csErgoBtn" data-flag="POSTURE" onclick="toggleCSErgo(this)" style="font-family:var(--mono);font-size:9px;padding:5px 9px;border:1px solid var(--br);border-radius:3px;background:var(--s2);color:var(--muted);cursor:pointer;-webkit-appearance:none">POSTURE</button>
+        <button class="csErgoBtn" data-flag="FORCE" onclick="toggleCSErgo(this)" style="font-family:var(--mono);font-size:9px;padding:5px 9px;border:1px solid var(--br);border-radius:3px;background:var(--s2);color:var(--muted);cursor:pointer;-webkit-appearance:none">FORCE</button>
+        <button class="csErgoBtn" data-flag="REPETITION" onclick="toggleCSErgo(this)" style="font-family:var(--mono);font-size:9px;padding:5px 9px;border:1px solid var(--br);border-radius:3px;background:var(--s2);color:var(--muted);cursor:pointer;-webkit-appearance:none">REPETITION</button>
+        <button class="csErgoBtn" data-flag="REACH" onclick="toggleCSErgo(this)" style="font-family:var(--mono);font-size:9px;padding:5px 9px;border:1px solid var(--br);border-radius:3px;background:var(--s2);color:var(--muted);cursor:pointer;-webkit-appearance:none">REACH</button>
+        <button class="csErgoBtn" data-flag="VIBRATION" onclick="toggleCSErgo(this)" style="font-family:var(--mono);font-size:9px;padding:5px 9px;border:1px solid var(--br);border-radius:3px;background:var(--s2);color:var(--muted);cursor:pointer;-webkit-appearance:none">VIBRATION</button>
+        <button class="csErgoBtn" data-flag="SURFACE" onclick="toggleCSErgo(this)" style="font-family:var(--mono);font-size:9px;padding:5px 9px;border:1px solid var(--br);border-radius:3px;background:var(--s2);color:var(--muted);cursor:pointer;-webkit-appearance:none">SURFACE</button>
+        <button class="csErgoBtn" data-flag="BLIND OPS" onclick="toggleCSErgo(this)" style="font-family:var(--mono);font-size:9px;padding:5px 9px;border:1px solid rgba(217,119,6,.4);border-radius:3px;background:var(--s2);color:var(--amber);cursor:pointer;-webkit-appearance:none">BLIND OPS</button>
+        <button id="csQualBtn" onclick="toggleCSQual()" style="font-family:var(--mono);font-size:9px;padding:5px 9px;border:1px solid var(--br);border-radius:3px;background:var(--s2);color:var(--muted);cursor:pointer;-webkit-appearance:none;transition:all .12s">✓ QUAL CHECK</button>
+      </div>
+      <div style="margin-top:6px;display:flex;gap:6px">
+        <select id="csErgoFreq" style="font-family:var(--mono);font-size:9px;background:var(--s2);border:1px solid var(--br);border-radius:3px;padding:5px 8px;color:var(--muted);-webkit-appearance:none;letter-spacing:.3px">
+          <option value="Every Cycle">Every Cycle</option>
+          <option value="Frequent">Frequent</option>
+          <option value="Occasional">Occasional</option>
+        </select>
+        <div style="font-family:var(--mono);font-size:9px;color:var(--muted2);padding:5px 0;line-height:1.4">Select frequency for flagged ergo risks</div>
+      </div>
+    </div>
+    <div id="csQuickNotes" style="margin-bottom:8px;display:none">
+      <div style="font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Logged Notes</div>
+      <div id="csQuickNotesList" style="font-family:var(--mono);font-size:11px;color:var(--slate);background:var(--s2);border:1px solid var(--br);border-radius:var(--r);padding:8px 10px;line-height:1.8"></div>
+    </div>
+    <div class="fg"><label>Prior Step (reuse)</label><select id="priorSel"><option value="">— Select prior —</option></select></div>
+    <div style="display:flex;gap:10px;margin-top:12px;position:sticky;bottom:0;background:var(--s1);padding-top:10px;border-top:1px solid var(--br)">
+      <button onclick="capSave()" style="flex:2;background:var(--green);color:#fff;font-family:var(--head);font-size:16px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:14px;border:none;border-radius:var(--r);cursor:pointer">✓ Save &amp; Continue</button>
+      <button onclick="capDiscard()" style="flex:1;background:transparent;color:var(--muted);font-family:var(--head);font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:14px;border:1px solid var(--br);border-radius:var(--r);cursor:pointer">Discard</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════ COACH NOTE OVERLAY ════ -->
+<div id="coachOverlay" style="display:none;position:fixed;inset:0;background:rgba(27,67,50,.82);z-index:500;align-items:flex-end;backdrop-filter:blur(6px)">
+  <div class="coach-box">
+    <div class="coach-eyebrow" id="coachEyebrow">Coach's Note — Gate 1</div>
+    <div class="coach-icon" id="coachIcon">🎓</div>
+    <div class="coach-title" id="coachTitle">Before You Begin</div>
+    <div class="coach-body" id="coachBody"></div>
+    <div class="coach-yt" id="coachYT" style="display:none"></div>
+    <label class="coach-skip"><input type="checkbox" id="coachSkipToggle" onchange="setCoachSkip(this.checked)"> Don't show Coach's Notes again (can re-enable on welcome screen)</label>
+    <button class="btn-primary btn-grn" onclick="dismissCoach()" style="width:100%;margin-top:4px">Got It — Continue →</button>
+  </div>
+</div>
+
+<!-- ════ TOOLTIP MODAL ════ -->
+<div id="tipModal">
+  <div class="tip-box">
+    <div class="tip-title" id="tipTitle">—</div>
+    <div class="tip-body" id="tipBody" style="white-space:pre-line">—</div>
+    <button class="tip-close" onclick="$('tipModal').style.display='none'">Got It</button>
+  </div>
+</div>
+
+<script>
+'use strict';
+const perf=()=>{try{return performance.now();}catch(e){return Date.now();}};
+
+// ═══════════════════════════
+// STATE
+// ═══════════════════════════
+const DX={
+  gate:0, setup:{}, baseline:{}, gemba:{checks:{},blind:false,abnormal:'',timestamp:'',notes:''},
+  ergoSteps:[], cycles:[[]], curCycle:0,
+  running:false,frozen:false,raf:null,tStart:null,tAccum:0,stepStart:null,
+  quickNotes:[],
+  variation:{}, varOverrides:{},
+  waste:{}, g5notes:'',
+  eracs:{}, ctMethod:'avg', wasteType:{},
+  kata:{targetCT:'',targetDate:'',conditions:[],successCriteria:'',obstacles:[],experiments:[]},
+};
+
+const $=id=>document.getElementById(id);
+const fmtMs=ms=>{const s=ms/1000,m=Math.floor(s/60);return `${String(m).padStart(2,'0')}:${(s%60).toFixed(1).padStart(4,'0')}`;};
+const fmtS=s=>`${(+s||0).toFixed(2)}s`;
+const elapsed=()=>{let ms=DX.tAccum;if(DX.tStart!==null)ms+=perf()-DX.tStart;return ms;};
+
+// ═══════════════════════════
+// TOOLTIP
+// ═══════════════════════════
+function showTip(id,title,body){
+  $('tipTitle').textContent=title;
+  $('tipBody').textContent=body;
+  $('tipModal').style.display='flex';
+}
+
+// ═══════════════════════════
+// PROGRESS BAR TEMPLATE
+// ═══════════════════════════
+const PROG_HTML=(active)=>{
+  const gates=['Setup','Baseline','Ergo','Capture','Variation','Waste','Output'];
+  const bars=gates.map((_,i)=>{
+    const g=i+1;
+    const cls=g<active?'done':g===active?'active':'';
+    return `<div class="prog-gate ${cls}"></div>`;
+  }).join('');
+  const lbls=gates.map((l,i)=>{
+    const g=i+1;
+    const cls=g<active?'done':g===active?'active':'';
+    return `<div class="prog-lbl ${cls}">${l}</div>`;
+  }).join('');
+  const ts=DX.gemba.timestamp?`<span class="ts-badge"><span class="dot-live"></span>${DX.gemba.timestamp}</span>`:'';
+  const proc=DX.setup&&DX.setup.process?DX.setup.process:'';
+  const saveBtn=proc?`<button onclick="quickSaveJSON()" style="font-family:var(--mono);font-size:9px;letter-spacing:.5px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:3px;padding:3px 9px;color:rgba(255,255,255,.65);cursor:pointer;-webkit-appearance:none;flex-shrink:0" title="Download JSON backup">⬇ JSON</button>`:'';
+  return `<div class="prog-wrap"><div class="prog-top"><div><div class="prog-name">Process <em>Dx</em></div><div class="prog-sub">Muri · Mura · Muda</div></div><div style="display:flex;align-items:center;gap:8px">${ts}${saveBtn}</div></div><div class="prog-gates">${bars}</div><div class="prog-labels">${lbls}</div></div>`;
+};
+
+// ═══════════════════════════
+// NAVIGATION
+// ═══════════════════════════
+function goHome(){document.querySelectorAll('.scr').forEach(s=>s.classList.remove('on'));$('S0').classList.add('on');}
+
+function goGate(n){
+  document.querySelectorAll('.scr').forEach(s=>s.classList.remove('on'));
+  $('S'+n).classList.add('on');
+  DX.gate=n;
+  for(let g=1;g<=7;g++){const el=$('prog'+g);if(el)el.innerHTML=PROG_HTML(n);}
+  if(n===2)calcBaseline();
+  if(n===3)renderErgoScreen();
+  if(n===4)renderCapScreen();
+  if(n===5)renderVariation();
+  if(n===6)renderWasteScreen();
+  if(n===7)renderOutput();
+  window.scrollTo(0,0);
+}
+
+function startNew(){
+  Object.assign(DX,{gate:0,setup:{},baseline:{},gemba:{checks:{},blind:false,abnormal:'',timestamp:'',notes:''},ergoSteps:[],cycles:[[]],curCycle:0,running:false,frozen:false,raf:null,tStart:null,tAccum:0,stepStart:null,quickNotes:[],variation:{},varOverrides:{},waste:{},g5notes:'',eracs:{},ctMethod:'avg',wasteType:{},afterStudy:{cycles:[],variation:{},captured:false},kata:{targetCT:'',targetDate:'',conditions:[],successCriteria:'',obstacles:[],experiments:[]}});
+  $('g1date').value=new Date().toLocaleDateString('en-US');
+  goGate(1);
+}
+
+// ═══════════════════════════
+// GATE 1
+// ═══════════════════════════
+function gate1Next(){
+  const proc=$('g1proc').value.trim(),analyst=$('g1analyst').value.trim(),takt=parseFloat($('g1takt').value);
+  if(!proc){$('g1proc').classList.add('err');$('g1proc').focus();return;}
+  if(!analyst){$('g1analyst').classList.add('err');$('g1analyst').focus();return;}
+  if(!takt||takt<=0){$('g1takt').classList.add('err');$('g1takt').focus();return;}
+  ['g1proc','g1analyst','g1takt'].forEach(id=>$(id).classList.remove('err'));
+  const shiftsDay=parseInt($('g1shiftsday').value)||1;
+  const daysWeek=parseInt($('g1daysweek').value)||5;
+  const weeks=parseInt($('g1weeks').value)||50;
+  const annualShifts=shiftsDay*daysWeek*weeks;
+  DX.setup={process:proc,dept:$('g1dept').value.trim(),analyst,date:$('g1date').value.trim()||new Date().toLocaleDateString('en-US'),operator:$('g1operator').value.trim(),takt,shiftMin:parseFloat($('g1shiftmin').value)||455,heads:parseFloat($('g1heads').value)||1,rate:parseFloat($('g1rate').value)||0,shiftsDay,daysWeek,weeks,annualShifts};
+  DX.setup.target=Math.floor((DX.setup.shiftMin*60)/DX.setup.takt);
+  autosave();
+  goGate(2);
+}
+
+// ═══════════════════════════
+// GATE 2
+// ═══════════════════════════
+function calcBaseline(){
+  const ct=parseFloat($('g2ct').value);
+  const{takt,shiftMin,heads,rate,annualShifts}=DX.setup;
+  if(!takt) return;
+  if(!ct){
+    ['bcCTvTval','bcGapVal','bcCostVal','bcAnnualVal'].forEach(id=>{const e=$(id);if(e){e.textContent='—';e.className='calc-val';}});
+    ['bcCTvsT','bcGap','bcCost','bcAnnual'].forEach(id=>{const e=$(id);if(e)e.className='calc-box';});
+    $('bcCTvTlbl').textContent='Enter current cycle time above';
+    $('bcGapLbl').textContent='';$('bcCostLbl').textContent='';$('bcAnnualLbl').textContent=(DX.setup.annualShifts||250)+' shifts/yr';
+    return;
+  }
+  const gap=ct-takt;
+  const targetUnits=Math.floor((shiftMin*60)/takt);
+  const actualUnits=Math.floor((shiftMin*60)/ct);
+  const unitsLost=targetUnits-actualUnits;
+  const shiftCost=rate>0&&unitsLost>0?unitsLost*heads*(rate/3600)*ct:0;
+  const annualCost=shiftCost*(annualShifts||250);
+  const fmt$=n=>n>=1000?'$'+(n/1000).toFixed(1)+'K':'$'+n.toFixed(0);
+  $('bcCTvsT').className='calc-box '+(gap>0?'alert':'good');
+  $('bcCTvTval').className='calc-val '+(gap>0?'red':'grn');
+  $('bcCTvTval').textContent=(gap>0?'+':'')+gap.toFixed(1)+'s';
+  $('bcCTvTlbl').textContent=gap>0?'Over takt — capacity gap':'Under takt — headroom exists';
+  $('bcGap').className='calc-box '+(unitsLost>0?'alert':'good');
+  $('bcGapVal').className='calc-val '+(unitsLost>0?'red':'grn');
+  $('bcGapVal').textContent=Math.max(0,unitsLost);
+  $('bcGapLbl').textContent='vs target '+targetUnits+' units';
+  $('bcCost').className='calc-box '+(shiftCost>0?'alert':'good');
+  $('bcCostVal').className='calc-val '+(shiftCost>0?'red':'grn');
+  $('bcCostVal').textContent=rate>0?fmt$(shiftCost):'—';
+  $('bcCostLbl').textContent=rate>0?'Labor cost of gap per shift':'Enter labor rate in Gate 1';
+  $('bcAnnual').className='calc-box '+(annualCost>0?'alert':'good');
+  $('bcAnnualVal').className='calc-val '+(annualCost>0?'red':'grn');
+  $('bcAnnualVal').textContent=rate>0?fmt$(annualCost):'—';
+  $('bcAnnualLbl').textContent=(DX.setup.annualShifts||250)+' shifts/yr';
+  DX.baseline={ct,gap,targetUnits,actualUnits,unitsLost,shiftCost,annualCost};
+}
+
+function toggleCbox(el,key){
+  if(el.id==='cboxBlind'){toggleBlind(el);return;}
+  el.classList.toggle('checked');
+  DX.gemba.checks[key]=el.classList.contains('checked');
+}
+
+function toggleBlind(el){
+  DX.gemba.blind=!DX.gemba.blind;
+  el.classList.toggle('blind',DX.gemba.blind);
+  el.classList.toggle('checked',false);
+}
+
+// autosave on gate forward
+function gate2Next(){
+  const ct=parseFloat($('g2ct').value);
+  if(!ct||ct<=0){$('g2ct').classList.add('err');$('g2ct').focus();return;}
+  $('g2ct').classList.remove('err');
+  DX.gemba.abnormal=$('g2abnormal').value.trim();
+  DX.gemba.baselineNote=$('g2baselineNote').value.trim();
+  const now=new Date();
+  DX.gemba.timestamp=now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+  $('gembaTS').textContent='Logged '+DX.gemba.timestamp;
+  $('gembaTimestamp').style.display='block';
+  calcBaseline();
+  autosave();
+  goGate(3);
+}
+
+// ═══════════════════════════
+// GATE 3 — ERGO
+// ═══════════════════════════
+const ERGO_FLAGS=['POSTURE','FORCE','REPETITION','REACH','VIBRATION','SURFACE','BLIND OPS'];
+const FREQ=['Every Cycle','Frequent','Occasional'];
+const FREQ_LOCK=['Every Cycle','Frequent'];
+
+function renderErgoScreen(){
+  const list=$('ergoStepList');list.innerHTML='';
+  if(!DX.ergoSteps.length){
+    list.innerHTML='<div class="empty-state">Add steps from your Gemba walk.<br>Flag ergo risk + frequency per step.</div>';
+    $('ergoWarning').innerHTML='';return;
+  }
+  let hardCount=0,softCount=0;
+  DX.ergoSteps.forEach((s,i)=>{
+    const hardFlags=(s.flags||[]).filter(f=>FREQ_LOCK.includes(s.freq[f]));
+    const softFlags=(s.flags||[]).filter(f=>!FREQ_LOCK.includes(s.freq[f]));
+    if(hardFlags.length)hardCount++;
+    else if(softFlags.length)softCount++;
+    const cls=hardFlags.length?'ergo-card flagged-hard':softFlags.length?'ergo-card flagged-soft':'ergo-card clear';
+    const flagsHTML=ERGO_FLAGS.map(f=>{
+      const on=(s.flags||[]).includes(f);
+      const freq=s.freq&&s.freq[f]?s.freq[f]:'';
+      const cls2=on?(FREQ_LOCK.includes(freq)?'ergo-flag on-hard':'ergo-flag on-soft'):'ergo-flag';
+      return `<div class="${cls2}" onclick="toggleErgoFlag(${i},'${f}',this)">${f}${on&&freq?` <span style="opacity:.7">(${freq.charAt(0)})</span>`:''}</div>`;
+    }).join('');
+    const freqSection=(s.flags||[]).length?`<div style="margin-top:8px"><div style="font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">How often? — flagged steps only</div><div class="freq-row">${(s.flags||[]).map(f=>`<div style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-right:4px">${f}:</div>${FREQ.map(fr=>`<button class="freq-btn ${s.freq&&s.freq[f]===fr?'sel-'+(FREQ_LOCK.includes(fr)?'ec':'oc')+(fr==='Frequent'?'sel-fr':''):''}" onclick="setFreq(${i},'${f}','${fr}')">${fr}</button>`).join('')}`).join('</div><div style="display:flex;flex-wrap:wrap;gap:5px;align-items:center;margin-top:6px">')}</div></div>`:''
+    const flaggedDesc=hardFlags.length?`<div class="ergo-status es-red">🔒 ${hardFlags.length} lock-level risk${hardFlags.length>1?'s':''} — waste classification locked</div>`:softFlags.length?`<div class="ergo-status es-amber">⚠ ${softFlags.length} occasional risk${softFlags.length>1?'s':''} — noted, not locked</div>`:`<div class="ergo-status es-grn">✓ Clear — no ergo flags</div>`;
+    const el=document.createElement('div');el.className=cls;
+    el.innerHTML=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px"><span class="ergo-step-num">STEP ${String(i+1).padStart(2,'0')}</span><button style="margin-left:auto;background:none;border:none;color:var(--muted2);font-size:14px;cursor:pointer" onclick="DX.ergoSteps.splice(${i},1);renderErgoScreen()">✕</button></div><div class="ergo-step-name">${s.name}</div><div class="ergo-flags">${flagsHTML}</div>${freqSection}${flaggedDesc}`;
+    list.appendChild(el);
+  });
+  $('ergoWarning').innerHTML=hardCount>0?`<div class="info-box red"><strong>⚠ ${hardCount} step${hardCount>1?'s':''} with lock-level risk.</strong> Resolve before waste analysis on those steps. Document fix required and re-study after correction.</div>`:softCount>0?`<div class="info-box amber"><strong>${softCount} step${softCount>1?'s':''} with occasional risk.</strong> Flagged in output. Waste classification not locked — but address these in Phase 1 recommendations.</div>`:'';
+}
+
+function toggleErgoFlag(idx,flag,el){
+  const s=DX.ergoSteps[idx];
+  if(!s.flags)s.flags=[];
+  if(!s.freq)s.freq={};
+  const i=s.flags.indexOf(flag);
+  if(i>=0){s.flags.splice(i,1);delete s.freq[flag];}
+  else{s.flags.push(flag);s.freq[flag]='Every Cycle';}
+  renderErgoScreen();
+}
+
+function setFreq(idx,flag,freq){
+  const s=DX.ergoSteps[idx];
+  if(!s.freq)s.freq={};
+  s.freq[flag]=freq;
+  renderErgoScreen();
+}
+
+function gate3Next(){
+  if(!DX.ergoSteps.length&&!DX.ergoAllClear){const ok=confirm('No steps added and All Clear not set.\n\nProceed without an ergo scan?\n\nTap "✓ All Clear" if no risks were observed, or add steps if you saw any issues.');if(!ok)return;}
+  DX.ergoSteps.forEach(s=>{if(!DX.waste[s.name])DX.waste[s.name]=null;});
+  autosave();
+  goGate(4);
+}
+
+// ═══════════════════════════
+// GATE 4 — CAPTURE
+// ═══════════════════════════
+const vid=$('vid');
+$('vidInput').addEventListener('change',e=>{const f=e.target.files[0];e.target.value='';if(f)loadVid(f);});
+
+function loadVid(file){
+  if(vid._url){URL.revokeObjectURL(vid._url);vid._url=null;}
+  vid.pause();vid.removeAttribute('src');vid.load();
+  const url=URL.createObjectURL(file);vid._url=url;
+  vid.onloadedmetadata=()=>{
+    $('vEmpty').style.display='none';
+    vid.style.display='block';
+    vid.onloadedmetadata=null;
+  };
+  vid.onerror=()=>{vid.style.display='none';$('vEmpty').style.display='flex';};
+  vid.src=url;
+}
+
+vid.addEventListener('timeupdate',()=>{
+  if(vid.duration)$('pFill').style.width=(vid.currentTime/vid.duration*100)+'%';
+});
+
+function flashBtn(btn,msg,ms){
+  if(!btn)return;
+  const orig=btn.textContent;btn.textContent=msg;
+  setTimeout(()=>{btn.textContent=orig;},ms||600);
+}
+
+function toggleVidPause(){
+  const btn=this;
+  if(!vid.src&&!vid._url){flashBtn(btn,'No video',800);return;}
+  if(vid.paused||vid.ended){
+    const p=vid.play();
+    if(p&&p.then){
+      p.then(()=>flashBtn(btn,'▶ Playing',500)).catch(()=>flashBtn(btn,'Tap again',800));
+    } else {flashBtn(btn,'▶ Playing',500);}
+  } else {
+    vid.pause();flashBtn(btn,'⏸ Paused',600);
+  }
+}
+
+function vidRw2(){
+  if(!vid.src&&!vid._url)return;
+  vid.pause();
+  vid.currentTime=Math.max(0,(vid.currentTime||0)-2);
+}
+
+function vidRwLastStep(){
+  const btn=this;
+  const steps=DX.cycles[DX.curCycle]||[];
+  if(!vid.src&&!vid._url){flashBtn(btn,'No video',700);return;}
+  if(!steps.length){vid.pause();vid.currentTime=Math.max(0,(vid.currentTime||0)-2);flashBtn(btn,'No steps −2s',700);return;}
+  const lastElapsed=steps[steps.length-1].elapsed||0;
+  vid.pause();
+  vid.currentTime=Math.max(0,lastElapsed-0.3);
+  flashBtn(btn,'↩ '+lastElapsed.toFixed(1)+'s',900);
+}
+
+function toggleAllClear(){
+  DX.ergoAllClear=!DX.ergoAllClear;
+  const btn=$('allClearBtn');
+  const box=$('ergoAllClear');
+  if(DX.ergoAllClear){
+    btn.style.background='var(--green)';btn.style.color='#fff';btn.style.borderColor='var(--green)';
+    btn.textContent='✓ All Clear';
+    if(box)box.style.display='block';
+    $('ergoHint').style.display='none';
+  } else {
+    btn.style.background='var(--s2)';btn.style.color='var(--green)';btn.style.borderColor='var(--green)';
+    btn.textContent='✓ All Clear';
+    if(box)box.style.display='none';
+    $('ergoHint').style.display='block';
+  }
+}
+
+let quickNoteBuffer=[];
+function saveQuickNote(){
+  const v=$('quickNote').value.trim();if(!v)return;
+  const note={text:v,cycle:DX.curCycle+1,t:fmtS(elapsed()/1000)};
+  quickNoteBuffer.push(note);
+  DX.quickNotes.push(note);
+  $('quickNote').value='';
+  renderCapSteps();
+}
+
+
+
+function renderCapScreen(){renderCapTabs();renderCapSteps();checkCapReady();}
+
+function renderCapTabs(){
+  const tabs=$('capTabs');
+  tabs.querySelectorAll('.ctab').forEach(t=>t.remove());
+  const add=tabs.querySelector('button:not(.ctab)');
+  DX.cycles.forEach((_,i)=>{
+    const t=document.createElement('button');
+    t.className='ctab'+(i===DX.curCycle?' on':'');
+    t.textContent='Cycle '+(i+1)+(i===0?' ⚠':'');
+    t.onclick=()=>capSwitchCycle(i);
+    tabs.insertBefore(t,add);
+  });
+}
+
+function capSwitchCycle(i){
+  if(DX.running)stopTimer();
+  DX.curCycle=i;DX.stepStart=null;quickNoteBuffer=[];
+  renderCapTabs();renderCapSteps();
+  $('capStart').textContent='▶ Start';$('capStart').disabled=false;
+  $('capStep').disabled=true;$('capEnd').disabled=true;
+  $('capCycle1Warning').style.display=i===0?'block':'none';
+}
+
+function capAddCycle(){DX.cycles.push([]);capSwitchCycle(DX.cycles.length-1);}
+
+function renderCapSteps(){
+  const list=$('capStepList');list.innerHTML='';
+  const steps=DX.cycles[DX.curCycle]||[];
+  const notes=DX.quickNotes.filter(n=>n.cycle===DX.curCycle+1);
+  if(!steps.length&&!notes.length){list.innerHTML='<div class="empty-state">Tap ▶ Start.<br>Tap ◼ Step End after each step transition.<br>Video pauses. Name the step. Save &amp; Continue.</div>';$('capSumBar').style.display='none';return;}
+  let total=0;
+  steps.forEach((s,i)=>{
+    total+=s.dur||0;
+    const el=document.createElement('div');el.className='step-card';
+    el.innerHTML=`<div class="step-card-top"><span class="step-num-tag">STEP ${String(i+1).padStart(2,'0')}</span><span class="step-name-txt">${s.name}</span><button class="step-del" onclick="capDelStep(${i})">✕</button></div><div class="step-times"><span>Duration: <b>${fmtS(s.dur)}</b></span><span>Elapsed: <b>${fmtS(s.elapsed)}</b></span></div>${s.note?`<div class="note-tag">📝 ${s.note}</div>`:''}`;
+    list.appendChild(el);
+  });
+  notes.forEach(n=>{
+    const el=document.createElement('div');
+    el.style.cssText='font-family:var(--mono);font-size:10px;color:var(--amber);background:var(--adim);border:1px solid rgba(217,119,6,.3);border-radius:var(--r);padding:6px 10px;margin-bottom:5px';
+    el.textContent='📝 @'+n.t+' — '+n.text;
+    list.appendChild(el);
+  });
+  const sb=$('capSumBar');sb.style.display='flex';
+  $('capSumLbl').textContent='Cycle '+(DX.curCycle+1)+(DX.curCycle===0?' (discarded)':'')+' · '+steps.length+' steps';
+  $('capSumVal').textContent=fmtS(total);
+  checkCapReady();
+}
+
+function capDelStep(i){DX.cycles[DX.curCycle].splice(i,1);renderCapSteps();}
+
+function checkCapReady(){
+  const valid=DX.cycles.slice(1).filter(c=>c.length>0);
+  const need=Math.max(0,2-valid.length);
+  $('capNextBtn').disabled=valid.length<2;
+  $('capNextBtn').textContent=valid.length>=2?`Analyze Variation (${valid.length} cycles) →`:`Need ${need} more cycle${need>1?'s':''} →`;
+}
+
+function timerGo(){DX.tStart=perf();const tick=()=>{$('capTimer').textContent=fmtMs(elapsed());DX.raf=requestAnimationFrame(tick);};DX.raf=requestAnimationFrame(tick);}
+function stopTimer(){cancelAnimationFrame(DX.raf);DX.raf=null;if(DX.tStart!==null){DX.tAccum+=perf()-DX.tStart;DX.tStart=null;}}
+function resetTimer(){cancelAnimationFrame(DX.raf);DX.raf=null;DX.tAccum=0;DX.tStart=null;$('capTimer').textContent='00:00.0';}
+
+function capDoStart(){
+  if(DX.running)return;
+  DX.stepStart=elapsed()/1000;
+  try{if(vid.src&&vid.readyState>=1)vid.play().catch(()=>{});}catch(e){}
+  timerGo();DX.running=true;
+  $('capStart').textContent='▶ Running';$('capStart').disabled=true;
+  $('capStep').disabled=false;$('capEnd').disabled=false;
+}
+
+function capDoStep(){
+  if(!DX.running)return;
+  stopTimer();
+  try{if(vid.src)vid.pause();}catch(e){}
+  DX.running=false;DX.frozen=true;
+  const endT=elapsed()/1000;
+  const dur=Math.max(0,endT-(DX.stepStart||0));
+  $('csDur').textContent=fmtS(dur);
+  $('csEl').textContent=fmtS(endT);
+  $('csName').value='';$('csNote').value='';
+  if(quickNoteBuffer.length){
+    $('csQuickNotes').style.display='block';
+    $('csQuickNotesList').innerHTML=quickNoteBuffer.map(n=>'• '+n.text).join('<br>');
+  } else {$('csQuickNotes').style.display='none';}
+  buildPriorOptions();
+  DX._pending={dur,elapsed:endT};
+  $('capSheet').style.display='flex';
+  setTimeout(()=>$('csName').focus(),300);
+}
+
+function buildPriorOptions(){
+  const sel=$('priorSel');sel.innerHTML='<option value="">— Select prior —</option>';
+  DX.cycles.forEach((cyc,ci)=>cyc.forEach((s,si)=>{
+    const opt=document.createElement('option');opt.value=ci+':'+si;opt.textContent='Cycle '+(ci+1)+' · Step '+(si+1)+' — '+s.name;sel.appendChild(opt);
+  }));
+}
+
+$('priorSel').onchange=function(){
+  const v=this.value;if(!v)return;
+  const[ci,si]=v.split(':').map(Number);
+  const s=DX.cycles?.[ci]?.[si];if(!s)return;
+  $('csName').value=s.name;
+  if(s.note)$('csNote').value=s.note;
+  // Carry over waste classification
+  if(s.capturedWaste){
+    csFlags.waste=s.capturedWaste;
+    csFlags.wasteType=s.capturedWasteType||null;
+    _renderCSWaste();
+  }
+  // Carry over ergo flags + freq
+  if(s.capturedErgo&&s.capturedErgo.length){
+    csFlags.ergo=[...s.capturedErgo];
+    if(s.capturedErgoFreq){
+      const freq=$('csErgoFreq');
+      if(freq)freq.value=s.capturedErgoFreq;
+    }
+    // Visually activate the buttons
+    document.querySelectorAll('.csErgoBtn').forEach(btn=>{
+      const flag=btn.dataset.flag;
+      const on=csFlags.ergo.includes(flag);
+      btn.style.borderColor=on?(flag==='BLIND OPS'?'var(--amber)':'var(--red)'):'var(--br)';
+      btn.style.background=on?(flag==='BLIND OPS'?'var(--adim)':'var(--rdim)'):'var(--s2)';
+      btn.style.color=on?(flag==='BLIND OPS'?'var(--amber)':'var(--red)'):'var(--muted)';
+    });
+  }
+  // Carry over quality check
+  if(s.qualityCheck){csFlags.quality=true;const qb=$('csQualBtn');if(qb){qb.style.borderColor='var(--green)';qb.style.background='var(--gdim)';qb.style.color='var(--green)';}}
+};
+
+function capSave(){
+  const name=$('csName').value.trim();if(!name){$('csName').style.borderColor='var(--red)';$('csName').focus();return;}
+  $('csName').style.borderColor='';
+  const pendingData={name,note:$('csNote').value.trim(),...DX._pending};
+  DX.cycles[DX.curCycle].push(pendingData);
+  // Merge ergo flags from cap sheet into ergoSteps
+  let esEntry=DX.ergoSteps.find(s=>s.name===name);
+  if(!esEntry){esEntry={name,flags:[],freq:{}};DX.ergoSteps.push(esEntry);}
+  if(pendingData.capturedErgo&&pendingData.capturedErgo.length){
+    const freq=pendingData.capturedErgoFreq||'Every Cycle';
+    pendingData.capturedErgo.forEach(f=>{
+      if(!esEntry.flags.includes(f))esEntry.flags.push(f);
+      esEntry.freq[f]=freq;
+    });
+  }
+  // Pre-populate waste classification from cap sheet
+  if(pendingData.capturedWaste&&!DX.waste[name]){
+    DX.waste[name]=pendingData.capturedWaste;
+    if(pendingData.capturedWasteType){
+      if(!DX.wasteType)DX.wasteType={};
+      DX.wasteType[name]=pendingData.capturedWasteType;
+    }
+  } else if(!DX.waste[name]){DX.waste[name]=null;}
+  DX.stepStart=DX._pending.elapsed;
+  DX._pending=null;quickNoteBuffer=[];
+  DX.frozen=false;$('capSheet').style.display='none';
+  autosave();
+  try{if(vid.src&&vid.readyState>=1)vid.play().catch(()=>{});}catch(e){}
+  $('capStart').textContent='▶ Resume';$('capStart').disabled=false;$('capStep').disabled=true;
+  renderCapSteps();
+}
+
+function capDiscard(){DX.frozen=false;DX._pending=null;quickNoteBuffer=[];$('capSheet').style.display='none';$('capStart').textContent='▶ Resume';$('capStart').disabled=false;$('capStep').disabled=true;}
+
+function capDoEndCycle(){
+  if(DX.running){stopTimer();DX.running=false;}
+  try{if(vid.src)vid.pause();}catch(e){}
+  if(DX.cycles[DX.curCycle].length>0){DX.cycles.push([]);capSwitchCycle(DX.cycles.length-1);}
+  resetTimer();$('capStart').textContent='▶ Start';$('capStart').disabled=false;$('capStep').disabled=true;$('capEnd').disabled=true;
+  renderCapTabs();checkCapReady();
+}
+
+function gate4Next(){checkCapReady();if($('capNextBtn').disabled){alert('Complete at least 2 valid cycles (cycles 2 and 3+) before proceeding.');return;}autosave();goGate(5);}
+
+// ═══════════════════════════
+// GATE 5 — VARIATION
+// ═══════════════════════════
+function renderVariation(){
+  const valid=DX.cycles.slice(1).filter(c=>c.length>0);
+  const stepNames=[];
+  valid.forEach(cyc=>cyc.forEach(s=>{if(!stepNames.includes(s.name))stepNames.push(s.name);}));
+  DX.variation={};
+  const tbody=$('varTbody');tbody.innerHTML='';
+  let anyHigh=false;
+  stepNames.forEach(name=>{
+    const _allDurs=valid.map((cyc,ci)=>{const s=cyc.find(x=>x.name===name);return s?{dur:s.dur,ci}:null;}).filter(d=>d!==null);
+    const exclForStep=(DX.varOverrides&&DX.varOverrides[name+'_excl'])||[];
+    const durs=_allDurs.filter((_,i)=>!exclForStep.includes(i)).map(d=>d.dur);
+    if(!durs.length)return;
+    if(!durs.length)return;
+    const avg=durs.reduce((a,b)=>a+b,0)/durs.length;
+    const min=Math.min(...durs),max=Math.max(...durs);
+    const cv=avg>0?((max-min)/avg)*100:0;
+    const isShort=avg<5;
+    const threshold=isShort?'Abs >0.8s':'CV >15%';
+    const flagVal=isShort?(max-min)>0.8:cv>15;
+    const overridden=DX.varOverrides[name]==='accepted';
+    const high=flagVal&&!overridden;
+    if(high)anyHigh=true;
+    const {lr,flag:lrFlag}=computeLowRep(durs);
+    DX.variation[name]={avg,min,max,cv,high,isShort,flagVal,overridden,lowrep:lr,lowrepFlag:lrFlag};
+    const tr=document.createElement('tr');
+    const status=overridden?`<span class="var-flag vf-override">Accepted</span>`:flagVal?`<span class="var-flag vf-warn">⚠ Unstable</span>`:`<span class="var-flag vf-ok">✓ Stable</span>`;
+    const overrideBtn=flagVal&&!overridden?`<br><button class="var-override-btn" onclick="overrideVar('${name}')">Proceed as-is →</button>`:'';
+    const lr_disp=DX.ctMethod==='lowrep'?`<span style="color:var(--amber);font-weight:600">${lr.toFixed(2)}s${lrFlag?' ⚠':''}</span>`:`${lr.toFixed(2)}s`;
+    const exclKey=name+'_excl';const excl=DX.varOverrides[exclKey]||[];
+    const pipHTML=durs.map((d,ci)=>`<span class="cycle-pip ${excl.includes(ci)?'excl':''}" onclick="toggleExclude('${name.replace(/'/g,"\\'")}',${ci})" title="${excl.includes(ci)?'Click to restore':'Click to exclude'}">${d.toFixed(2)}s</span>`).join('');
+    const pipRow=durs.length>1?`<div style="margin-top:4px"><span style="font-family:var(--mono);font-size:8px;color:var(--muted2);letter-spacing:.5px">CYCLES — TAP TO EXCLUDE: </span>${pipHTML}</div>`:'';
+    tr.innerHTML=`<td>${name}${pipRow}</td><td>${avg.toFixed(2)}</td><td>${lr_disp}</td><td>${isShort?'Range: '+(max-min).toFixed(2)+'s':cv.toFixed(1)+'%'}</td><td style="font-size:10px">${threshold}</td><td>${status}${overrideBtn}</td>`;
+    tbody.appendChild(tr);
+  });
+  const avgCTs=valid.map(cyc=>cyc.reduce((a,s)=>a+s.dur,0));
+  const avgCT=avgCTs.length?avgCTs.reduce((a,b)=>a+b,0)/avgCTs.length:0;
+  // effective CT respects method — sum per-step values
+  const effCT=stepNames.reduce((s,n)=>{const vd=DX.variation[n];if(!vd)return s;return s+(DX.ctMethod==='lowrep'?(vd.lowrep||vd.avg):vd.avg);},0)||avgCT;
+  const{takt,shiftMin,rate,heads,annualShifts}=DX.setup;
+  const ctGap=effCT-takt;
+  const target=Math.floor((shiftMin*60)/takt);
+  const actual=effCT>0?Math.floor((shiftMin*60)/effCT):0;
+  const units=target-actual;
+  const cost=units>0&&rate>0?units*heads*(rate/3600)*effCT:0;
+  const fmt$=n=>n>=1000?'$'+(n/1000).toFixed(1)+'K':'$'+n.toFixed(0);
+  $('varTaktCalc').innerHTML=`
+    <div class="calc-box ${ctGap>0?'alert':'good'}"><div class="calc-lbl">${DX.ctMethod==='lowrep'?'Low Rep CT':'Avg Study CT'}</div><div class="calc-val ${ctGap>0?'red':'grn'}">${effCT.toFixed(1)}s</div><div style="font-family:var(--mono);font-size:10px;color:var(--muted)">Takt: ${takt}s</div></div>
+    <div class="calc-box ${ctGap>0?'alert':'good'}"><div class="calc-lbl">CT vs Takt</div><div class="calc-val ${ctGap>0?'red':'grn'}">${ctGap>0?'+':''}${ctGap.toFixed(1)}s</div><div style="font-family:var(--mono);font-size:10px;color:var(--muted)">${ctGap>0?'Over takt':'Under takt'}</div></div>
+    <div class="calc-box ${units>0?'alert':'good'}"><div class="calc-lbl">Units at Risk</div><div class="calc-val ${units>0?'red':'grn'}">${Math.max(0,units)}</div><div style="font-family:var(--mono);font-size:10px;color:var(--muted)">vs target ${target}/shift</div></div>
+    <div class="calc-box ${cost>0?'alert':'good'}"><div class="calc-lbl">$/Shift</div><div class="calc-val ${cost>0?'red':'grn'}">${rate>0?fmt$(cost):'—'}</div><div style="font-family:var(--mono);font-size:10px;color:var(--muted)">${rate>0?fmt$(cost*(annualShifts||250))+'/yr':''}</div></div>`;
+  $('varSummaryBox').innerHTML=anyHigh?`<div class="info-box amber"><strong>⚠ Variation detected.</strong> ${Object.values(DX.variation).filter(v=>v.high).length} step(s) flagged. Document root cause below. You may proceed — flagged steps are noted in output.<br><br>To accept a step and proceed, tap <strong>Proceed as-is</strong> and your rationale will be logged.</div>`:stepNames.length?`<div class="info-box"><strong>✓ Variation within threshold.</strong> All steps stable. Ready for waste classification.</div>`:'<div class="info-box amber">No step data found. Return to Gate 4.</div>';
+  DX.varAvgCT=effCT;DX.varGap=ctGap;DX.varUnitsGap=units;DX.varShiftCost=cost;
+}
+
+function overrideVar(name){
+  const reason=prompt(`Accept "${name}" variation and proceed?\n\nEnter your reason (this will appear in the output):`,'');
+  if(reason===null)return;
+  DX.varOverrides[name]='accepted';
+  DX.variation[name].high=false;DX.variation[name].overridden=true;DX.variation[name].overrideReason=reason||'Accepted by analyst';
+  renderVariation();
+}
+
+function gate5Next(){DX.g5notes=$('g5notes').value.trim();autosave();goGate(6);}
+
+// ═══════════════════════════
+// GATE 6 — WASTE  ← P1 PATCH
+// ═══════════════════════════
+const ERACS_MAP={'wst':['E','R','S'],'inc':['R','A','C','S'],'va':['S']};
+
+function renderWasteScreen(){
+  const list=$('wasteStepList');list.innerHTML='';
+  const names=DX.ergoSteps.map(s=>s.name);
+  if(!names.length){list.innerHTML='<div class="empty-state">No steps found. Return to Gate 3 or 4.</div>';return;}
+
+  // ── P1: Calculate totals for summary bar ──
+  const totalCT=names.reduce((sum,name)=>{const vd=DX.variation[name];return sum+(vd?vd.avg:0);},0);
+  const cls_sum={va:0,inc:0,wst:0,unclassified:0};
+  names.forEach(name=>{
+    const vd=DX.variation[name];const avg=vd?vd.avg:0;const c=DX.waste[name];
+    if(c==='va')cls_sum.va+=avg;
+    else if(c==='inc')cls_sum.inc+=avg;
+    else if(c==='wst')cls_sum.wst+=avg;
+    else cls_sum.unclassified+=avg;
+  });
+  const pct=v=>totalCT>0?Math.round(v/totalCT*100):0;
+
+  // ── P1: Summary bar ──
+  const summaryDiv=document.createElement('div');
+  summaryDiv.style.cssText='background:var(--s1);border:1px solid var(--br);border-radius:var(--r2);padding:12px 14px;margin-bottom:14px;box-shadow:var(--shadow)';
+  summaryDiv.innerHTML=`
+    <div style="font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px">Classification Summary · Total CT: <span style="color:var(--forest);font-weight:600">${totalCT.toFixed(1)}s</span></div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">
+      <span style="font-family:var(--mono);font-size:11px;color:var(--green);background:var(--gdim);border:1px solid rgba(64,145,108,.25);border-radius:3px;padding:4px 9px">VA: ${cls_sum.va.toFixed(1)}s (${pct(cls_sum.va)}%)</span>
+      <span style="font-family:var(--mono);font-size:11px;color:var(--amber);background:var(--adim);border:1px solid rgba(217,119,6,.25);border-radius:3px;padding:4px 9px">Incidental: ${cls_sum.inc.toFixed(1)}s (${pct(cls_sum.inc)}%)</span>
+      <span style="font-family:var(--mono);font-size:11px;color:var(--red);background:var(--rdim);border:1px solid rgba(185,28,28,.25);border-radius:3px;padding:4px 9px">Waste: ${cls_sum.wst.toFixed(1)}s (${pct(cls_sum.wst)}%)</span>
+      ${cls_sum.unclassified>0?`<span style="font-family:var(--mono);font-size:11px;color:var(--muted2);background:var(--s2);border:1px solid var(--br);border-radius:3px;padding:4px 9px">Unclassified: ${cls_sum.unclassified.toFixed(1)}s (${pct(cls_sum.unclassified)}%)</span>`:''}
+    </div>
+    <div style="height:6px;background:var(--s2);border-radius:3px;overflow:hidden;display:flex">
+      <div style="width:${pct(cls_sum.va)}%;background:var(--green);height:100%;transition:width .3s"></div>
+      <div style="width:${pct(cls_sum.inc)}%;background:var(--amber);height:100%;transition:width .3s"></div>
+      <div style="width:${pct(cls_sum.wst)}%;background:var(--red);height:100%;transition:width .3s"></div>
+    </div>`;
+  list.appendChild(summaryDiv);
+
+  names.forEach(name=>{
+    const es=DX.ergoSteps.find(s=>s.name===name)||{name,flags:[],freq:{}};
+    const vd=DX.variation[name];
+    const avg=vd?vd.avg:0;
+    const stepPct=totalCT>0?Math.round(avg/totalCT*100):0;
+    const hardErgo=(es.flags||[]).some(f=>FREQ_LOCK.includes(es.freq&&es.freq[f]));
+    const highVar=vd&&vd.high;
+    const locked=hardErgo||highVar;
+    const cur=DX.waste[name];
+    const card=document.createElement('div');card.className='ergo-card'+(locked?' flagged-hard':'');
+    let locks='';
+    if(hardErgo)locks+=`<div class="gate-lock"><span style="font-size:18px">🔒</span><div class="gate-lock-text">Ergo risk (every cycle/frequent): ${(es.flags||[]).filter(f=>FREQ_LOCK.includes(es.freq&&es.freq[f])).join(', ')}. Resolve physical overburden before waste classification.</div></div>`;
+    if(highVar)locks+=`<div class="gate-lock"><span style="font-size:18px">🔒</span><div class="gate-lock-text">High variation (${vd.isShort?'Range '+(vd.max-vd.min).toFixed(2)+'s':vd.cv.toFixed(1)+'% CV'}). Stabilize method consistency first.</div></div>`;
+    const chips=locked?`<div class="ergo-status es-red">🔒 Locked — resolve flags above</div>`:['va','inc','wst'].map((k,idx)=>{
+      const labels=['Value Creating','Incidental','Waste'];
+      const descs=['Customer pays for this','Required but not valued','Pure loss — eliminate'];
+      const onCls=cur===k?'on-'+k:'';
+      return `<div class="wc-chip ${onCls}" onclick="setWaste('${name}','${k}',this)"><span class="wd"></span>${labels[idx]}<span style="opacity:.5;margin-left:6px">· ${descs[idx]}</span></div>`;
+    }).join('');
+    const applicableEracs=locked?[]:(ERACS_MAP[cur]||[]);
+    const selectedEracs=DX.eracs[name]||null;
+    const ALL_ERACS_DESC={E:'Eliminate',R:'Rearrange',A:'Add/Subtract',C:'Combine',S:'Simplify'};
+    const selWT=DX.wasteType&&DX.wasteType[name]||null;
+    const WASTE_TYPES={T:'Transport',I:'Inventory',M:'Motion',W:'Waiting',O:'Overproduction',P:'Over-processing',D:'Defects',U:'Unused Skills'};
+    const wasteTypeRow=!locked&&cur==='wst'?`<div style="margin-top:6px"><div style="font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:4px">Waste Type (TIMWOODS):</div><div class="wtype-chips">${Object.entries(WASTE_TYPES).map(([k,v])=>`<button class="wtype-chip ${selWT===k?'on':''}" onclick="setWasteType('${name.replace(/'/g,"\\'")}','${k}')">${k} — ${v}</button>`).join('')}</div></div>`:'';
+    const eracs=!locked&&cur?`<div style="margin-top:8px"><div style="font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:5px">Choose ERACS action:</div><div class="eracs-chips">${applicableEracs.map(l=>`<button class="eracs-chip ${selectedEracs===l?'on':''}" onclick="setEracs('${name.replace(/'/g,"\\'")}','${l}')">${l} — ${ALL_ERACS_DESC[l]||l}</button>`).join('')}</div>${wasteTypeRow}</div>`:'';;
+    card.innerHTML=`
+      <div class="ergo-step-num">STEP ${String(names.indexOf(name)+1).padStart(2,'0')}</div>
+      <div class="ergo-step-name">${name}</div>
+      <div style="display:flex;gap:16px;margin-bottom:10px;padding:6px 10px;background:var(--s2);border-radius:var(--r);border:1px solid var(--br)">
+        <span style="font-family:var(--mono);font-size:11px;color:var(--muted)">AVG&nbsp;<span style="color:var(--forest);font-weight:700">${avg.toFixed(1)}s</span></span>
+        <span style="font-family:var(--mono);font-size:11px;color:var(--muted)">%&nbsp;CT&nbsp;<span style="color:var(--forest);font-weight:700">${stepPct}%</span></span>
+        <div style="flex:1;display:flex;align-items:center"><div style="height:4px;background:var(--br);border-radius:2px;width:100%;overflow:hidden"><div style="height:100%;background:${cur==='va'?'var(--green)':cur==='wst'?'var(--red)':cur==='inc'?'var(--amber)':'var(--br2)'};width:${stepPct}%;transition:width .3s"></div></div></div>
+      </div>
+      ${locks}${locked?'':`<div style="display:flex;flex-direction:column;gap:6px;margin-top:8px">${chips}</div>`}${eracs}`;
+    list.appendChild(card);
+  });
+}
+
+function setWaste(name,type,el){DX.waste[name]=DX.waste[name]===type?null:type;if(!DX.eracs)DX.eracs={};renderWasteScreen();autosave();}
+
+function gate6Next(){autosave();goGate(7);}
+
+// ═══════════════════════════
+// GATE 7 — OUTPUT
+// ═══════════════════════════
+function renderOutput(){
+  const{setup,baseline,ergoSteps,variation,waste,varAvgCT,varGap,varUnitsGap,varShiftCost}=DX;
+  const rate=setup.rate||0;const fmt$=n=>n>=1000?'$'+(n/1000).toFixed(1)+'K':'$'+n.toFixed(0);
+  const annShifts=setup.annualShifts||250;
+  $('roiOutput').innerHTML=rate>0&&baseline.annualCost>0?`<div class="roi-box"><div class="roi-lbl">Annual Exposure — Baseline</div><div class="roi-val">${fmt$(baseline.annualCost)}</div><div class="roi-sub">${setup.process} · ${setup.date} · ${setup.shiftsDay} shift${setup.shiftsDay>1?'s':''}/day · ${setup.daysWeek} days/wk · Analyst: ${setup.analyst}</div></div>`:`<div class="roi-box"><div class="roi-lbl">Study Completed</div><div class="roi-val" style="font-size:22px">${setup.process}</div><div class="roi-sub">${setup.date} · Analyst: ${setup.analyst}</div></div>`;
+  const ergoFlagged=ergoSteps.filter(s=>(s.flags||[]).length>0);
+  const hardErgo=ergoFlagged.filter(s=>(s.flags||[]).some(f=>FREQ_LOCK.includes(s.freq&&s.freq[f])));
+  const softErgo=ergoFlagged.filter(s=>!(s.flags||[]).some(f=>FREQ_LOCK.includes(s.freq&&s.freq[f])));
+  const blindSteps=DX.gemba.blind?['Blind operation noted in Gemba log — identify which steps and document visual management solution']:[];
+  $('phase1Output').innerHTML=`<div class="output-phase"><div class="output-phase-hdr"><div class="phase-num ph1">1</div><div><div class="phase-title">Fix First — Muri (Ergo)</div><div class="phase-sub">Resolve before re-timing. Fix the body before you time the method.</div></div></div>${hardErgo.map(s=>`<div class="output-item"><span class="out-step red">LOCK</span><div class="out-text"><b>${s.name}</b><br>Risks (every cycle/frequent): ${(s.flags||[]).filter(f=>FREQ_LOCK.includes(s.freq&&s.freq[f])).join(', ')}<br>Fix the physical condition. Re-study after correction before classifying waste.</div></div>`).join('')}${softErgo.map(s=>`<div class="output-item"><span class="out-step amber">NOTE</span><div class="out-text"><b>${s.name}</b><br>Occasional risks: ${(s.flags||[]).join(', ')}<br>Does not lock waste analysis. Address in next improvement cycle.</div></div>`).join('')}${blindSteps.map(n=>`<div class="output-item"><span class="out-step amber">BLIND</span><div class="out-text">${n}</div></div>`).join('')}${!ergoFlagged.length&&!DX.gemba.blind?`<div class="out-empty">✓ No ergonomic risks flagged.</div>`:''}${DX.gemba.abnormal?`<div class="output-item"><span class="out-step amber">COND</span><div class="out-text"><b>Abnormal conditions noted:</b><br>${DX.gemba.abnormal}</div></div>`:''}</div>`;
+  const varFlagged=Object.entries(variation).filter(([,v])=>v.high);
+  const varAccepted=Object.entries(DX.varOverrides||{}).filter(([,v])=>v==='accepted');
+  $('phase2Output').innerHTML=`<div class="output-phase"><div class="output-phase-hdr"><div class="phase-num ph2">2</div><div><div class="phase-title">Stabilize — Mura (Variation)</div><div class="phase-sub">${varFlagged.length} flagged · ${varAccepted.length} accepted by analyst.</div></div></div>${varFlagged.map(([name,v])=>`<div class="output-item"><span class="out-step amber">VAR</span><div class="out-text"><b>${name}</b><br>${v.isShort?`Short cycle (avg ${v.avg.toFixed(2)}s) — Range: ${(v.max-v.min).toFixed(2)}s exceeds 0.8s threshold`:`CV: ${v.cv.toFixed(1)}% (Min: ${v.min.toFixed(2)}s, Max: ${v.max.toFixed(2)}s, Avg: ${v.avg.toFixed(2)}s)`}<br>Stabilize method before removing waste from this step.</div></div>`).join('')}${varAccepted.map(([name])=>{const v=DX.variation[name]||{};return `<div class="output-item"><span class="out-step" style="color:var(--muted)">ACCPT</span><div class="out-text"><b>${name}</b> — variation accepted by analyst.<br>Reason: ${v.overrideReason||'Not stated'}</div></div>`;}).join('')}${!varFlagged.length&&!varAccepted.length?`<div class="out-empty">✓ All steps within variation threshold.</div>`:''}${DX.g5notes?`<div class="output-item"><span class="out-step">NOTES</span><div class="out-text">${DX.g5notes}</div></div>`:''}</div>`;
+  const wstItems=Object.entries(waste).filter(([,v])=>v==='wst');
+  const incItems=Object.entries(waste).filter(([,v])=>v==='inc');
+  $('phase3Output').innerHTML=`<div class="output-phase"><div class="output-phase-hdr"><div class="phase-num ph3">3</div><div><div class="phase-title">Remove Waste — Muda</div><div class="phase-sub">${wstItems.length} waste · ${incItems.length} incidental</div></div></div>${wstItems.map(([name])=>`<div class="output-item"><span class="out-step red">WASTE</span><div class="out-text"><b>${name}</b><br>ERACS: <span style="color:var(--forest);font-weight:600">E, R, S</span> — target for elimination</div></div>`).join('')}${incItems.map(([name])=>`<div class="output-item"><span class="out-step amber">INCID</span><div class="out-text"><b>${name}</b><br>ERACS: <span style="color:var(--forest);font-weight:600">R, A, C, S</span> — reduce duration and frequency</div></div>`).join('')}${!wstItems.length&&!incItems.length?`<div class="out-empty">${Object.values(waste).some(v=>v)?'All classified steps are Value Creating.':'Return to Gate 6 to classify waste.'}</div>`:''}</div>`;
+  const valid=DX.cycles.slice(1).filter(c=>c.length>0);
+  $('studyMeta').innerHTML=`Process: ${setup.process||'—'} · Dept: ${setup.dept||'—'}<br>Analyst: ${setup.analyst||'—'} · Date: ${setup.date||'—'} · Operator: ${setup.operator||'—'}<br>Takt: ${setup.takt}s · Baseline CT: ${baseline.ct||'—'}s · Study Avg CT: ${varAvgCT?varAvgCT.toFixed(1)+'s':'—'}<br>Schedule: ${setup.shiftsDay||1} shift${setup.shiftsDay>1?'s':''}/day · ${setup.daysWeek||5} days/wk · ${setup.annualShifts||250} shifts/yr<br>Valid Cycles: ${valid.length} · Steps: ${DX.ergoSteps.length} · Ergo Flags: ${Object.values(DX.variation||{}).filter(v=>v.high).length===0?0:Object.keys(DX.variation||{}).length}<br>Gemba Log: ${DX.gemba.timestamp||'—'} · Blind Ops: ${DX.gemba.blind?'Yes — see Phase 1':'No'}`;
+}
+
+// ═══════════════════════════
+// P2 — TIME STUDY TABLE
+// ═══════════════════════════
+function renderTimeStudyTable(){
+  const el=$('timeStudyTable');if(!el)return;
+  const names=DX.ergoSteps.map(s=>s.name);
+  if(!names.length){el.innerHTML='';return;}
+  const totalCT=names.reduce((sum,name)=>{const vd=DX.variation[name];return sum+(vd?vd.avg:0);},0);
+  if(totalCT===0){el.innerHTML='';return;}
+  const takt=DX.setup.takt||0;
+  const ctGap=totalCT-takt;
+  const clsLabel={'va':'Value Creating','inc':'Incidental','wst':'Waste'};
+  const clsColor={'va':'var(--green)','inc':'var(--amber)','wst':'var(--red)'};
+
+  const rowsHTML=names.map((name,i)=>{
+    const vd=DX.variation[name];
+    const avg=stepCT(name);
+    const stepPct=totalCT>0?Math.round(avg/totalCT*100):0;
+    const cls=DX.waste[name];
+    const selectedAct=DX.eracs&&DX.eracs[name];
+    const autoRec=cls?(ERACS_MAP[cls]||[]).join(', '):'—';
+    const eracs=selectedAct?`<strong style="color:var(--forest)">${selectedAct}</strong> <span style="opacity:.5;font-size:10px">(${autoRec})</span>`:autoRec;
+    const wt=DX.wasteType&&DX.wasteType[name];
+    const WTLABEL={T:'Transport',I:'Inventory',M:'Motion',W:'Waiting',O:'Overproduction',P:'Over-processing',D:'Defects',U:'Unused Skills'};
+    const clsDisplay=cls?`${cls==='va'?'Value Creating':cls==='inc'?'Incidental':'Waste'}${wt&&cls==='wst'?' — '+WTLABEL[wt]:''}`:' — ';
+    const es=DX.ergoSteps.find(s=>s.name===name)||{flags:[],freq:{}};
+    const notes=[];
+    if((es.flags||[]).length)notes.push('Ergo: '+(es.flags||[]).join(', '));
+    if(vd&&vd.high)notes.push(vd.isShort?`Var range ${(vd.max-vd.min).toFixed(2)}s`:`CV ${vd.cv.toFixed(1)}%`);
+    if(vd&&vd.overridden)notes.push('Var accepted');
+    const noteTxt=notes.length?notes.join(' · '):'—';
+    const bgEven=i%2===0?'var(--s1)':'var(--s2)';
+    const barColor=cls?clsColor[cls]:'var(--br2)';
+    return `<tr>
+      <td style="padding:8px 10px;border-bottom:1px solid var(--br);background:${bgEven}">
+        <span style="font-family:var(--mono);font-size:9px;color:var(--green);background:var(--gdim);border:1px solid rgba(64,145,108,.25);border-radius:3px;padding:2px 5px;letter-spacing:.5px;margin-right:6px">${String(i+1).padStart(2,'0')}</span>${name}
+      </td>
+      <td style="padding:8px 10px;border-bottom:1px solid var(--br);font-family:var(--mono);font-size:12px;font-weight:700;color:var(--forest);text-align:center;background:${bgEven}">
+        ${avg.toFixed(1)}
+        <div style="height:3px;background:var(--br);border-radius:2px;margin-top:3px;overflow:hidden"><div style="height:100%;background:${barColor};width:${stepPct}%"></div></div>
+      </td>
+      <td style="padding:8px 10px;border-bottom:1px solid var(--br);font-family:var(--mono);font-size:12px;text-align:center;color:var(--slate);background:${bgEven}">${stepPct}%</td>
+      <td style="padding:8px 10px;border-bottom:1px solid var(--br);font-family:var(--mono);font-size:10px;font-weight:600;color:${cls?clsColor[cls]:'var(--muted2)'};background:${bgEven}">${clsDisplay}</td>
+      <td style="padding:8px 10px;border-bottom:1px solid var(--br);font-family:var(--mono);font-size:10px;color:var(--forest);font-weight:600;background:${bgEven}">${eracs}</td>
+      <td style="padding:8px 10px;border-bottom:1px solid var(--br);font-size:11px;color:var(--muted);background:${bgEven}">${noteTxt}</td>
+    </tr>`;
+  }).join('');
+
+  const annShifts=DX.setup.annualShifts||250;
+  const rate=DX.setup.rate||0;
+  const heads=DX.setup.heads||1;
+  const wstSteps=names.filter(n=>DX.waste[n]==='wst');
+  const wstTime=wstSteps.reduce((s,n)=>{const vd=DX.variation[n];return s+(vd?vd.avg:0);},0);
+  const futureCT=totalCT-wstTime;
+  const taktLine=takt>0?`Takt: ${takt}s · Gap: ${ctGap>0?'+':''}${ctGap.toFixed(1)}s`:'Takt: not set';
+  const savingsLine=wstTime>0&&rate>0?(() => {
+    const shiftMin=DX.setup.shiftMin||455;
+    const currentUnits=Math.floor((shiftMin*60)/totalCT);
+    const futureUnits=Math.floor((shiftMin*60)/futureCT);
+    const gain=futureUnits-currentUnits;
+    const annualGain=gain*heads*(rate/3600)*totalCT*annShifts;
+    const fmt$=n=>n>=1000?'$'+(n/1000).toFixed(1)+'K':'$'+n.toFixed(0);
+    return ` · Remove waste → CT ${futureCT.toFixed(1)}s · +${gain} units/shift · ${fmt$(annualGain)}/yr potential`;
+  })():'';
+
+  el.innerHTML=`
+    <div class="slbl">Time Study Record — Step Detail</div>
+    <div style="overflow-x:auto;border:1px solid var(--br);border-radius:var(--r);box-shadow:var(--shadow);margin-bottom:8px">
+      <table class="ts-table">
+        <thead>
+          <tr>
+            <th>STEP</th>
+            <th class="center">AVG (s)</th>
+            <th class="center">% CT</th>
+            <th>CLASSIFICATION</th>
+            <th>ERACS</th>
+            <th>NOTES</th>
+          </tr>
+        </thead>
+        <tbody>${rowsHTML}</tbody>
+        <tfoot>
+          <tr>
+            <td style="color:#fff;font-weight:700">TOTAL</td>
+            <td style="text-align:center;color:var(--greenlt);font-size:13px;font-weight:700">${totalCT.toFixed(1)}</td>
+            <td style="text-align:center;color:rgba(255,255,255,.6)">100%</td>
+            <td colspan="3" style="color:rgba(255,255,255,.55);font-size:10px">${taktLine}${savingsLine}</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>`;
+}
+
+// ═══════════════════════════
+// STEP MODAL
+// ═══════════════════════════
+function showAddStepModal(){
+  $('stepModalName').value='';
+  $('stepModal').style.display='flex';
+  setTimeout(()=>$('stepModalName').focus(),200);
+}
+function closeStepModal(){$('stepModal').style.display='none';}
+function saveStepModal(){
+  const name=$('stepModalName').value.trim();
+  if(!name){$('stepModalName').style.borderColor='var(--red)';$('stepModalName').focus();return;}
+  $('stepModalName').style.borderColor='';
+  if(!DX.ergoSteps.find(s=>s.name===name)){DX.ergoSteps.push({name,flags:[],freq:{}});}
+  if(!DX.waste[name])DX.waste[name]=null;
+  closeStepModal();renderErgoScreen();
+}
+
+// ═══════════════════════════
+// JSON
+// ═══════════════════════════
+function quickSaveJSON(){
+  // Fixed filename so it overwrites the previous backup in Downloads
+  if(!DX.setup||!DX.setup.process)return;
+  const state={app:'ProcessDx',version:'2.0',exportedAt:new Date().toISOString(),...DX};
+  const proc=(DX.setup.process||'Study').replace(/[^a-z0-9\-_]+/gi,'_');
+  // Consistent name — no timestamp — so it overwrites in Downloads
+  const fn=`ProcessDx_${proc}_backup.json`;
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([JSON.stringify(state,null,2)],{type:'application/json'}));
+  a.download=fn;document.body.appendChild(a);a.click();a.remove();
+  _showSaveStatus('✓ JSON downloaded');
+}
+function exportJSON(){
+  const state={app:'ProcessDx',version:'2.0',exportedAt:new Date().toISOString(),...DX};
+  const proc=(DX.setup.process||'ProcessDx').replace(/[^a-z0-9\-_]+/gi,'_');
+  const d=new Date(),p=n=>String(n).padStart(2,'0');
+  const fn=`${proc}_${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}_ProcessDx.json`;
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([JSON.stringify(state,null,2)],{type:'application/json'}));
+  a.download=fn;document.body.appendChild(a);a.click();a.remove();
+}
+
+$('resumeInput').addEventListener('change',async e=>{
+  const f=e.target.files[0];e.target.value='';if(!f)return;
+  try{const obj=JSON.parse(await f.text());if(obj.app!=='ProcessDx')throw new Error('Not a Process Dx file');Object.assign(DX,obj);goGate(DX.gate||7);}
+  catch(err){alert('Could not load: '+(err.message||err));}
+});
+
+// Init
+$('g1date').value=new Date().toLocaleDateString('en-US');
+checkResume();
+
+// ═══════════════════════════
+// GATE 2 INLINE STOPWATCH
+// ═══════════════════════════
+const SW={running:false,tStart:null,tAccum:0,raf:null,laps:[]};
+const swFmt=ms=>{const t=ms/1000,m=Math.floor(t/60);return `${m}:${(t%60).toFixed(1).padStart(4,'0')}`;};
+const swElapsed=()=>{let ms=SW.tAccum;if(SW.tStart!==null)ms+=perf()-SW.tStart;return ms;};
+
+function swTick(){$('swDisplay').textContent=swFmt(swElapsed());SW.raf=requestAnimationFrame(swTick);}
+
+function swToggle(){
+  if(SW.running){
+    cancelAnimationFrame(SW.raf);SW.raf=null;
+    SW.tAccum+=perf()-SW.tStart;SW.tStart=null;SW.running=false;
+    $('swStartBtn').textContent='▶ Resume';$('swStartBtn').style.background='var(--amber)';
+    $('swUseBtn').disabled=false;$('swUseBtn').style.opacity='1';
+  } else {
+    SW.tStart=perf();SW.running=true;
+    $('swStartBtn').textContent='⏸ Stop';$('swStartBtn').style.background='var(--red)';
+    swTick();
+  }
+}
+
+function swLap(){
+  const totalMs=swElapsed();
+  const prevTotal=SW.laps.reduce((a,b)=>a+b,0);
+  const lapMs=totalMs-prevTotal;
+  if(lapMs<300)return;
+  SW.laps.push(lapMs);
+  renderSwLaps();
+  const avg=SW.laps.reduce((a,b)=>a+b,0)/SW.laps.length/1000;
+  $('g2ct').value=avg.toFixed(1);calcBaseline();
+  $('swUseBtn').disabled=false;$('swUseBtn').style.opacity='1';
+}
+
+function renderSwLaps(){
+  const el=$('swLaps');
+  el.innerHTML=SW.laps.map((ms,i)=>`<span style="font-family:var(--mono);font-size:10px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);border-radius:3px;padding:3px 8px;color:rgba(255,255,255,.7)">L${i+1}: ${swFmt(ms)}</span>`).join('');
+  if(SW.laps.length>1){
+    const avg=SW.laps.reduce((a,b)=>a+b,0)/SW.laps.length;
+    el.innerHTML+=`<span style="font-family:var(--mono);font-size:10px;background:rgba(64,145,108,.2);border:1px solid rgba(116,198,157,.3);border-radius:3px;padding:3px 8px;color:var(--greenlt)">Avg: ${swFmt(avg)}</span>`;
+    $('swAvgNote').style.display='block';$('swLapCount').textContent=SW.laps.length;
+  } else {$('swAvgNote').style.display='none';}
+}
+
+function swReset(){
+  cancelAnimationFrame(SW.raf);SW.raf=null;
+  SW.running=false;SW.tStart=null;SW.tAccum=0;SW.laps=[];
+  $('swDisplay').textContent='0:00.0';
+  $('swStartBtn').textContent='▶ Start';$('swStartBtn').style.background='var(--amber)';
+  $('swUseBtn').disabled=true;$('swUseBtn').style.opacity='.3';
+  $('swLaps').innerHTML='';$('swAvgNote').style.display='none';
+}
+
+function swUse(){
+  let secs;
+  if(SW.laps.length>1){secs=SW.laps.reduce((a,b)=>a+b,0)/SW.laps.length/1000;}
+  else{secs=swElapsed()/1000;}
+  if(secs<0.5)return;
+  $('g2ct').value=secs.toFixed(1);
+  calcBaseline();
+  $('g2ct').style.borderColor='var(--green)';
+  setTimeout(()=>$('g2ct').style.borderColor='',1500);
+}
+
+function setBn(val){
+  DX.setup.bottleneck=val;
+  ['Yes','No','Unk'].forEach(k=>{
+    const btn=$('btnBn'+k);if(!btn)return;
+    btn.style.borderColor='var(--br)';btn.style.background='var(--s2)';btn.style.color='var(--muted)';
+  });
+  if(val===true){$('btnBnYes').style.borderColor='var(--green)';$('btnBnYes').style.background='var(--gdim)';$('btnBnYes').style.color='var(--green)';$('bnWarning').style.display='none';}
+  else if(val===false){$('btnBnNo').style.borderColor='var(--red)';$('btnBnNo').style.background='var(--rdim)';$('btnBnNo').style.color='var(--red)';$('bnWarning').style.display='block';}
+  else{$('btnBnUnk').style.borderColor='var(--amber)';$('btnBnUnk').style.background='var(--adim)';$('btnBnUnk').style.color='var(--amber)';$('bnWarning').style.display='none';}
+}
+
+// ═══════════════════════════
+// CAPTURE SHEET FLAGS
+// ═══════════════════════════
+const csFlags={quality:false,waste:null,wasteType:null,ergo:[],ergoFreq:'Every Cycle'};
+
+function setCSWaste(type){
+  csFlags.waste=csFlags.waste===type?null:type;
+  if(csFlags.waste!=='wst'){csFlags.wasteType=null;}
+  _renderCSWaste();
+}
+function _renderCSWaste(){
+  const ids={va:'csWcVa',inc:'csWcInc',wst:'csWcWst'};
+  const colors={va:'var(--green)',inc:'var(--amber)',wst:'var(--red)'};
+  Object.entries(ids).forEach(([k,id])=>{
+    const b=$(id);if(!b)return;
+    const on=csFlags.waste===k;
+    b.style.borderColor=on?colors[k]:'var(--br)';
+    b.style.background=on?`rgba(${k==='va'?'64,145,108':k==='inc'?'217,119,6':'185,28,28'},.1)`:'var(--s2)';
+    b.style.color=on?colors[k]:'var(--muted)';
+    b.style.fontWeight=on?'800':'600';
+  });
+  // Waste type row
+  const wtr=$('csWasteTypeRow');
+  if(wtr){wtr.style.display=csFlags.waste==='wst'?'block':'none';}
+  const chips=$('csWasteTypeChips');
+  if(chips&&csFlags.waste==='wst'){
+    const WTYPES={T:'Transport',I:'Inventory',M:'Motion',W:'Waiting',O:'Overproduction',P:'Over-processing',D:'Defects',U:'Unused Skills'};
+    chips.innerHTML=Object.entries(WTYPES).map(([k,v])=>{
+      const on=csFlags.wasteType===k;
+      return `<button style="font-family:var(--mono);font-size:9px;font-weight:600;padding:4px 8px;border:1px solid ${on?'var(--red)':'var(--br)'};border-radius:3px;background:${on?'var(--rdim)':'var(--s2)'};color:${on?'var(--red)':'var(--muted)'};cursor:pointer;-webkit-appearance:none;letter-spacing:.3px" onclick="csFlags.wasteType=csFlags.wasteType==='${k}'?null:'${k}';_renderCSWaste()">${k} — ${v}</button>`;
+    }).join('');
+  }
+}
+function toggleCSErgo(btn){
+  const flag=btn.dataset.flag;
+  const idx=csFlags.ergo.indexOf(flag);
+  if(idx>=0){
+    csFlags.ergo.splice(idx,1);
+    btn.style.borderColor='var(--br)';btn.style.background='var(--s2)';btn.style.color='var(--muted)';
+    if(flag==='BLIND OPS')btn.style.color='var(--amber)';
+  } else {
+    csFlags.ergo.push(flag);
+    btn.style.borderColor='var(--red)';btn.style.background='var(--rdim)';btn.style.color='var(--red)';
+    if(flag==='BLIND OPS'){btn.style.borderColor='var(--amber)';btn.style.background='var(--adim)';btn.style.color='var(--amber)';}
+  }
+}
+function toggleCSQual(){
+  csFlags.quality=!csFlags.quality;
+  const b=$('csQualBtn');if(!b)return;
+  b.style.borderColor=csFlags.quality?'var(--green)':'var(--br)';
+  b.style.background=csFlags.quality?'var(--gdim)':'var(--s2)';
+  b.style.color=csFlags.quality?'var(--green)':'var(--muted)';
+}
+function toggleCSBlind(){}
+function toggleCSDiff(){}
+function resetCSFlags(){
+  csFlags.waste=null;csFlags.wasteType=null;csFlags.ergo=[];csFlags.quality=false;csFlags.ergoFreq='Every Cycle';
+  // reset waste buttons
+  ['csWcVa','csWcInc','csWcWst'].forEach(id=>{const b=$(id);if(!b)return;b.style.borderColor='var(--br)';b.style.background='var(--s2)';b.style.color='var(--muted)';b.style.fontWeight='600';});
+  const wtr=$('csWasteTypeRow');if(wtr)wtr.style.display='none';
+  // reset ergo buttons
+  document.querySelectorAll('.csErgoBtn').forEach(b=>{b.style.borderColor='var(--br)';b.style.background='var(--s2)';b.style.color=b.dataset.flag==='BLIND OPS'?'var(--amber)':'var(--muted)';});
+  const qb=$('csQualBtn');if(qb){qb.style.borderColor='var(--br)';qb.style.background='var(--s2)';qb.style.color='var(--muted)';}
+}
+
+const _origCapSave = capSave;
+window.capSave = function(){
+  if(DX._pending){
+    DX._pending.qualityCheck=csFlags.quality;
+    DX._pending.capturedWaste=csFlags.waste;
+    DX._pending.capturedWasteType=csFlags.wasteType;
+    DX._pending.capturedErgo=csFlags.ergo.length?[...csFlags.ergo]:[];
+    DX._pending.capturedErgoFreq=$('csErgoFreq')?$('csErgoFreq').value:'Every Cycle';
+  }
+  resetCSFlags();
+  _origCapSave();
+};
+
+// ═══════════════════════════
+// AUTOSAVE / RESUME
+// ═══════════════════════════
+const SAVE_KEY='pdx_autosave';
+let _storageType=null;
+
+function _getStorage(){
+  if(_storageType==='local')try{return localStorage;}catch(e){}
+  if(_storageType==='session')try{return sessionStorage;}catch(e){}
+  try{localStorage.setItem('_pdx_t','1');localStorage.removeItem('_pdx_t');_storageType='local';return localStorage;}catch(e){}
+  try{sessionStorage.setItem('_pdx_t','1');sessionStorage.removeItem('_pdx_t');_storageType='session';return sessionStorage;}catch(e){}
+  _storageType=null;return null;
+}
+
+function _showSaveStatus(msg,warn){
+  const f=$('saveFlash');if(!f)return;
+  f.textContent=msg;
+  f.style.color=warn?'var(--amber)':'var(--green)';
+  f.style.background=warn?'var(--adim)':'var(--gdim)';
+  f.style.borderColor=warn?'rgba(217,119,6,.3)':'rgba(64,145,108,.3)';
+  f.style.opacity='1';clearTimeout(f._t);
+  f._t=setTimeout(()=>f.style.opacity='0',warn?3500:1500);
+}
+
+function autosave(){
+  const store=_getStorage();
+  if(!store){_showSaveStatus('⚠ Auto-save unavailable — use JSON export',true);return;}
+  try{
+    store.setItem(SAVE_KEY,JSON.stringify(DX));
+    _showSaveStatus(_storageType==='session'?'✓ Saved (session)':'✓ Saved');
+  }catch(e){
+    _showSaveStatus('⚠ Save error — use JSON export',true);
+  }
+}
+
+function checkResume(){
+  const store=_getStorage();if(!store)return;
+  try{
+    const s=store.getItem(SAVE_KEY);
+    if(!s)return;
+    const obj=JSON.parse(s);
+    if(!obj||!obj.setup||!obj.setup.process)return;
+    window._savedState=obj;
+    const wrap=$('resumeBtnWrap');
+    const hint=$('resumeHint');
+    if(wrap)wrap.style.display='block';
+    const sessionNote=_storageType==='session'?' · session only':'';
+    if(hint)hint.textContent=`${obj.setup.process} · Gate ${obj.gate||1} · ${obj.setup.date||''}${sessionNote}`;
+  }catch(e){}
+}
+
+function doResume(){
+  if(!window._savedState)return;
+  const obj=window._savedState;
+  Object.assign(DX,obj);
+  if(obj.kata)DX.kata=Object.assign({targetCT:'',targetDate:'',conditions:[],successCriteria:'',obstacles:[],experiments:[]},obj.kata);
+  if(obj.eracs)DX.eracs=obj.eracs;
+  goGate(DX.gate||7);
+}
+
+function clearSave(){
+  const store=_getStorage();
+  if(store)try{store.removeItem(SAVE_KEY);}catch(e){}
+  window._savedState=null;
+  const wrap=$('resumeBtnWrap');
+  if(wrap)wrap.style.display='none';
+}
+
+// ═══════════════════════════
+// GATE 1 TAKT CALCULATOR
+// ═══════════════════════════
+function _showTaktResult(sm,uph,ups,t){
+  const res=$('taktCalcResult');
+  if(!t||t<=0){res.style.display='none';return;}
+  res.style.display='block';
+  const lines=[];
+  lines.push(`Takt = <strong>${t}s</strong>`);
+  if(uph){
+    lines.push(`3600 ÷ ${uph} u/hr = ${t}s`);
+    const upshift=Math.round(uph*(sm/60));
+    lines.push(`Units/shift: <strong>${upshift}</strong> &nbsp;(${uph} u/hr × ${sm} min)`);
+  }
+  if(ups){
+    lines.push(`(${sm} min × 60) ÷ ${ups} units/shift = ${t}s`);
+    const uphCalc=Math.round(ups/(sm/60)*10)/10;
+    lines.push(`Units/hr: <strong>${uphCalc}</strong>`);
+  }
+  res.innerHTML=lines.join('<br>');
+  window._taktCalcVal=t;
+}
+function calcTaktFromHr(){
+  const uph=parseFloat($('g1uph').value);
+  const sm=parseFloat($('g1taktShiftMin').value)||455;
+  if(!uph||uph<=0){$('taktCalcResult').style.display='none';return;}
+  const t=Math.round(3600/uph*10)/10;
+  $('g1upshift').value='';
+  _showTaktResult(sm,uph,null,t);
+}
+function calcTaktFromShift(){
+  const ups=parseFloat($('g1upshift').value);
+  const sm=parseFloat($('g1taktShiftMin').value)||455;
+  if(!ups||ups<=0){$('taktCalcResult').style.display='none';return;}
+  const t=Math.round((sm*60)/ups*10)/10;
+  $('g1uph').value='';
+  _showTaktResult(sm,null,ups,t);
+}
+function calcTakt(){calcTaktFromHr();}
+function applyTakt(){
+  const sm=parseFloat($('g1taktShiftMin').value)||455;
+  const t=window._taktCalcVal;
+  if(!t||t<=0)return;
+  $('g1takt').value=t;
+  $('g1shiftmin').value=sm;
+  $('g1takt').style.borderColor='var(--green)';
+  setTimeout(()=>$('g1takt').style.borderColor='',1500);
+}
+
+// ═══════════════════════════
+// CT METHOD — LOWEST REPEATABLE
+// ═══════════════════════════
+function computeLowRep(durs){
+  if(!durs||!durs.length)return{lr:0,flag:true};
+  const s=[...durs].sort((a,b)=>a-b);
+  if(s.length<2){const avg=durs.reduce((a,b)=>a+b,0)/durs.length;return{lr:avg,flag:true};}
+  for(let i=0;i<s.length-1;i++){
+    if(s[i+1]<=s[i]*1.10)return{lr:(s[i]+s[i+1])/2,flag:false};
+  }
+  // No repeatable pair — return avg, flag it
+  const avg=durs.reduce((a,b)=>a+b,0)/durs.length;
+  return{lr:avg,flag:true};
+}
+function stepCT(name){
+  const vd=DX.variation[name];if(!vd)return 0;
+  return DX.ctMethod==='lowrep'?(vd.lowrep||vd.avg):vd.avg;
+}
+function toggleCtMethod(btn){
+  DX.ctMethod=DX.ctMethod==='avg'?'lowrep':'avg';
+  const isLR=DX.ctMethod==='lowrep';
+  btn.textContent=isLR?'Method: Lowest Repeatable ▾':'Method: Average ▾';
+  btn.className='ctmethod-toggle'+(isLR?' lowrep':'');
+  const note=$('ctMethodNote');if(note)note.style.display=isLR?'block':'none';
+  renderVariation();autosave();
+}
+
+// ═══════════════════════════
+// ERACS SELECTION
+// ═══════════════════════════
+function setWasteType(name,code){
+  if(!DX.wasteType)DX.wasteType={};
+  DX.wasteType[name]=DX.wasteType[name]===code?null:code;
+  renderWasteScreen();autosave();
+}
+function setEracs(name,letter){
+  DX.eracs[name]=DX.eracs[name]===letter?null:letter;
+  renderWasteScreen();autosave();
+}
+
+// ═══════════════════════════
+// VARIATION OUTLIER EXCLUSION
+// ═══════════════════════════
+function toggleExclude(name,ci){
+  const key=name+'_excl';
+  if(!DX.varOverrides)DX.varOverrides={};
+  let excl=DX.varOverrides[key]||[];
+  const pos=excl.indexOf(ci);
+  if(pos>=0)excl.splice(pos,1);else excl.push(ci);
+  DX.varOverrides[key]=excl;
+  renderVariation();autosave();
+}
+
+// ═══════════════════════════
+// KATA SECTION
+// ═══════════════════════════
+let _autoObsCache=[];
+function _buildAutoObsHTML(){
+  _autoObsCache=_kataAutoObstacles();
+  if(!_autoObsCache.length)return '<div style="font-family:var(--mono);font-size:10px;color:var(--muted2);padding:4px 0;margin-bottom:4px">Complete Gates 5 &amp; 6 \u2014 obstacles auto-populate from data.</div>';
+  const html=_autoObsCache.map((o,i)=>`<div class="kata-obs auto">
+    <span style="width:15px;height:15px;flex-shrink:0;margin-top:2px;text-align:center;font-size:11px;color:var(--muted2)">\u2022</span>
+    <span class="kata-obs-txt">${o.text}</span>
+    <span class="kata-obs-src">${o.src||'Auto'}</span>
+    <button onclick="importAutoObsByIdx(${i})" style="font-family:var(--mono);font-size:8px;color:var(--green);background:var(--gdim);border:1px solid rgba(64,145,108,.3);border-radius:3px;padding:2px 6px;cursor:pointer;flex-shrink:0;letter-spacing:.3px">+ Add</button>
+  </div>`).join('');
+  return `<div style="font-family:var(--mono);font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:4px">From study data \u2014 tap + to add to your list:</div>${html}<div style="border-top:1px solid var(--br);margin:8px 0"></div>`;
+}
+function importAutoObsByIdx(i){
+  const o=_autoObsCache[i];if(!o)return;
+  if(!DX.kata.obstacles)DX.kata.obstacles=[];
+  if(DX.kata.obstacles.find(x=>x.text===o.text))return;
+  DX.kata.obstacles.push({text:o.text,src:o.src||'Auto',resolved:false,auto:false});
+  renderKataSection();autosave();
+}
+function importAutoObs(text,src){
+  if(!DX.kata.obstacles)DX.kata.obstacles=[];
+  if(DX.kata.obstacles.find(o=>o.text===text))return;
+  DX.kata.obstacles.push({text,src,resolved:false,auto:false});
+  renderKataSection();autosave();
+}
+function _kataAutoObstacles(){
+  const obs=[];
+  Object.entries(DX.variation||{}).forEach(([name,v])=>{
+    if(v.high)obs.push({text:`Stabilize method: ${name} (${v.isShort?'range '+(v.max-v.min).toFixed(2)+'s':'CV '+v.cv.toFixed(1)+'%'})`,src:'Variation',resolved:false,auto:true});
+  });
+  const{ergoSteps=[]}=DX;
+  ergoSteps.forEach(s=>{
+    const hardFlags=(s.flags||[]).filter(f=>['Every Cycle','Frequent'].includes(s.freq&&s.freq[f]));
+    if(hardFlags.length)obs.push({text:`Resolve ergo risk: ${s.name} — ${hardFlags.join(', ')}`,src:'Ergo',resolved:false,auto:true});
+  });
+  Object.entries(DX.waste||{}).forEach(([name,v])=>{
+    if(v==='wst'){const ct=stepCT(name);obs.push({text:`Eliminate or reduce: ${name} (${ct.toFixed(1)}s — ${DX.variation[name]?Math.round(ct/(Object.keys(DX.variation).reduce((s,n)=>s+stepCT(n),0)||1)*100):0}% CT)`,src:'Waste',resolved:false,auto:true});}
+  });
+  return obs;
+}
+
+function renderKataSection(){
+  const el=$('kataSection');if(!el)return;
+  const names=DX.ergoSteps.map(s=>s.name);
+  if(!names.length){el.innerHTML='';return;}
+  const k=DX.kata;
+  const totalCT=names.reduce((s,n)=>s+stepCT(n),0);
+  const takt=DX.setup.takt||0;
+  const{setup,baseline}=DX;
+  // Current state summary
+  const wstTime=names.filter(n=>DX.waste[n]==='wst').reduce((s,n)=>s+stepCT(n),0);
+  const incTime=names.filter(n=>DX.waste[n]==='inc').reduce((s,n)=>s+stepCT(n),0);
+  const vaTime=names.filter(n=>DX.waste[n]==='va').reduce((s,n)=>s+stepCT(n),0);
+
+  const expHTML=(k.experiments||[]).map((e,i)=>`
+    <tr>
+      <td contenteditable="true" oninput="updateKataExp(${i},'date',this.textContent)" data-placeholder="Date">${e.date||''}</td>
+      <td contenteditable="true" oninput="updateKataExp(${i},'hypothesis',this.textContent)" data-placeholder="What we will change">${e.hypothesis||''}</td>
+      <td contenteditable="true" oninput="updateKataExp(${i},'expected',this.textContent)" data-placeholder="Expected result (metric)">${e.expected||''}</td>
+      <td contenteditable="true" oninput="updateKataExp(${i},'result',this.textContent)" data-placeholder="What actually happened">${e.result||''}</td>
+      <td contenteditable="true" oninput="updateKataExp(${i},'learned',this.textContent)" data-placeholder="What we learned">${e.learned||''}</td>
+      <td contenteditable="true" oninput="updateKataExp(${i},'next',this.textContent)" data-placeholder="Next step">${e.next||''}</td>
+      <td><button onclick="deleteKataExp(${i})" style="background:none;border:none;color:var(--muted2);font-size:12px;cursor:pointer">✕</button></td>
+    </tr>`).join('');
+
+  el.innerHTML=`
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:6px">
+      <div style="font-family:var(--head);font-size:11px;font-weight:800;color:var(--forest);text-transform:uppercase;letter-spacing:2px;border-bottom:2px solid var(--forest);flex:1;padding-bottom:4px">Improvement Kata Record</div>
+      <button onclick="window.print()" style="font-family:var(--mono);font-size:9px;border:1px solid var(--forest);background:var(--forest);color:#fff;border-radius:4px;padding:5px 10px;cursor:pointer;letter-spacing:.5px">🖨 Print Kata</button>
+    </div>
+
+    <div class="kata-card">
+      <div class="kata-hdr">1 — Current State <span style="font-family:var(--mono);font-size:9px;font-weight:400;color:var(--muted);letter-spacing:.5px;text-transform:none">Auto-populated from study data</span></div>
+      <div style="font-family:var(--mono);font-size:10px;color:var(--muted);line-height:2;background:var(--s2);border:1px solid var(--br);border-radius:var(--r);padding:10px 13px">
+        Process: <strong style="color:var(--forest)">${setup.process||'—'}</strong> · Analyst: ${setup.analyst||'—'} · Date: ${setup.date||'—'}<br>
+        Baseline CT: <strong>${baseline.ct||'—'}s</strong> · Study CT (${DX.ctMethod==='lowrep'?'Low Rep':'Avg'}): <strong style="color:${totalCT>takt?'var(--red)':'var(--green)'}">${totalCT.toFixed(1)}s</strong> · Takt: <strong>${takt||'—'}s</strong> · Gap: <strong style="color:${totalCT>takt?'var(--red)':'var(--green)'}">${(totalCT-takt).toFixed(1)}s</strong><br>
+        Value Creating: ${vaTime.toFixed(1)}s (${totalCT>0?Math.round(vaTime/totalCT*100):0}%) · Incidental: ${incTime.toFixed(1)}s (${totalCT>0?Math.round(incTime/totalCT*100):0}%) · Waste: <strong style="color:var(--red)">${wstTime.toFixed(1)}s (${totalCT>0?Math.round(wstTime/totalCT*100):0}%)</strong>
+      </div>
+    </div>
+
+    <div class="kata-card">
+      <div class="kata-hdr">2 — Target State <span style="font-family:var(--mono);font-size:9px;font-weight:400;color:var(--muted);letter-spacing:.5px;text-transform:none">What does done look like?</span></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+        <div><div class="kata-lbl">Target CT (sec)</div>
+          <input class="kata-field" type="number" value="${k.targetCT||''}" placeholder="e.g. ${takt?Math.ceil(takt*0.95):''}" oninput="DX.kata.targetCT=this.value;autosave()"></div>
+        <div><div class="kata-lbl">Target Date</div>
+          <input class="kata-field" type="text" value="${k.targetDate||''}" placeholder="e.g. Apr 30" oninput="DX.kata.targetDate=this.value;autosave()"></div>
+      </div>
+      <div style="font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:6px">Target Conditions — what will be true when we reach target?</div>
+      ${(k.conditions||[]).map((c,ci)=>`
+        <div style="display:flex;gap:6px;margin-bottom:6px;align-items:flex-start">
+          <div style="flex:1.5"><input class="kata-field" value="${(c.condition||'').replace(/"/g,'&quot;')}" placeholder="Condition (e.g. All waste steps eliminated)" oninput="DX.kata.conditions[${ci}].condition=this.value;autosave()"></div>
+          <div style="flex:1"><input class="kata-field" value="${(c.measurement||'').replace(/"/g,'&quot;')}" placeholder="Measurement (e.g. CT ≤ 120s)" oninput="DX.kata.conditions[${ci}].measurement=this.value;autosave()"></div>
+          <button onclick="removeKataCondition(${ci})" style="background:none;border:none;color:var(--muted2);font-size:14px;cursor:pointer;padding:10px 4px;flex-shrink:0">✕</button>
+        </div>`).join('')}
+      <button onclick="addKataCondition()" style="width:100%;font-family:var(--head);font-size:12px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:9px;background:var(--s2);border:1px dashed var(--br2);color:var(--muted);border-radius:var(--r);cursor:pointer;-webkit-appearance:none;margin-bottom:12px">＋ Add Condition + Measurement</button>
+      <div><div class="kata-lbl">Success Criteria — how will we confirm we got there?</div>
+        <textarea class="kata-field" rows="2" placeholder="e.g. 5 consecutive cycles ≤ target CT. No ergo flags remaining." oninput="DX.kata.successCriteria=this.value;autosave()">${k.successCriteria||''}</textarea></div>
+    </div>
+
+    <div class="kata-card">
+      <div class="kata-hdr">3 — Obstacles <span style="font-family:var(--mono);font-size:9px;font-weight:400;color:var(--muted);letter-spacing:.5px;text-transform:none">What's blocking the target?</span></div>
+      ${_buildAutoObsHTML()}
+      ${(k.obstacles||[]).length?'':''}<div style="font-family:var(--mono);font-size:9px;color:var(--muted2);margin-bottom:8px;line-height:1.6">${(k.obstacles||[]).length===0?'No user obstacles added yet.':''}</div>
+      ${(k.obstacles||[]).map((o,i)=>`
+        <div class="kata-obs ${o.resolved?'resolved':''}">
+          <input type="checkbox" ${o.resolved?'checked':''} onchange="DX.kata.obstacles[${i}].resolved=this.checked;renderKataSection();autosave()" style="width:15px;height:15px;accent-color:var(--green);flex-shrink:0;margin-top:2px;cursor:pointer">
+          <span class="kata-obs-txt">${o.text}</span>
+          <span class="kata-obs-src">${o.src||'User'}</span>
+          <button onclick="deleteKataObs(${i})" style="background:none;border:none;color:var(--muted2);font-size:12px;cursor:pointer;flex-shrink:0">✕</button>
+        </div>`).join('')}
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <input id="obsInput" class="kata-field" style="flex:1;margin-bottom:0" type="text" placeholder="Add obstacle…" onkeydown="if(event.key==='Enter'){addKataObs();event.preventDefault()}">
+        <button onclick="addKataObs()" style="font-family:var(--head);font-size:12px;font-weight:700;padding:9px 14px;background:var(--forest2);color:#fff;border:none;border-radius:var(--r);cursor:pointer;white-space:nowrap;-webkit-appearance:none">+ Add</button>
+      </div>
+    </div>
+    <div class="kata-card">
+      <div class="kata-hdr">4 — Experiment Record <span style="font-family:var(--mono);font-size:9px;font-weight:400;color:var(--muted);letter-spacing:.5px;text-transform:none">PDCA cycles — tap cells to edit</span></div>
+      <div style="overflow-x:auto">
+        <table class="kata-exp-table">
+          <thead><tr>
+            <th style="min-width:70px">Date</th>
+            <th style="min-width:130px">What we will change</th>
+            <th style="min-width:130px">What do you expect? (metric)</th>
+            <th style="min-width:120px">What actually happened?</th>
+            <th style="min-width:120px">What did you learn?</th>
+            <th style="min-width:100px">Next step</th>
+            <th style="width:28px"></th>
+          </tr></thead>
+          <tbody id="kataExpBody">${expHTML}</tbody>
+        </table>
+      </div>
+      <button onclick="addKataExp()" style="font-family:var(--head);font-size:12px;font-weight:700;padding:10px 18px;background:var(--s2);border:1px dashed var(--br2);color:var(--muted);border-radius:var(--r);cursor:pointer;width:100%;margin-top:4px;letter-spacing:.5px;-webkit-appearance:none">＋ Add Experiment</button>
+    </div>`;
+
+  // Apply placeholder styling via CSS
+  el.querySelectorAll('td[data-placeholder]:empty').forEach(td=>{
+    td.textContent='';
+  });
+}
+
+function addKataCondition(){
+  if(!DX.kata.conditions)DX.kata.conditions=[];
+  DX.kata.conditions.push({condition:'',measurement:''});
+  renderKataSection();autosave();
+}
+function removeKataCondition(i){
+  DX.kata.conditions.splice(i,1);
+  renderKataSection();autosave();
+}
+function addKataObs(){
+  const inp=$('obsInput');if(!inp)return;
+  const txt=inp.value.trim();if(!txt)return;
+  DX.kata.obstacles.push({text:txt,resolved:false,auto:false,src:'User'});
+  inp.value='';
+  renderKataSection();autosave();
+}
+function toggleKataObs(i,cb){
+  if(DX.kata.obstacles[i])DX.kata.obstacles[i].resolved=cb.checked;
+  autosave();
+}
+function toggleAutoObs(cb){autosave();} // auto obstacles not stored, just UI state
+function deleteKataObs(i){
+  DX.kata.obstacles.splice(i,1);
+  renderKataSection();autosave();
+}
+function addKataExp(){
+  DX.kata.experiments.push({date:'',hypothesis:'',expected:'',result:'',learned:'',next:''});
+  renderKataSection();autosave();
+}
+function updateKataExp(i,field,val){
+  if(DX.kata.experiments[i])DX.kata.experiments[i][field]=val;
+  autosave();
+}
+function deleteKataExp(i){
+  DX.kata.experiments.splice(i,1);
+  renderKataSection();autosave();
+}
+
+
+// ═══════════════════════════
+// KATA EXPORT FUNCTIONS
+// ═══════════════════════════
+
+function _kataHeader(title){
+  const{setup,baseline,kata}=DX;
+  return `Process: <strong>${setup.process||'—'}</strong> &nbsp;|&nbsp; Analyst / Learner: <strong>${setup.analyst||'—'}</strong> &nbsp;|&nbsp; Date: <strong>${setup.date||'—'}</strong><br>
+  Baseline CT: <strong>${baseline.ct||'—'}s</strong> &nbsp;|&nbsp; Study CT: <strong>${DX.varAvgCT?DX.varAvgCT.toFixed(1)+'s':'—'}</strong> &nbsp;|&nbsp; Takt: <strong>${setup.takt||'—'}s</strong> &nbsp;|&nbsp; Target CT: <strong>${kata.targetCT||'—'}s</strong>`;
+}
+
+function _autoObstaclesList(){
+  const obs=[];
+  const names=DX.ergoSteps.map(s=>s.name);
+  Object.entries(DX.variation||{}).forEach(([name,v])=>{
+    if(v.high)obs.push(`Stabilize method — ${name}: ${v.isShort?'range '+(v.max-v.min).toFixed(2)+'s':'CV '+v.cv.toFixed(1)+'%'} — identify root cause and run experiment`);
+  });
+  DX.ergoSteps.forEach(s=>{
+    const hardFlags=(s.flags||[]).filter(f=>['Every Cycle','Frequent'].includes(s.freq&&s.freq[f]));
+    if(hardFlags.length)obs.push(`Resolve ergo risk — ${s.name}: ${hardFlags.join(', ')} — fix condition and re-study`);
+  });
+  Object.entries(DX.waste||{}).forEach(([name,v])=>{
+    if(v==='wst'){
+      const ct=stepCT(name);
+      const wt=DX.wasteType&&DX.wasteType[name];
+      obs.push(`Eliminate / reduce — ${name} (${ct.toFixed(1)}s${wt?' — '+{T:'Transport',I:'Inventory',M:'Motion',W:'Waiting',O:'Overproduction',P:'Over-processing',D:'Defects',U:'Unused Skills'}[wt]:''})`);
+    }
+  });
+  (DX.kata.obstacles||[]).forEach(o=>obs.push(o.text));
+  return obs;
+}
+
+// ── FILE 1: OBSTACLES ──
+function exportKataObstacles(){
+  const{setup,kata}=DX;
+  const obs=_autoObstaclesList();
+  const rows=[];
+  for(let i=1;i<=12;i++){
+    const txt=obs[i-1]||'';
+    rows.push(`<tr>
+      <td style="width:36px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700;color:#1B4332;border:1px solid #C3D9C9;padding:10px 8px;background:#F0F7F2">${i}</td>
+      <td style="border:1px solid #C3D9C9;padding:10px 12px;font-size:13px;color:#1A2A1F;min-height:40px">${txt}</td>
+    </tr>`);
+  }
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <title>Obstacles — ${setup.process||'Process Dx'}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800&family=Barlow:wght@400;600&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Barlow',sans-serif;background:#fff;padding:32px;max-width:700px;margin:0 auto;color:#1A2A1F}
+    .doc-title{font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;color:#1B4332;text-transform:uppercase;letter-spacing:.5px;border-bottom:3px solid #1B4332;padding-bottom:8px;margin-bottom:6px}
+    .doc-sub{font-family:'IBM Plex Mono',monospace;font-size:9px;color:#5A7A66;letter-spacing:2px;text-transform:uppercase;margin-bottom:16px}
+    .doc-meta{font-size:12px;color:#3D5247;background:#F0F7F2;border:1px solid #C3D9C9;border-radius:4px;padding:10px 14px;margin-bottom:20px;line-height:2}
+    table{width:100%;border-collapse:collapse}
+    .kata-note{font-family:'IBM Plex Mono',monospace;font-size:10px;color:#8AAD95;margin-top:16px;line-height:1.8;border-top:1px solid #C3D9C9;padding-top:12px}
+    @media print{body{padding:16px}.kata-note{display:none}}
+  </style></head><body>
+  <div class="doc-title">Obstacles / Obstáculos</div>
+  <div class="doc-sub">Improvement Kata — File 1 of 3 · Process Dx</div>
+  <div class="doc-meta">${_kataHeader('Obstacles')}</div>
+  <table>${rows.join('')}</table>
+  <div class="kata-note">
+    <strong>Instructions:</strong> List everything preventing you from reaching the Target Condition. Start with what you know now — add obstacles as you discover them during experiments.<br>
+    Work on one obstacle at a time. The current obstacle drives the next experiment (Experimenting Record).<br>
+    Target CT: <strong>${kata.targetCT||'—'}s</strong> by <strong>${kata.targetDate||'—'}</strong>${(kata.conditions||[]).length?'<br>Conditions: '+(kata.conditions.map(c=>c.condition+(c.measurement?' → '+c.measurement:'')).join('; ')):''}
+  </div>
+  <div id="saveFlash" class="save-flash">✓ Saved</div>
+</body></html>`;
+  _downloadHTML(html,`Obstacles_${(setup.process||'ProcessDx').replace(/\s+/g,'_')}.html`);
+}
+
+// ── FILE 2: EXPERIMENTING RECORD ──
+function exportKataExp(){
+  const{setup,kata}=DX;
+  const obs=_autoObstaclesList();
+  const topObstacle=obs[0]||'';
+  const expRows=(kata.experiments||[]);
+  // Pre-fill 8 rows (filled + blank)
+  const allRows=[...expRows];
+  while(allRows.length<8)allRows.push({date:'',hypothesis:'',result:'',learned:'',next:''});
+  const rowsHTML=allRows.map((e,i)=>`<tr style="background:${i%2===0?'#fff':'#F0F7F2'}">
+    <td style="border:1px solid #C3D9C9;padding:8px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#1A2A1F;min-width:70px;vertical-align:top">${e.date||''}</td>
+    <td style="border:1px solid #C3D9C9;padding:8px;font-size:12px;color:#1A2A1F;min-width:140px;vertical-align:top">${e.hypothesis||''}</td>
+    <td style="border:1px solid #C3D9C9;padding:8px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#1B4332;font-weight:600;min-width:130px;vertical-align:top">${e.expected||''}</td>
+    <td style="border:1px solid #C3D9C9;padding:8px;font-size:11px;color:#5A7A66;vertical-align:top">—</td>
+    <td style="border:1px solid #C3D9C9;padding:8px;font-size:12px;color:#1A2A1F;min-width:130px;vertical-align:top">${e.result||''}</td>
+    <td style="border:1px solid #C3D9C9;padding:8px;font-size:12px;color:#1A2A1F;min-width:130px;vertical-align:top">${e.learned||''}</td>
+  </tr>`).join('');
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <title>Experimenting Record — ${setup.process||'Process Dx'}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800&family=Barlow:wght@400;600&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Barlow',sans-serif;background:#fff;padding:32px;max-width:900px;margin:0 auto;color:#1A2A1F}
+    .doc-title{font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;color:#1B4332;text-transform:uppercase;letter-spacing:.5px;border-bottom:3px solid #1B4332;padding-bottom:8px;margin-bottom:6px}
+    .doc-sub{font-family:'IBM Plex Mono',monospace;font-size:9px;color:#5A7A66;letter-spacing:2px;text-transform:uppercase;margin-bottom:16px}
+    .doc-meta{font-size:12px;color:#3D5247;background:#F0F7F2;border:1px solid #C3D9C9;border-radius:4px;padding:10px 14px;margin-bottom:8px;line-height:2}
+    .obs-bar{background:#1B4332;color:#fff;padding:8px 14px;border-radius:4px;font-size:12px;margin-bottom:16px;display:flex;align-items:center;gap:10px}
+    .obs-label{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:1.5px;opacity:.7}
+    table{width:100%;border-collapse:collapse}
+    th{background:#1B4332;color:rgba(255,255,255,.85);padding:9px 8px;text-align:left;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.8px;font-weight:500}
+    @media print{body{padding:12px}.doc-sub{display:none}}
+  </style></head><body>
+  <div class="doc-title">Experimenting Record</div>
+  <div class="doc-sub">Improvement Kata — File 2 of 3 · Process Dx</div>
+  <div class="doc-meta">${_kataHeader('Experimenting Record')}</div>
+  <div class="obs-bar"><span class="obs-label">CURRENT OBSTACLE:</span> <span>${topObstacle||'See Obstacles document'}</span></div>
+  <table>
+    <thead><tr>
+      <th>Date &amp; Step</th>
+      <th>What will you change?</th>
+      <th>What do you expect? (metric)</th>
+      <th>Coaching cycle</th>
+      <th>What actually happened?</th>
+      <th>What did you learn?</th>
+    </tr></thead>
+    <tbody>${rowsHTML}</tbody>
+  </table>
+  <div id="saveFlash" class="save-flash">✓ Saved</div>
+</body></html>`;
+  _downloadHTML(html,`Experimenting_Record_${(setup.process||'ProcessDx').replace(/\s+/g,'_')}.html`);
+}
+
+// ── FILE 3: TARGET SHEET ──
+function exportTargetSheet(){
+  const{setup,kata,baseline}=DX;
+  const names=DX.ergoSteps.map(s=>s.name);
+  const currentCT=names.reduce((s,n)=>s+stepCT(n),0);
+  const takt=setup.takt||0;
+  const fmt$=n=>n>=1000?'$'+(n/1000).toFixed(1)+'K':'$'+n.toFixed(0);
+  const annShifts=setup.annualShifts||250;
+  const rate=setup.rate||0;
+  const heads=setup.heads||1;
+  const shiftMin=setup.shiftMin||455;
+  // Units at current CT vs target CT
+  const unitsNow=takt>0?Math.floor((shiftMin*60)/currentCT):0;
+  const targetCTnum=parseFloat(kata.targetCT)||0;
+  const unitsTarget=targetCTnum>0?Math.floor((shiftMin*60)/targetCTnum):0;
+  const annualExpNow=rate>0&&currentCT>takt?((Math.floor((shiftMin*60)/takt)-unitsNow)*heads*(rate/3600)*currentCT*annShifts):0;
+  const annualExpTarget=rate>0&&targetCTnum>0&&targetCTnum<currentCT?((unitsTarget-unitsNow)*heads*(rate/3600)*currentCT*annShifts):0;
+
+  // Outcome metrics rows
+  const outcomeRows=[
+    {label:'Cycle Time (seconds)',current:currentCT.toFixed(1)+'s',target:targetCTnum?targetCTnum.toFixed(1)+'s':''},
+    {label:'CT vs Takt',current:takt>0?(currentCT-takt).toFixed(1)+'s gap':'—',target:takt>0?'≤ '+takt+'s':''},
+    {label:'Units / Shift',current:unitsNow||'—',target:unitsTarget||''},
+    {label:'Annual Exposure ($)',current:annualExpNow>0?fmt$(annualExpNow):'—',target:annualExpTarget>0?'Save '+fmt$(annualExpTarget):targetCTnum?'Recalculate after CT target':''},
+  ];
+
+  // Process metrics: waste steps + variation + ergo
+  const procRows=[];
+  // 1. Waste and incidental steps
+  names.forEach(n=>{
+    const cls=DX.waste[n];
+    if(cls==='wst'||cls==='inc'){
+      const ct=stepCT(n);
+      const pctOfTotal=currentCT>0?Math.round(ct/currentCT*100):0;
+      const vd=DX.variation[n];
+      const cv=vd?vd.cv.toFixed(1)+'%':'—';
+      const wt=DX.wasteType&&DX.wasteType[n];
+      const WTLABEL={T:'Transport',I:'Inventory',M:'Motion',W:'Waiting',O:'Overproduction',P:'Over-processing',D:'Defects',U:'Unused Skills'};
+      const label=`${cls==='wst'?'[W]':'[I]'} ${n}${wt?' ('+WTLABEL[wt]+')':''}`;
+      const eracs=(DX.eracs&&DX.eracs[n])||'—';
+      procRows.push({label,current:`${ct.toFixed(1)}s (${pctOfTotal}%)`,target:'',note:`CV: ${cv} | ERACS: ${eracs}`});
+    }
+  });
+  // 2. High variation steps not already listed
+  Object.entries(DX.variation||{}).forEach(([n,v])=>{
+    if(v.high&&DX.waste[n]!=='wst'&&DX.waste[n]!=='inc'){
+      procRows.push({label:`[VAR] ${n}`,current:v.isShort?`Range ${(v.max-v.min).toFixed(2)}s`:`CV ${v.cv.toFixed(1)}%`,target:'Stabilize',note:`Avg: ${v.avg.toFixed(2)}s`});
+    }
+  });
+  // 3. Hard ergo flags
+  DX.ergoSteps.forEach(s=>{
+    const hardFlags=(s.flags||[]).filter(f=>['Every Cycle','Frequent'].includes(s.freq&&s.freq[f]));
+    if(hardFlags.length){
+      procRows.push({label:`[ERGO] ${s.name}`,current:hardFlags.join(', '),target:'Resolve',note:'Lock-level risk'});
+    }
+  });
+  // 4. Target conditions from kata
+  (kata.conditions||[]).forEach(c=>{
+    if(c.condition)procRows.push({label:`[COND] ${c.condition}`,current:'',target:c.measurement||'',note:''});
+  });
+  while(procRows.length<8)procRows.push({label:'',current:'',target:'',note:''});
+
+  const wkCols=Array.from({length:8},()=>`<th style="text-align:center;min-width:55px;background:#2D6A4F">WK</th>`).join('');
+  const makeRows=(rows,showNote=false)=>rows.map(r=>`<tr>
+    <td style="border:1px solid #C3D9C9;padding:7px 10px;font-size:12px;color:#1A2A1F">${r.label}</td>
+    ${showNote?`<td style="border:1px solid #C3D9C9;padding:7px 8px;font-family:'IBM Plex Mono',monospace;font-size:9px;color:#8AAD95">${r.note||''}</td>`:''}
+    <td style="border:2px solid #40916C;padding:7px 8px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;color:#40916C;background:#F0F7F2">${r.current||''}</td>
+    <td style="border:2px solid #2D6A4F;padding:7px 8px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;color:#2D6A4F;background:#E8F2EB">${r.target||''}</td>
+    ${Array.from({length:8},()=>`<td style="border:1px solid #C3D9C9;padding:7px;text-align:center"></td>`).join('')}
+  </tr>`).join('');
+
+  const conditionsHTML=(kata.conditions||[]).length?`
+    <h3 style="font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:800;color:#1B4332;text-transform:uppercase;letter-spacing:.5px;margin:16px 0 8px">Target Conditions</h3>
+    <table style="width:100%;border-collapse:collapse;margin-bottom:16px">
+      <thead><tr>
+        <th style="background:#1B4332;color:rgba(255,255,255,.8);padding:8px 10px;text-align:left;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.8px;font-weight:500">Condition</th>
+        <th style="background:#1B4332;color:rgba(255,255,255,.8);padding:8px 10px;text-align:left;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.8px;font-weight:500">Measurement / Proof</th>
+      </tr></thead>
+      <tbody>${(kata.conditions||[]).map((c,i)=>`<tr style="background:${i%2===0?'#fff':'#F0F7F2'}">
+        <td style="border:1px solid #C3D9C9;padding:8px 10px;font-size:12px">${c.condition||''}</td>
+        <td style="border:1px solid #C3D9C9;padding:8px 10px;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;color:#1B4332">${c.measurement||''}</td>
+      </tr>`).join('')}</tbody>
+    </table>`:'';
+
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <title>Target Sheet — ${setup.process||'Process Dx'}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800&family=Barlow:wght@400;600&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Barlow',sans-serif;background:#fff;padding:24px;color:#1A2A1F}
+    .doc-title{font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;color:#1B4332;text-transform:uppercase;letter-spacing:.5px;border-bottom:3px solid #1B4332;padding-bottom:8px;margin-bottom:6px}
+    .doc-sub{font-family:'IBM Plex Mono',monospace;font-size:9px;color:#5A7A66;letter-spacing:2px;text-transform:uppercase;margin-bottom:14px}
+    .owner-bar{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+    .owner-field{background:#F0F7F2;border:1px solid #C3D9C9;border-radius:4px;padding:8px 12px}
+    .owner-lbl{font-family:'IBM Plex Mono',monospace;font-size:8px;color:#8AAD95;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:2px}
+    .owner-val{font-size:13px;font-weight:600;color:#1B4332}
+    .section-hdr{background:#1B4332;color:#fff;padding:7px 12px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:1px;margin-bottom:0;font-weight:500}
+    table{width:100%;border-collapse:collapse;margin-bottom:14px}
+    th{background:#1B4332;color:rgba(255,255,255,.85);padding:8px 8px;text-align:left;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.5px;font-weight:500}
+    @media print{body{padding:10px}.doc-sub{display:none}}
+  </style></head><body>
+  <div class="doc-title">Target Sheet</div>
+  <div class="doc-sub">Improvement Kata — File 3 of 3 · Process Dx</div>
+  <div class="owner-bar">
+    <div class="owner-field"><div class="owner-lbl">Owner / Learner</div><div class="owner-val">${setup.analyst||'—'}</div></div>
+    <div class="owner-field"><div class="owner-lbl">Coach</div><div class="owner-val">&nbsp;</div></div>
+    <div class="owner-field"><div class="owner-lbl">Process</div><div class="owner-val">${setup.process||'—'}</div></div>
+    <div class="owner-field"><div class="owner-lbl">Target Date</div><div class="owner-val">${kata.targetDate||'—'}</div></div>
+  </div>
+  ${conditionsHTML}
+  <div class="section-hdr">Outcome Metrics (Results)</div>
+  <table>
+    <thead><tr><th style="min-width:200px">Metric</th><th style="min-width:110px;background:#40916C">Current State</th><th style="min-width:110px;background:#2D6A4F">Target</th>${wkCols}</tr></thead>
+    <tbody>${makeRows(outcomeRows)}</tbody>
+  </table>
+  <div class="section-hdr">Process Metrics (What You Can Change)</div>
+  <table>
+    <thead><tr><th>Step / Metric</th><th style="min-width:80px;font-size:8px;letter-spacing:.3px">Note / Type</th><th style="min-width:110px;background:#40916C">Current</th><th style="min-width:110px;background:#2D6A4F">Target</th>${wkCols}</tr></thead>
+    <tbody>${makeRows(procRows,true)}</tbody>
+  </table>
+  <div id="saveFlash" class="save-flash">✓ Saved</div>
+</body></html>`;
+  _downloadHTML(html,`Target_Sheet_${(setup.process||'ProcessDx').replace(/\s+/g,'_')}.html`);
+}
+// ── SHARED DOWNLOAD HELPER ──
+function _downloadHTML(html,filename){
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([html],{type:'text/html'}));
+  a.download=filename;
+  document.body.appendChild(a);a.click();a.remove();
+}
+
+// ═══════════════════════════
+// COACH'S NOTES
+// ═══════════════════════════
+let coachCallback=null;
+let coachSkip=false;
+
+const COACH_NOTES={
+  1:{icon:'🎯',eyebrow:"Coach's Note — Before Gate 1",title:'Start at the Bottleneck',
+    body:`<strong>Before you time a single step — find the bottleneck.</strong>\n\nThe Theory of Constraints says it plainly: the line's output is limited by one station. Improving any other station does not change the line's output. It just makes a non-bottleneck run faster while the bottleneck still holds everything back.\n\nHow do you find the bottleneck? Look for <strong>WIP piling up</strong> in front of a station. Look for the <strong>longest cycle time</strong> on the line. Look for the station that everyone walks over to when there's a problem.\n\n<strong>Start there. Not wherever is easiest or most convenient.</strong>`,
+    yt:`📺 <strong>YouTube concept:</strong> "Why fixing the wrong station is the most expensive mistake in lean manufacturing — and how to find your real bottleneck in 5 minutes."`},
+  2:{icon:'👁',eyebrow:"Coach's Note — Before Gate 2",title:"Observe Before You Time",
+    body:`<strong>Taiichi Ohno had one rule for his engineers: stand and watch for one hour before you touch anything.</strong>\n\nMost time studies fail because the analyst starts the stopwatch before they understand what they're watching. You need to see the full cycle — the setups, the waits, the compensations operators have built in to deal with problems.\n\nThe <strong>baseline cycle time</strong> is the single most important number in this study. It's your before. Without a credible before number, you can't prove any after.\n\nEnter what you actually observed. Not what the standard says. Not what the supervisor thinks it should be. What you saw with your own eyes.`,
+    yt:`📺 <strong>YouTube concept:</strong> "Ohno's Rule — why most time studies start wrong and how to fix it before you pick up a stopwatch."`},
+  3:{icon:'🦺',eyebrow:"Coach's Note — Before Gate 3",title:"Fix the Body First",
+    body:`<strong>You cannot standardize a process that injures your operator.</strong>\n\nThis is the rule that every industrial engineering textbook puts in a footnote and every real plant learns the hard way: if the method requires an awkward posture, excessive force, or repetitive strain — that IS the problem. Not the cycle time.\n\nImproving a process before resolving the ergonomic issues means you're locking in an injury risk as the standard. You'll get the time down. You'll also get the comp claim up.\n\n<strong>Flag it. Fix it. Re-study. In that order.</strong>\n\nNote: reaching into a red zone occasionally is different from doing it every cycle. Frequency matters as much as the risk type.`,
+    yt:`📺 <strong>YouTube concept:</strong> "Why ergonomics comes before cycle time — the sequence most engineers get backwards."`},
+  4:{icon:'⏱',eyebrow:"Coach's Note — Before Gate 4",title:"How to Capture Properly",
+    body:`<strong>Cycle 1 is always wrong. Plan for it.</strong>\n\nThe Hawthorne Effect is real: operators change their pace when they know they're being observed. Cycle 1 is almost always faster or slower than normal. Capture it anyway — but the system will discard it automatically.\n\n<strong>Minimum 3 valid cycles.</strong> 5 is better. The average of cycles 2–5 is your study data.\n\nFor short cycles (under 30 seconds), aim for 5–10 cycles. Variation is harder to see with fewer observations.\n\n<strong>Video is your best friend.</strong> You cannot write and watch simultaneously. Load the video, let it run, tap Step End when the operator transitions. You can always review and correct in the Variation gate.\n\nUse the quick note bar to log observations without stopping the timer.`,
+    yt:`📺 <strong>YouTube concept:</strong> "The Hawthorne Effect and why cycle 1 is always wrong — how to run a time study that survives peer review."`},
+  5:{icon:'📊',eyebrow:"Coach's Note — Before Gate 5",title:"Variation Before Waste",
+    body:`<strong>If a process varies by 30% cycle to cycle, you don't have one process. You have several.</strong>\n\nRemoving waste from an unstable process is pointless — the variation will mask whatever you removed. You might eliminate 10 seconds of waste and not see it in the numbers because the process swings 15 seconds between cycles.\n\n<strong>High variation tells you something is wrong with the method, the material, or the machine.</strong> That root cause must be addressed before waste removal begins.\n\nShort-cycle steps (under 5 seconds) get a different threshold — reaction time and minor inconsistencies naturally create higher percentage variation on short operations. A 0.2-second variation on a 1-second step looks like 20% CV but is meaningless. The tool handles this automatically.`,
+    yt:`📺 <strong>YouTube concept:</strong> "Why you must stabilize before you optimize — the mistake that makes lean improvements disappear."`},
+  6:{icon:'🗑',eyebrow:"Coach's Note — Before Gate 6",title:"ERACS — What It Actually Means",
+    body:`<strong>ERACS is a prioritized decision filter, not a label.</strong>\n\n<strong>E — Eliminate:</strong> Can this step be removed entirely? Does the customer pay for it? If no and no — eliminate it first before all other options.\n\n<strong>R — Rearrange:</strong> Is this step in the wrong sequence? Would doing it earlier or later reduce travel, waiting, or setups? Often the cheapest improvement.\n\n<strong>A — Add/Subtract:</strong> Should we combine this with another step or split it? Is the batch size right for the demand?\n\n<strong>C — Combine:</strong> Can two operations be done simultaneously? Can one operator do two sequential steps without putting the part down?\n\n<strong>S — Simplify:</strong> If you can't eliminate, rearrange, add, subtract, or combine — simplify. Reduce the complexity of the motion, the tool, the fixture.\n\n<strong>Apply E before C before S.</strong> Simplifying waste is still waste.`,
+    yt:`📺 <strong>YouTube concept:</strong> "ERACS explained — the 5-question filter that replaces opinion with method in your improvement sessions."`},
+};
+
+function showCoach(gateNum, callback){
+  if(coachSkip){if(callback)callback();return;}
+  const note=COACH_NOTES[gateNum];if(!note){if(callback)callback();return;}
+  coachCallback=callback||null;
+  $('coachEyebrow').textContent=note.eyebrow;
+  $('coachIcon').textContent=note.icon;
+  $('coachTitle').textContent=note.title;
+  $('coachBody').innerHTML=note.body.replace(/\n/g,'<br><br>');
+  const ytEl=$('coachYT');
+  if(note.yt){ytEl.innerHTML=note.yt;ytEl.style.display='block';}
+  else ytEl.style.display='none';
+  $('coachSkipToggle').checked=false;
+  $('coachOverlay').style.display='flex';
+}
+
+function dismissCoach(){
+  $('coachOverlay').style.display='none';
+  if(coachCallback){const cb=coachCallback;coachCallback=null;cb();}
+}
+
+function setCoachSkip(val){coachSkip=val;}
+
+const _origGoGate=goGate;
+window.goGate=function(n){
+  const COACHED=[1,2,3,4,5,6];
+  if(COACHED.includes(n)&&n>DX.gate){
+    showCoach(n,()=>_origGoGate(n));
+  } else {
+    _origGoGate(n);
+  }
+};
+
+// ═══════════════════════════
+// INTERACTIVE YAMAZUMI
+// ═══════════════════════════
+let yamStepStates={};
+
+function initYamStates(){
+  yamStepStates={};
+  DX.ergoSteps.forEach(s=>{yamStepStates[s.name]={active:true,scale:1.0};});
+}
+
+function yamResetAll(){
+  Object.keys(yamStepStates).forEach(k=>{yamStepStates[k]={active:true,scale:1.0};});
+  renderYamazumi();renderYamSliders();
+}
+
+function renderYamSliders(){
+  const el=$('yamSliders');if(!el)return;
+  el.innerHTML='';
+  const stepNames=DX.ergoSteps.map(s=>s.name);
+  if(!stepNames.length){el.innerHTML='<div class="empty-state">Complete capture in Gate 4 first.</div>';return;}
+  stepNames.forEach(name=>{
+    const vd=DX.variation[name];
+    const avg=stepCT(name);
+    const state=yamStepStates[name]||{active:true,scale:1.0};
+    const wc=DX.waste[name];
+    const wcColor=wc==='va'?'var(--green)':wc==='wst'?'var(--red)':wc==='inc'?'var(--amber)':'var(--muted)';
+    const card=document.createElement('div');
+    card.style.cssText='background:var(--s1);border:1px solid var(--br);border-radius:var(--r);padding:10px 12px;margin-bottom:8px;display:flex;align-items:center;gap:10px';
+    card.innerHTML=`
+      <div style="width:10px;height:10px;border-radius:50%;background:${wcColor};flex-shrink:0"></div>
+      <div style="flex:1;min-width:0">
+        <div style="font-family:var(--head);font-size:12px;font-weight:700;color:var(--forest);text-transform:uppercase;letter-spacing:.3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${name}</div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:4px">
+          <input type="range" min="0" max="100" value="${Math.round(state.scale*100)}"
+            ${!state.active?'disabled':''}
+            oninput="setYamScale('${name}',this.value)"
+            style="flex:1;accent-color:var(--green);height:4px">
+          <span style="font-family:var(--mono);font-size:10px;color:var(--muted);min-width:45px;text-align:right" id="yamScale_${name.replace(/\s+/g,'_')}">${(avg*state.scale).toFixed(1)}s</span>
+        </div>
+      </div>
+      <button onclick="toggleYamStep('${name}')" style="font-family:var(--mono);font-size:9px;padding:5px 9px;border:1px solid ${state.active?'var(--green)':'var(--br)'};background:${state.active?'var(--gdim)':'var(--s2)'};color:${state.active?'var(--green)':'var(--muted2)'};border-radius:3px;cursor:pointer;flex-shrink:0;letter-spacing:.5px">${state.active?'ON':'OFF'}</button>`;
+    el.appendChild(card);
+  });
+}
+
+function setYamScale(name, val){
+  if(!yamStepStates[name])yamStepStates[name]={active:true,scale:1.0};
+  yamStepStates[name].scale=parseInt(val)/100;
+  const vd=DX.variation[name];
+  const avg=vd?vd.avg:0;
+  const key='yamScale_'+name.replace(/\s+/g,'_');
+  const el=$(key);if(el)el.textContent=(avg*yamStepStates[name].scale).toFixed(1)+'s';
+  renderYamazumi();
+}
+
+function toggleYamStep(name){
+  if(!yamStepStates[name])yamStepStates[name]={active:true,scale:1.0};
+  yamStepStates[name].active=!yamStepStates[name].active;
+  renderYamSliders();
+  renderYamazumi();
+}
+
+function renderYamazumi(){
+  const cv=$('yamCanvas');if(!cv)return;
+  const ctx=cv.getContext('2d');
+  const dpr=window.devicePixelRatio||1;
+  const cssW=cv.clientWidth||360;
+  const cssH=220;
+  cv.width=Math.floor(cssW*dpr);cv.height=Math.floor(cssH*dpr);
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.clearRect(0,0,cssW,cssH);
+
+  const stepNames=DX.ergoSteps.map(s=>s.name);
+  if(!stepNames.length){
+    ctx.fillStyle='rgba(255,255,255,.2)';ctx.font=`12px monospace`;
+    ctx.fillText('Complete capture to see chart',20,cssH/2);return;
+  }
+
+  const stepData=stepNames.map(name=>{
+    const vd=DX.variation[name];
+    const avg=stepCT(name);
+    const state=yamStepStates[name]||{active:true,scale:1.0};
+    const curDur=avg;
+    const futureDur=state.active?avg*state.scale:0;
+    const wc=DX.waste[name];
+    return{name,avg,curDur,futureDur,wc,active:state.active};
+  });
+
+  const takt=DX.setup.takt||0;
+  const curTotal=stepData.reduce((a,s)=>a+s.curDur,0);
+  const futureTotal=stepData.reduce((a,s)=>a+s.futureDur,0);
+  const maxVal=Math.max(curTotal,futureTotal,takt)*1.15||1;
+
+  const padL=44,padR=10,padT=14,padB=32;
+  const w=cssW-padL-padR,h=cssH-padT-padB;
+
+  ctx.strokeStyle='rgba(255,255,255,.06)';ctx.lineWidth=1;
+  for(let g=0;g<=4;g++){
+    const y=padT+h-(h*g/4);
+    ctx.beginPath();ctx.moveTo(padL,y);ctx.lineTo(padL+w,y);ctx.stroke();
+    ctx.fillStyle='rgba(255,255,255,.4)';ctx.font=`10px monospace`;
+    const v=maxVal*g/4;
+    ctx.fillText(v>=60?(v/60).toFixed(1)+'m':v.toFixed(0)+'s',6,y+3);
+  }
+
+  const barW=Math.min(80,w/2.6);
+  const gap=(w-barW*2)/3;
+  const barColors={'va':'#40916C','inc':'#D97706','wst':'#B91C1C','null':'#6B7280'};
+
+  let yBase=padT+h;
+  stepData.forEach(s=>{
+    if(s.curDur<=0)return;
+    const segH=(s.curDur/maxVal)*h;
+    yBase-=segH;
+    ctx.fillStyle=barColors[s.wc||'null']||'#6B7280';
+    ctx.fillRect(padL+gap,yBase,barW,segH);
+    if(segH>14){ctx.fillStyle='rgba(255,255,255,.7)';ctx.font='9px monospace';ctx.fillText(s.name.substring(0,10),padL+gap+2,yBase+segH-3);}
+  });
+
+  yBase=padT+h;
+  stepData.forEach(s=>{
+    if(s.futureDur<=0)return;
+    const segH=(s.futureDur/maxVal)*h;
+    yBase-=segH;
+    const col=barColors[s.wc||'null']||'#6B7280';
+    ctx.fillStyle=col;ctx.globalAlpha=0.65;
+    ctx.fillRect(padL+gap*2+barW,yBase,barW,segH);
+    ctx.globalAlpha=1;
+  });
+
+  ctx.fillStyle='rgba(255,255,255,.55)';ctx.font='10px monospace';
+  ctx.fillText('CURRENT',padL+gap,padT+h+18);
+  ctx.fillText('FUTURE',padL+gap*2+barW,padT+h+18);
+
+  ctx.fillStyle='rgba(255,255,255,.7)';ctx.font='bold 11px monospace';
+  const curY=padT+h-(curTotal/maxVal)*h-4;
+  const futY=padT+h-(futureTotal/maxVal)*h-4;
+  ctx.fillText(curTotal.toFixed(1)+'s',padL+gap+barW+2,Math.max(curY,padT+12));
+  ctx.fillStyle=futureTotal<takt?'#74C69D':'#F87171';
+  ctx.fillText(futureTotal.toFixed(1)+'s',padL+gap*2+barW*2+2,Math.max(futY,padT+12));
+
+  if(takt>0){
+    const taktY=padT+h-(takt/maxVal)*h;
+    ctx.strokeStyle='#F59E0B';ctx.lineWidth=2;ctx.setLineDash([6,4]);
+    ctx.beginPath();ctx.moveTo(padL,taktY);ctx.lineTo(padL+w,taktY);ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle='#F59E0B';ctx.font='bold 10px monospace';
+    ctx.fillText('TAKT '+takt+'s',padL+w-60,taktY-3);
+  }
+
+  $('yamLegend').innerHTML=[
+    {c:'#40916C',l:'Value Creating'},
+    {c:'#D97706',l:'Incidental'},
+    {c:'#B91C1C',l:'Waste'},
+    {c:'#F59E0B',l:'Takt Line'},
+    {c:'#6B7280',l:'Unclassified'},
+  ].map(x=>`<span style="display:inline-flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:${x.c};display:inline-block"></span><span>${x.l}</span></span>`).join('');
+
+  const saving=curTotal-futureTotal;
+  const savingPct=curTotal>0?((saving/curTotal)*100).toFixed(0):0;
+  const taktEl=$('yamCTDisplay');
+  if(taktEl)taktEl.textContent=`Current: ${curTotal.toFixed(1)}s → Future: ${futureTotal.toFixed(1)}s (${saving>0?'-':''}${saving.toFixed(1)}s, ${savingPct}%) · Takt: ${takt}s`;
+}
+
+// ── Patch renderOutput to run Yamazumi + P2 table ──
+const _origRenderOutput=renderOutput;
+window.renderOutput=function(){
+  _origRenderOutput();
+  initYamStates();
+  renderYamazumi();
+  renderYamSliders();
+  renderTimeStudyTable();
+  renderKataSection();
+};
+
+// Print styles
+const printStyle=document.createElement('style');
+printStyle.textContent=`@media print{#coachOverlay,#tipModal,#stepModal,#capSheet,.foot,#prog7,.cap-bar,.quick-note-bar,.cycle-tabs,#yamSliders,#phase1Output,#phase2Output,#phase3Output,#timeStudyTable,#studyMeta,.slbl:not(.kata-print-show){display:none!important}#kataSection{display:block!important}.kata-card{break-inside:avoid;page-break-inside:avoid}.kata-exp-table td[contenteditable]{border:none}.scr.on{min-height:auto}.scroll{overflow:visible;padding-bottom:0}body{background:#fff}canvas{max-width:100%}}`;
+document.head.appendChild(printStyle);
+
+</script>
+<div id="saveFlash" class="save-flash">✓ Saved</div>
+</body>
+</html>
