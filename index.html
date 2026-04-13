@@ -522,8 +522,19 @@ body{overscroll-behavior:none}
 <!-- GATE 7: SCIENTIFIC THINKING -->
 <div class="scr" id="S7">
   <div id="prog7"></div>
-  <div class="gate-hdr"><div class="gate-tag">Gate 7 of 7 — Scientific Thinking</div><div class="gate-title">PDCA</div><div class="gate-desc">Target state. Obstacles. Experiments. Weekly tracking. Export your plan.</div></div>
+  <div class="gate-hdr"><div class="gate-tag">Gate 7 of 7 — Scientific Thinking</div><div class="gate-title">Scientific Thinking</div><div class="gate-desc">Five questions. One step at a time.</div></div>
   <div class="scroll">
+    <!-- Five Questions — always visible at top of Gate 7 -->
+    <div style="background:var(--forest);border-radius:var(--r2);padding:16px 18px;margin-bottom:16px">
+      <div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.45);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px">The Five Questions</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div style="display:flex;align-items:flex-start;gap:12px"><div style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--amber2);flex-shrink:0;width:20px">01</div><div style="font-family:var(--body);font-size:14px;color:#fff;line-height:1.4">Where do you want to be?</div></div>
+        <div style="display:flex;align-items:flex-start;gap:12px"><div style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--amber2);flex-shrink:0;width:20px">02</div><div style="font-family:var(--body);font-size:14px;color:#fff;line-height:1.4">Where are you now?</div></div>
+        <div style="display:flex;align-items:flex-start;gap:12px"><div style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--amber2);flex-shrink:0;width:20px">03</div><div style="font-family:var(--body);font-size:14px;color:#fff;line-height:1.4">What's stopping you from getting there today?</div></div>
+        <div style="display:flex;align-items:flex-start;gap:12px"><div style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--amber2);flex-shrink:0;width:20px">04</div><div style="font-family:var(--body);font-size:14px;color:#fff;line-height:1.4">What step will you take?</div></div>
+        <div style="display:flex;align-items:flex-start;gap:12px"><div style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--amber2);flex-shrink:0;width:20px">05</div><div style="font-family:var(--body);font-size:14px;color:#fff;line-height:1.4">When will it be ready to see what you learned from that step?</div></div>
+      </div>
+    </div>
     <div id="pdcaSection" style="margin-bottom:12px"></div>
     <div id="weeklyTrackingSection" style="margin-bottom:12px"></div>
     <!-- re-study buttons — live here in Gate 7 -->
@@ -1093,7 +1104,7 @@ function capDoStart(){if(DX.running)return;DX.stepStart=elapsed()/1000;try{if(vi
 
 function capDoStep(){
   if(!DX.running)return;
-  stopTimer();try{if(vid.src)vid.pause();}catch(e){}
+  stopTimer();try{vid.pause();}catch(e){}
   DX.running=false;DX.frozen=true;
   const endT=elapsed()/1000;const dur=Math.max(0,endT-(DX.stepStart||0));
   $('csDur').textContent=fmtS(dur);$('csEl').textContent=fmtS(endT);
@@ -1172,7 +1183,7 @@ function capSave(){
 }
 
 function capDiscard(){DX.frozen=false;DX._pending=null;quickNoteBuffer=[];$('capSheet').style.display='none';$('capStart').textContent='▶ Resume';$('capStart').disabled=false;$('capStep').disabled=true;resetCSFlags();}
-function capDoEndCycle(){if(DX.running){stopTimer();DX.running=false;}try{if(vid.src)vid.pause();}catch(e){}if(DX.cycles[DX.curCycle].length>0){DX.cycles.push([]);capSwitchCycle(DX.cycles.length-1);}resetTimer();$('capStart').textContent='▶ Start';$('capStart').disabled=false;$('capStep').disabled=true;$('capEnd').disabled=true;renderCapTabs();checkCapReady();}
+function capDoEndCycle(){if(DX.running){stopTimer();DX.running=false;}try{vid.pause();}catch(e){}if(DX.cycles[DX.curCycle].length>0){DX.cycles.push([]);capSwitchCycle(DX.cycles.length-1);}resetTimer();$('capStart').textContent='▶ Start';$('capStart').disabled=false;$('capStep').disabled=true;$('capEnd').disabled=true;renderCapTabs();checkCapReady();}
 function gate3Next(){checkCapReady();if($('capNextBtn').disabled){alert('Complete at least 2 valid cycles (cycles 2 and 3+) before proceeding.');return;}autosave();const f=$('saveFlash');if(f){f.textContent='📥 Capture saved — tap ⬇ Save Backup to download';f.style.color='var(--amber)';f.style.background='var(--adim)';f.style.borderColor='rgba(217,119,6,.3)';f.style.opacity='1';clearTimeout(f._t);f._t=setTimeout(()=>{f.style.opacity='0';},5000);}goGate(4);}
 
 // ═══ GATE 5 — VARIATION ═══
@@ -2048,7 +2059,7 @@ const COACH_NOTES={
   3:{icon:'🦺',eyebrow:"Coach's Note — Gate 3",title:'Fix the Body First',body:'<strong>You cannot standardize a process that injures your operator.</strong><br><br>If the method requires an awkward posture, excessive force, or repetitive strain — that IS the problem. Not the cycle time.<br><br><strong>Flag it. Fix it. Re-study. In that order.</strong>'},
   4:{icon:'⏱',eyebrow:"Coach's Note — Gate 4",title:'How to Capture Properly',body:'<strong>Cycle 1 is always wrong. Plan for it.</strong><br><br>The Hawthorne Effect is real: operators change their pace when observed. Capture Cycle 1 anyway — the system discards it automatically.<br><br><strong>Minimum 3 valid cycles.</strong> Use quick notes to log observations without stopping the timer.'},
   5:{icon:'📊',eyebrow:"Coach's Note — Gate 5",title:'Variation Before Waste',body:'<strong>If a process varies by 30% cycle to cycle, you don\'t have one process. You have several.</strong><br><br>Removing waste from an unstable process is pointless — variation will mask whatever you removed.<br><br>High variation tells you something is wrong with the method, material, or machine. Address that root cause first.'},
-  6:{icon:'🗑',eyebrow:"Coach's Note — Gate 6",title:'CLEAR — What It Actually Means',body:'<strong>C — Cut it:</strong> Remove entirely. No customer value.<br><strong>L — Link it:</strong> Wrong sequence? Reorder first.<br><strong>E — Exchange it:</strong> Combine or split steps.<br><strong>A — Add to it:</strong> Two ops simultaneously?<br><strong>R — Reduce complexity:</strong> Last resort if you can\'t do E, R, A, or C.<br><br><strong>Apply E before C before S. Simplifying waste is still waste.</strong>'},
+  6:{icon:'🗑',eyebrow:"Coach's Note — Gate 6",title:'CLEAR — What It Actually Means',body:'<strong>C — Cut it:</strong> Can this step be removed completely? No customer value — cut it. Do not simplify what should not exist.<br><br><strong>L — Link it:</strong> Can one operator perform this step without setting the part down? Link steps that share a boundary.<br><br><strong>E — Exchange it:</strong> Would doing this step earlier or later eliminate waste between steps? Wrong sequence creates motion, waiting, redundant setup.<br><br><strong>A — Add to it:</strong> Is the step boundary, batch size, or split point correct for the demand rate? Adjust the work content at this step.<br><br><strong>R — Reduce complexity:</strong> Only if you cannot Cut, Link, Exchange, or Add. Simplifying waste is still waste.<br><br><strong>Work the sequence. Never skip to Reduce complexity.</strong>'},
 };
 function showCoach(n,cb){if(coachSkip){if(cb)cb();return;}const note=COACH_NOTES[n];if(!note){if(cb)cb();return;}coachCallback=cb||null;$('coachEyebrow').textContent=note.eyebrow;$('coachIcon').textContent=note.icon;$('coachTitle').textContent=note.title;$('coachBody').innerHTML=note.body;const yt=$('coachYT');if(note.yt){yt.innerHTML=note.yt;yt.style.display='block';}else yt.style.display='none';$('coachSkipToggle').checked=false;$('coachOverlay').style.display='flex';}
 function dismissCoach(){$('coachOverlay').style.display='none';if(coachCallback){const cb=coachCallback;coachCallback=null;cb();}}
