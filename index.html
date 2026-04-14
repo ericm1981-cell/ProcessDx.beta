@@ -2254,7 +2254,8 @@ printStyle.textContent=`
   * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
   body { background: #fff !important; margin: 0; padding: 0; font-family: 'Barlow', sans-serif; }
 
-  /* ── HIDE EVERYTHING except Gate 7 scroll content ── */
+  /* ── HIDE EVERYTHING ── */
+  #S0, #S1, #S2, #S3, #S4, #S5, #S6,
   #coachOverlay, #tipModal, #stepModal, #capSheet,
   .foot, #prog7, .cap-bar, .quick-note-bar, .cycle-tabs,
   #yamSliders, #studyMeta, #afterStudySection, #afterStudyBtnWrap,
@@ -2263,10 +2264,10 @@ printStyle.textContent=`
   button, .qbtn, .ctmethod-toggle, .var-override-btn,
   .save-flash { display: none !important; }
 
-  /* ── SHOW GATE 7 ── */
+  /* ── SHOW GATE 7 ONLY ── */
   .scr { display: none !important; min-height: auto !important; }
   #S7 { display: block !important; }
-  .scroll { overflow: visible !important; padding: 0 !important; }
+  #S7 .scroll { overflow: visible !important; padding: 0 !important; }
 
   /* ── PAGE 1: ROI header + Yamazumi ── */
   #roiOutput { margin-bottom: 12pt; }
