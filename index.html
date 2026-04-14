@@ -1423,8 +1423,6 @@ function renderTimeStudyTable(){
     const wt=DX.wasteType&&DX.wasteType[name];const WTLABEL={T:'Transport',I:'Inventory',M:'Motion',W:'Waiting',O:'Overproduction',P:'Over-processing',D:'Defects',U:'Unused Skills'};
     const clsDisplay=cls?`${cls==='va'?'VA':'Waste'}${wt?' — '+WTLABEL[wt]:''}`:' — ';
     const clsPrintClass=cls==='va'?'print-va':cls==='wst'?'print-wst':'print-unc';
-    const varNote=notes.join(' · ')||'—';
-    const varPrintClass=notes.some(n=>n.includes('CV')||n.includes('Var'))?'print-var-warn':'print-var-ok';
     const es=DX.ergoSteps.find(s=>s.name===name)||{flags:[],freq:{}};
     const notes=[];
     if((es.flags||[]).length)notes.push('Ergo: '+(es.flags||[]).join(', '));
@@ -1438,6 +1436,8 @@ function renderTimeStudyTable(){
     // Quick notes logged during capture — show if text mentions step or show all if no step association
     const qNotes=DX.quickNotes&&DX.quickNotes.length?[...new Set(DX.quickNotes.filter(n=>{const txt=(n.text||'').toLowerCase();return txt.includes(name.toLowerCase().substring(0,8));}).map(n=>n.text))]:[];
     if(qNotes.length)notes.push(...qNotes);
+    const varNote=notes.join(' · ')||'—';
+    const varPrintClass=notes.some(n=>n.includes('CV')||n.includes('Var'))?'print-var-warn':'print-var-ok';
     const bgEven=i%2===0?'var(--s1)':'var(--s2)';const barColor=cls?clsColor[cls]:'var(--br2)';
     return`<tr>
       <td style="padding:8px 10px;border-bottom:1px solid var(--br);background:${bgEven}"><span class="step-badge" style="font-family:var(--mono);font-size:9px;color:var(--green);background:var(--gdim);border:1px solid rgba(64,145,108,.25);border-radius:3px;padding:2px 5px;letter-spacing:.5px;margin-right:6px">${String(i+1).padStart(2,'0')}</span>${name}</td>
