@@ -427,9 +427,11 @@ body{overscroll-behavior:none}
     </div>
     <input type="file" id="vidInput" accept="video/*" style="display:none">
   </div>
+  <div id="vidSyncBanner" style="display:none;background:var(--amber);color:#fff;font-family:var(--mono);font-size:12px;padding:10px 16px;text-align:center;letter-spacing:.3px;font-weight:600;flex-shrink:0"></div>
   <div class="scroll" style="padding-top:10px">
     <div class="info-box" id="capCycle1Warning"><strong>Cycle 1 will be discarded.</strong> Operators adjust pace when first observed (Hawthorne effect). Capture it — only cycles 2+ are used for analysis.<br><br><strong style="color:var(--amber)">Target 10 cycles.</strong> 3 is the minimum to proceed. With only 3, you get 2 usable data points — not enough to confirm a reliable low-rep pair. 10 cycles gives the variation analysis real signal and makes the lowest-repeatable CT defensible to anyone reviewing your work.</div>
     <div id="capStepList"><div class="empty-state">Tap ▶ Start.<br>When operator finishes a step — tap ◼ Step End.<br>Video pauses. Name the step. Save &amp; Continue.</div></div>
+    <div id="vidLogDisplay" style="display:none;margin-bottom:10px"></div>
     <div id="capSumBar" style="display:none;background:var(--forest);border-radius:var(--r);padding:10px 14px;margin-top:8px;display:flex;justify-content:space-between;align-items:center">
       <div style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.55)" id="capSumLbl">Cycle 1</div>
       <div style="font-family:var(--mono);font-size:18px;color:var(--greenlt)" id="capSumVal">0.00s</div>
@@ -504,6 +506,7 @@ body{overscroll-behavior:none}
     <div id="phase3Output"></div>
     <div id="savingsBlock" style="margin:16px 0"></div>
     <div id="timeStudyTable" style="margin-bottom:12px"></div>
+    <div id="cycleLog" style="margin-bottom:12px"></div>
     <!-- capture observations — quick notes + step notes render here -->
     <div id="captureObservations" style="margin-bottom:12px"></div>
     <!-- after-state comparison renders here -->
@@ -627,6 +630,20 @@ body{overscroll-behavior:none}
 <!-- TOOLTIP MODAL -->
 <div id="tipModal"><div class="tip-box"><div class="tip-title" id="tipTitle">—</div><div class="tip-body" id="tipBody" style="white-space:pre-line">—</div><button class="tip-close" onclick="$('tipModal').style.display='none'">Got It</button></div></div>
 
+<!-- VIDEO RE-LINK MODAL -->
+<div id="vidRelinkModal" style="display:none;position:fixed;inset:0;background:rgba(27,67,50,.75);z-index:450;align-items:flex-end;backdrop-filter:blur(4px)">
+  <div style="background:var(--s1);border-top:4px solid var(--amber);border-radius:14px 14px 0 0;padding:20px 20px calc(24px + var(--sb));width:100%;max-height:80vh;overflow-y:auto">
+    <div style="font-family:var(--mono);font-size:9px;color:var(--amber);letter-spacing:2px;text-transform:uppercase;margin-bottom:6px">Study Loaded — Video Re-Link Required</div>
+    <div style="font-family:var(--head);font-size:20px;font-weight:800;color:var(--forest);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Re-link Your Videos</div>
+    <div style="font-size:13px;color:var(--slate);line-height:1.6;margin-bottom:16px">This study used <strong id="relinkVidCount">0</strong> video file(s). The browser can't store video files — re-link each one to restore video seek. Your captured data is already loaded.</div>
+    <div id="relinkList" style="margin-bottom:16px"></div>
+    <div style="display:flex;gap:10px">
+      <button class="btn-primary btn-amber" onclick="closeRelinkModal()" style="flex:1;font-size:14px">Done — Skip Remaining</button>
+    </div>
+  </div>
+</div>
+<input type="file" id="relinkInput" accept="video/*" style="display:none">
+
 <div id="saveFlash" class="save-flash">✓ Saved</div>
 <script>
 'use strict';
@@ -639,14 +656,60 @@ const DX={
   running:false,frozen:false,raf:null,tStart:null,tAccum:0,stepStart:null,
   quickNotes:[],variation:{},varOverrides:{},waste:{},g5notes:'',
   eracs:{},ctMethod:'avg',wasteType:{},
+  vidLog:[],  // [{sessionElapsed, label, idx}] — one entry per video loaded
   kata:{targetCT:'',targetDate:'',conditions:[],successCriteria:'',obstacles:[],experiments:[],
-        weeklyTracking:[]},  // ITEM 4
-  // ── After-state fields (already in file per spec) ──
+        weeklyTracking:[]},
   afterStudies:[],afterStudyMode:false,afterStudyDraft:null,_asOrig:null,
 };
 
 const $=id=>document.getElementById(id);
 const fmtMs=ms=>{const s=ms/1000,m=Math.floor(s/60);return`${String(m).padStart(2,'0')}:${(s%60).toFixed(1).padStart(4,'0')}`;};
+// Format elapsed seconds as MM:SS for video scrubbing
+const fmtElapsed=sec=>{const s=+sec||0;const m=Math.floor(s/60);return`${String(m).padStart(2,'0')}:${String(Math.floor(s%60)).padStart(2,'0')}`;};
+
+// Get which video a step belongs to and its seek position within that video
+function getVidSegment(stepElapsed){
+  const log=DX.vidLog||[];
+  if(!log.length)return{label:'Video 1',seekTime:stepElapsed,idx:0,offset:0};
+  // Find the last vidLog entry where sessionElapsed <= stepElapsed
+  let seg=log[0];
+  for(let i=0;i<log.length;i++){if(log[i].sessionElapsed<=stepElapsed)seg=log[i];else break;}
+  const seekTime=stepElapsed-seg.sessionElapsed;
+  return{label:seg.label,seekTime:Math.max(0,seekTime-0.3),displaySeek:Math.max(0,seekTime),idx:seg.idx,offset:seg.sessionElapsed};
+}
+
+// Format elapsed for display in cycle log — shows "V2 · 04:15" if multi-video
+function fmtStepTimestamp(stepElapsed){
+  const log=DX.vidLog||[];
+  const seg=getVidSegment(stepElapsed);
+  if(log.length<=1)return fmtElapsed(stepElapsed);
+  return`${seg.label.replace('Video','V')} · ${fmtElapsed(seg.displaySeek)}`;
+}
+
+// Seek video to step — handles multi-video with instruction if wrong video loaded
+function seekToStep(stepElapsed){
+  const seg=getVidSegment(stepElapsed);
+  const loadedIdx=vid._vidIdx!=null?vid._vidIdx:0;
+  const log=DX.vidLog||[];
+  if(log.length>1&&loadedIdx!==seg.idx){
+    // Wrong video loaded — show instruction
+    const toast=`Load ${seg.label} — seek to ${fmtElapsed(seg.displaySeek)}`;
+    _showSaveStatus(toast,true);
+    // Also show a visible alert in capture area
+    const banner=$('vidSyncBanner');
+    if(banner){
+      banner.style.display='block';
+      banner.textContent=`📹 ${seg.label} required — scrub to ${fmtElapsed(seg.displaySeek)}`;
+      clearTimeout(banner._t);banner._t=setTimeout(()=>{banner.style.display='none';},6000);
+    }
+    return;
+  }
+  try{
+    vid.pause();
+    vid.currentTime=seg.seekTime;
+    _showSaveStatus(`↩ Seeking ${seg.label} → ${fmtElapsed(seg.displaySeek)}`,false);
+  }catch(e){}
+};
 const fmtS=s=>`${(+s||0).toFixed(2)}s`;
 const elapsed=()=>{let ms=DX.tAccum;if(DX.tStart!==null)ms+=perf()-DX.tStart;return ms;};
 
@@ -700,6 +763,7 @@ function startNew(){
     ergoSteps:[],cycles:[[]],curCycle:0,running:false,frozen:false,raf:null,tStart:null,tAccum:0,stepStart:null,
     quickNotes:[],variation:{},varOverrides:{},waste:{},g5notes:'',eracs:{},ctMethod:'avg',wasteType:{},
     kata:{targetCT:'',targetDate:'',conditions:[],successCriteria:'',obstacles:[],experiments:[],weeklyTracking:[]},
+    vidLog:[],
     afterStudies:[],afterStudyMode:false,afterStudyDraft:null,_asOrig:null,
     afterStudy:{cycles:[],variation:{},captured:false,ctLog:[]},
     yamStates:{},demoMode:false,
@@ -717,6 +781,7 @@ function startDemo(){
     ergoSteps:[],cycles:[[]],curCycle:0,running:false,frozen:false,raf:null,tStart:null,tAccum:0,stepStart:null,
     quickNotes:[],variation:{},varOverrides:{},waste:{},g5notes:'',eracs:{},ctMethod:'avg',wasteType:{},
     kata:{targetCT:'',targetDate:'',conditions:[],successCriteria:'',obstacles:[],experiments:[],weeklyTracking:[]},
+    vidLog:[],
     afterStudies:[],afterStudyMode:false,afterStudyDraft:null,_asOrig:null,
     afterStudy:{cycles:[],variation:{},captured:false,ctLog:[]},
     yamStates:{},demoMode:true,
@@ -1053,7 +1118,28 @@ function setFreq(idx,flag,freq){const s=DX.ergoSteps[idx];if(!s.freq)s.freq={};s
 // ═══ GATE 3 — CAPTURE (ITEM 3) ═══
 const vid=$('vid');
 $('vidInput').addEventListener('change',e=>{const f=e.target.files[0];e.target.value='';if(f)loadVid(f);});
-function loadVid(file){if(vid._url){URL.revokeObjectURL(vid._url);vid._url=null;}vid.pause();vid.removeAttribute('src');vid.load();const url=URL.createObjectURL(file);vid._url=url;vid.onloadedmetadata=()=>{$('vEmpty').style.display='none';vid.style.display='block';vid.onloadedmetadata=null;};vid.onerror=()=>{vid.style.display='none';$('vEmpty').style.display='flex';};vid.src=url;}
+function loadVid(file){
+  if(vid._url){URL.revokeObjectURL(vid._url);vid._url=null;}
+  vid.pause();vid.removeAttribute('src');vid.load();
+  const url=URL.createObjectURL(file);vid._url=url;
+  // Log sync point — capture session elapsed at moment this video was loaded
+  if(!DX.vidLog)DX.vidLog=[];
+  const vidIdx=DX.vidLog.length;
+  const syncElapsed=elapsed()/1000;
+  DX.vidLog.push({sessionElapsed:syncElapsed,label:'Video '+(vidIdx+1),idx:vidIdx,fileName:file.name});
+  vid._vidIdx=vidIdx;
+  vid.onloadedmetadata=()=>{
+    $('vEmpty').style.display='none';vid.style.display='block';vid.onloadedmetadata=null;
+    // Show sync banner if there are already captured cycles
+    const hasCycles=DX.cycles.slice(1).some(c=>c&&c.length>0);
+    if(hasCycles&&vidIdx>0){
+      _showSaveStatus(`Video ${vidIdx+1} loaded · sync @ ${fmtElapsed(syncElapsed)}`,true);
+    }
+  };
+  vid.onerror=()=>{vid.style.display='none';$('vEmpty').style.display='flex';};
+  vid.src=url;
+  autosave();
+}
 vid.addEventListener('timeupdate',()=>{if(vid.duration)$('pFill').style.width=(vid.currentTime/vid.duration*100)+'%';});
 function flashBtn(btn,msg,ms){if(!btn)return;const orig=btn.textContent;btn.textContent=msg;setTimeout(()=>{btn.textContent=orig;},ms||600);}
 function toggleVidPause(){const btn=this;if(!vid.src&&!vid._url){flashBtn(btn,'No video',800);return;}if(vid.paused||vid.ended){const p=vid.play();if(p&&p.then){p.then(()=>flashBtn(btn,'▶ Playing',500)).catch(()=>flashBtn(btn,'Tap again',800));}else flashBtn(btn,'▶ Playing',500);}else{vid.pause();flashBtn(btn,'⏸ Paused',600);}}
@@ -1064,7 +1150,23 @@ function toggleAllClear(){DX.ergoAllClear=!DX.ergoAllClear;const btn=$('allClear
 let quickNoteBuffer=[];
 function saveQuickNote(){const v=$('quickNote').value.trim();if(!v)return;const note={text:v,cycle:DX.curCycle+1,t:fmtS(elapsed()/1000)};quickNoteBuffer.push(note);DX.quickNotes.push(note);$('quickNote').value='';renderCapSteps();}
 
-function renderCapScreen(){renderCapTabs();renderCapSteps();checkCapReady();}
+function renderCapScreen(){renderCapTabs();renderCapSteps();renderVidLog();checkCapReady();}
+
+function renderVidLog(){
+  const el=$('vidLogDisplay');if(!el)return;
+  const log=DX.vidLog||[];
+  if(log.length<=1){el.style.display='none';return;}
+  el.style.display='block';
+  el.innerHTML=`<div style="background:var(--s2);border:1px solid var(--br);border-radius:var(--r);padding:10px 12px">
+    <div style="font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px">Video Sync Log — ${log.length} videos</div>
+    ${log.map((v,i)=>`<div style="display:flex;align-items:center;gap:10px;padding:5px 0;${i<log.length-1?'border-bottom:1px solid var(--br)':''}">
+      <span style="font-family:var(--mono);font-size:10px;font-weight:700;color:${i===(vid._vidIdx||0)?'var(--green)':'var(--muted)'};background:${i===(vid._vidIdx||0)?'var(--gdim)':'var(--s2)'};border:1px solid ${i===(vid._vidIdx||0)?'rgba(64,145,108,.3)':'var(--br)'};border-radius:3px;padding:2px 8px">${v.label}</span>
+      <span style="font-family:var(--mono);font-size:10px;color:var(--muted)">Loaded @ session ${fmtElapsed(v.sessionElapsed)}</span>
+      ${i===(vid._vidIdx||0)?'<span style="font-family:var(--mono);font-size:9px;color:var(--green);margin-left:auto">● Active</span>':''}
+    </div>`).join('')}
+    <div style="font-family:var(--mono);font-size:9px;color:var(--muted2);margin-top:8px">Tap any timestamp in the cycle log to seek. If the wrong video is loaded, the tool will tell you which one to switch to.</div>
+  </div>`;
+}
 
 function renderCapTabs(){
   const tabs=$('capTabs');tabs.querySelectorAll('.ctab').forEach(t=>t.remove());
@@ -1111,6 +1213,7 @@ function capDoStep(){
   $('csName').value='';$('csNote').value='';
   if(quickNoteBuffer.length){$('csQuickNotes').style.display='block';$('csQuickNotesList').innerHTML=quickNoteBuffer.map(n=>'• '+n.text).join('<br>');}else{$('csQuickNotes').style.display='none';}
   buildPriorOptions();DX._pending={dur,elapsed:endT};
+  const foot4=document.querySelector('#S4 .foot');if(foot4)foot4.style.visibility='hidden';
   $('capSheet').style.display='flex';setTimeout(()=>$('csName').focus(),300);
 }
 
@@ -1177,6 +1280,7 @@ function capSave(){
   }
   DX.stepStart=DX._pending.elapsed;DX._pending=null;quickNoteBuffer=[];
   DX.frozen=false;$('capSheet').style.display='none';
+  const foot4s=document.querySelector('#S4 .foot');if(foot4s)foot4s.style.visibility='visible';
   autosave();
   try{vid.pause();}catch(e){}
   $('capStart').textContent='▶ Resume';$('capStart').disabled=true;$('capStep').disabled=true;
@@ -1184,7 +1288,16 @@ function capSave(){
   resetCSFlags();renderCapSteps();
 }
 
-function capDiscard(){DX.frozen=false;DX._pending=null;quickNoteBuffer=[];$('capSheet').style.display='none';try{vid.pause();}catch(e){}$('capStart').textContent='▶ Resume';$('capStart').disabled=true;$('capStep').disabled=true;resetCSFlags();setTimeout(()=>{$('capStart').disabled=false;},350);}
+function capDiscard(){
+  DX.frozen=false;DX._pending=null;quickNoteBuffer=[];
+  $('capSheet').style.display='none';
+  try{vid.pause();}catch(e){}
+  // Restore footer visibility
+  const foot=document.querySelector('#S4 .foot');if(foot)foot.style.visibility='visible';
+  $('capStart').textContent='▶ Resume';$('capStart').disabled=true;$('capStep').disabled=true;
+  resetCSFlags();autosave();
+  setTimeout(()=>{$('capStart').disabled=false;},350);
+}
 function capDoEndCycle(){if(DX.running){stopTimer();DX.running=false;}try{vid.pause();}catch(e){}if(DX.cycles[DX.curCycle].length>0){DX.cycles.push([]);capSwitchCycle(DX.cycles.length-1);}resetTimer();$('capStart').textContent='▶ Start';$('capStart').disabled=false;$('capStep').disabled=true;$('capEnd').disabled=true;renderCapTabs();checkCapReady();}
 function gate3Next(){checkCapReady();if($('capNextBtn').disabled){alert('Complete at least 2 valid cycles (cycles 2 and 3+) before proceeding.');return;}autosave();const f=$('saveFlash');if(f){f.textContent='📥 Capture saved — tap ⬇ Save Backup to download';f.style.color='var(--amber)';f.style.background='var(--adim)';f.style.borderColor='rgba(217,119,6,.3)';f.style.opacity='1';clearTimeout(f._t);f._t=setTimeout(()=>{f.style.opacity='0';},5000);}goGate(4);}
 
@@ -1416,6 +1529,9 @@ function renderTimeStudyTable(){
   const takt=DX.setup.takt||0;const ctGap=totalCT-takt;
   const clsColor={'va':'var(--green)','inc':'var(--amber)','wst':'var(--red)'};
   const rowsHTML=names.map((name,i)=>{
+    const vd=DX.variation[name];
+    const lr=vd?(vd.lowrep||vd.avg):avg;
+    const lrFlag=vd&&vd.lowrepFlag;
     const avg=stepCT(name);const stepPct=totalCT>0?Math.round(avg/totalCT*100):0;
     const cls=DX.waste[name];const selectedAct=DX.eracs&&DX.eracs[name];
     const autoRec=cls?(ERACS_MAP[cls]||[]).join(', '):'—';
@@ -1426,7 +1542,6 @@ function renderTimeStudyTable(){
     const es=DX.ergoSteps.find(s=>s.name===name)||{flags:[],freq:{}};
     const notes=[];
     if((es.flags||[]).length)notes.push('Ergo: '+(es.flags||[]).join(', '));
-    const vd=DX.variation[name];
     if(vd&&vd.high)notes.push(vd.isShort?`Var range ${(vd.max-vd.min).toFixed(2)}s`:`CV ${vd.cv.toFixed(1)}%`);
     if(vd&&vd.overridden)notes.push('Var accepted');
     // Step notes from capture sheet — aggregate unique non-empty notes across all valid cycles
@@ -1442,6 +1557,7 @@ function renderTimeStudyTable(){
     return`<tr>
       <td style="padding:8px 10px;border-bottom:1px solid var(--br);background:${bgEven}"><span class="step-badge" style="font-family:var(--mono);font-size:9px;color:var(--green);background:var(--gdim);border:1px solid rgba(64,145,108,.25);border-radius:3px;padding:2px 5px;letter-spacing:.5px;margin-right:6px">${String(i+1).padStart(2,'0')}</span>${name}</td>
       <td class="print-avg" style="padding:8px 10px;border-bottom:1px solid var(--br);font-family:var(--mono);font-size:12px;font-weight:700;color:var(--forest);text-align:center;background:${bgEven}">${avg.toFixed(1)}<div style="height:3px;background:var(--br);border-radius:2px;margin-top:3px;overflow:hidden"><div style="height:100%;background:${barColor};width:${stepPct}%"></div></div></td>
+      <td style="padding:8px 10px;border-bottom:1px solid var(--br);font-family:var(--mono);font-size:11px;text-align:center;color:${lrFlag?'var(--amber)':'var(--forest2)'};font-weight:600;background:${bgEven}">${lr.toFixed(1)}${lrFlag?'*':''}</td>
       <td style="padding:8px 10px;border-bottom:1px solid var(--br);font-family:var(--mono);font-size:12px;text-align:center;color:var(--slate);background:${bgEven}">${stepPct}%</td>
       <td class="${clsPrintClass}" style="padding:8px 10px;border-bottom:1px solid var(--br);font-family:var(--mono);font-size:10px;font-weight:600;color:${cls?clsColor[cls]:'var(--muted2)'};background:${bgEven}">${clsDisplay}</td>
       <td style="padding:8px 10px;border-bottom:1px solid var(--br);font-family:var(--mono);font-size:10px;color:var(--forest);font-weight:600;background:${bgEven}">${eracs}</td>
@@ -1449,10 +1565,60 @@ function renderTimeStudyTable(){
     </tr>`;
   }).join('');
   const taktLine=takt>0?`Takt: ${takt}s · Gap: ${ctGap>0?'+':''}${ctGap.toFixed(1)}s`:'Takt: not set';
-  el.innerHTML=`<div class="slbl">Time Study Record — Step Detail</div><div style="overflow-x:auto;border:1px solid var(--br);border-radius:var(--r);box-shadow:var(--shadow);margin-bottom:8px"><table class="ts-table"><thead><tr><th>STEP</th><th class="center">AVG (s)</th><th class="center">% CT</th><th>CLASSIFICATION</th><th>CLEAR</th><th>NOTES</th></tr></thead><tbody>${rowsHTML}</tbody><tfoot><tr><td style="color:#fff;font-weight:700">TOTAL</td><td style="text-align:center;color:var(--greenlt);font-size:13px;font-weight:700">${totalCT.toFixed(1)}</td><td style="text-align:center;color:rgba(255,255,255,.6)">100%</td><td colspan="3" style="color:rgba(255,255,255,.55);font-size:10px">${taktLine}</td></tr></tfoot></table></div>`;
+  el.innerHTML=`<div class="slbl">Time Study Record — Step Detail</div><div style="overflow-x:auto;border:1px solid var(--br);border-radius:var(--r);box-shadow:var(--shadow);margin-bottom:8px"><table class="ts-table"><thead><tr><th>STEP</th><th class="center">AVG (s)</th><th class="center">LOW REP</th><th class="center">% CT</th><th>CLASSIFICATION</th><th>CLEAR</th><th>NOTES</th></tr></thead><tbody>${rowsHTML}</tbody><tfoot><tr><td style="color:#fff;font-weight:700">TOTAL</td><td style="text-align:center;color:var(--greenlt);font-size:13px;font-weight:700">${totalCT.toFixed(1)}</td><td style="text-align:center;color:rgba(255,255,255,.6);font-size:11px">${names.reduce((s,n)=>{const vd=DX.variation[n];return s+(vd?(vd.lowrep||vd.avg):0);},0).toFixed(1)}</td><td style="text-align:center;color:rgba(255,255,255,.6)">100%</td><td colspan="3" style="color:rgba(255,255,255,.55);font-size:10px">${taktLine} · *No repeatable pair found</td></tr></tfoot></table></div>`;
 }
 
-// ═══ ITEM 4 — WEEKLY TRACKING ═══
+// ═══ CYCLE LOG — chronological raw record ═══
+function renderCycleLog(){
+  const el=$('cycleLog');if(!el)return;
+  const valid=DX.cycles.slice(1).filter(c=>c&&c.length>0);
+  if(!valid.length){el.innerHTML='';return;}
+  const takt=DX.setup.takt||0;
+  const cycleHTML=valid.map((cyc,ci)=>{
+    const totalDur=cyc.filter(s=>!s._elimSkip).reduce((a,s)=>a+(s.dur||0),0);
+    const overTakt=takt&&totalDur>takt;
+    const rowsHTML=cyc.map((s,si)=>{
+      const bg=si%2===0?'var(--s1)':'var(--s2)';
+      const cls=DX.waste&&DX.waste[s.name];
+      const clsColor=cls==='va'?'var(--green)':cls==='wst'?'var(--red)':cls==='inc'?'var(--amber)':'var(--muted2)';
+      const clsLabel=cls==='va'?'VA':cls==='wst'?'Waste':cls==='inc'?'Inc':'—';
+      const elimSkip=s._elimSkip;
+      return`<tr style="background:${bg};${elimSkip?'opacity:.4':''}">
+        <td style="padding:5px 8px;font-family:var(--mono);font-size:10px;font-weight:700;color:var(--muted);text-align:center;border-bottom:1px solid var(--br);white-space:nowrap">${String(si+1).padStart(2,'0')}</td>
+        <td style="padding:5px 8px;font-size:12px;color:var(--txt);border-bottom:1px solid var(--br)">${elimSkip?`<span style="text-decoration:line-through;color:var(--muted2)">${s.name}</span> <span style="font-family:var(--mono);font-size:8px;color:var(--amber);border:1px solid var(--amber);border-radius:2px;padding:0 4px">ELIM</span>`:s.name}</td>
+        <td style="padding:5px 8px;font-family:var(--mono);font-size:11px;font-weight:700;color:var(--forest);text-align:center;border-bottom:1px solid var(--br);white-space:nowrap">${elimSkip?'—':(s.dur||0).toFixed(1)+'s'}</td>
+        <td style="padding:5px 8px;font-family:var(--mono);font-size:11px;color:var(--amber);text-align:center;border-bottom:1px solid var(--br);white-space:nowrap;cursor:pointer;text-decoration:underline dotted" onclick="seekToStep(${s.elapsed||0})" title="Tap to seek video to this frame">${fmtStepTimestamp(s.elapsed||0)}</td>
+        <td style="padding:5px 8px;font-family:var(--mono);font-size:9px;font-weight:600;color:${clsColor};border-bottom:1px solid var(--br)">${clsLabel}</td>
+        <td style="padding:5px 8px;font-size:11px;color:var(--slate);border-bottom:1px solid var(--br)">${s.note||''}</td>
+      </tr>`;
+    }).join('');
+    // Quick notes for this cycle
+    const qn=(DX.quickNotes||[]).filter(n=>n.cycle===ci+2);
+    const qnHTML=qn.length?qn.map(n=>`<tr><td colspan="6" style="padding:4px 8px;font-family:var(--mono);font-size:9px;color:var(--amber);background:var(--adim);border-bottom:1px solid var(--br)">📝 @${n.t} — ${n.text}</td></tr>`).join(''):'';
+    const headerBg=overTakt?'var(--red)':'var(--forest)';
+    const ctDisplay=totalDur.toFixed(1)+'s'+(takt?(' '+(overTakt?'▲ +':'▼ −')+Math.abs(totalDur-takt).toFixed(1)+'s vs takt'):'');
+    return`<div style="margin-bottom:14px;border:1px solid var(--br);border-radius:var(--r);overflow:hidden;break-inside:avoid">
+      <div style="background:${headerBg};padding:7px 12px;display:flex;justify-content:space-between;align-items:center">
+        <span style="font-family:var(--head);font-size:13px;font-weight:800;color:#fff;text-transform:uppercase;letter-spacing:.5px">Cycle ${ci+2}</span>
+        <span style="font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.8)">${ctDisplay}</span>
+      </div>
+      <table style="width:100%;border-collapse:collapse">
+        <thead><tr style="background:var(--s2)">
+          <th style="padding:4px 8px;font-family:var(--mono);font-size:8px;color:var(--muted);font-weight:500;text-align:center;letter-spacing:.5px">#</th>
+          <th style="padding:4px 8px;font-family:var(--mono);font-size:8px;color:var(--muted);font-weight:500;letter-spacing:.5px">STEP</th>
+          <th style="padding:4px 8px;font-family:var(--mono);font-size:8px;color:var(--muted);font-weight:500;text-align:center;letter-spacing:.5px">DUR</th>
+          <th style="padding:4px 8px;font-family:var(--mono);font-size:8px;color:var(--muted);font-weight:500;text-align:center;letter-spacing:.5px">VIDEO ↗</th>
+          <th style="padding:4px 8px;font-family:var(--mono);font-size:8px;color:var(--muted);font-weight:500;letter-spacing:.5px">CLASS</th>
+          <th style="padding:4px 8px;font-family:var(--mono);font-size:8px;color:var(--muted);font-weight:500;letter-spacing:.5px">NOTE</th>
+        </tr></thead>
+        <tbody>${rowsHTML}${qnHTML}</tbody>
+      </table>
+    </div>`;
+  }).join('');
+  el.innerHTML=`<div class="slbl">Cycle-by-Cycle Record <span style="font-family:var(--mono);font-size:9px;font-weight:400;color:var(--muted);letter-spacing:.5px;text-transform:none">${valid.length} valid cycles · Cycle 1 discarded</span></div>${cycleHTML}`;
+}
+
+
 function renderWeeklyTracking(){
   const el=$('weeklyTrackingSection');if(!el)return;
   if(!DX.kata)DX.kata={targetCT:'',targetDate:'',conditions:[],successCriteria:'',obstacles:[],experiments:[],weeklyTracking:[]};
@@ -1498,7 +1664,7 @@ function saveStepModal(){const name=$('stepModalName').value.trim();if(!name){$(
 // ═══ JSON ═══
 function quickSaveJSON(){if(!DX.setup||!DX.setup.process)return;const state={app:'ProcessDx',version:'2.1',exportedAt:new Date().toISOString(),...DX};const proc=(DX.setup.process||'Study').replace(/[^a-zA-Z0-9]+/g,'_').replace(/^_|_$/g,'');const fn=`${proc}_Study.json`;const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(state,null,2)],{type:'application/json'}));a.download=fn;document.body.appendChild(a);a.click();a.remove();_showSaveStatus('✓ JSON downloaded');}
 function exportJSON(){const state={app:'ProcessDx',version:'2.1',exportedAt:new Date().toISOString(),...DX};const proc=(DX.setup.process||'ProcessDx').replace(/[^a-z0-9\-_]+/gi,'_');const d=new Date(),p=n=>String(n).padStart(2,'0');const fn=`${proc}_${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}_ProcessDx.json`;const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(state,null,2)],{type:'application/json'}));a.download=fn;document.body.appendChild(a);a.click();a.remove();}
-$('resumeInput').addEventListener('change',async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;try{const obj=JSON.parse(await f.text());if(obj.app!=='ProcessDx')throw new Error('Not a Process Dx file');Object.assign(DX,obj);if(!DX.afterStudies)DX.afterStudies=[];if(!DX.kata.weeklyTracking)DX.kata.weeklyTracking=[];goGate(DX.gate||7);}catch(err){alert('Could not load: '+(err.message||err));}});
+$('resumeInput').addEventListener('change',async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;try{const obj=JSON.parse(await f.text());if(obj.app!=='ProcessDx')throw new Error('Not a Process Dx file');Object.assign(DX,obj);if(!DX.afterStudies)DX.afterStudies=[];if(!DX.vidLog)DX.vidLog=[];if(!DX.kata.weeklyTracking)DX.kata.weeklyTracking=[];goGate(DX.gate||7);if(DX.vidLog.length>0)setTimeout(()=>showRelinkModal(),400);}catch(err){alert('Could not load: '+(err.message||err));}});
 
 $('g1date').value=new Date().toLocaleDateString('en-US');
 checkResume();
@@ -1530,12 +1696,78 @@ function deleteCTLog(i){if(DX.afterStudy&&DX.afterStudy.ctLog)DX.afterStudy.ctLo
 function renderProgressLog(){}
 
 
-// ═══ AUTOSAVE / RESUME ═══
+// ═══ VIDEO RE-LINK MODAL ═══
+let _relinkTarget=null; // which vidLog idx we're currently re-linking
+
+function showRelinkModal(){
+  const log=DX.vidLog||[];
+  if(!log.length)return;
+  $('relinkVidCount').textContent=log.length;
+  renderRelinkList();
+  $('vidRelinkModal').style.display='flex';
+}
+
+function renderRelinkList(){
+  const log=DX.vidLog||[];
+  const el=$('relinkList');if(!el)return;
+  el.innerHTML=log.map((v,i)=>{
+    const linked=v._relinked||false;
+    const isActive=i===(vid._vidIdx||0)&&vid._url;
+    return`<div style="display:flex;align-items:center;gap:10px;background:${linked||isActive?'var(--gdim)':'var(--s2)'};border:1px solid ${linked||isActive?'rgba(64,145,108,.3)':'var(--br)'};border-radius:var(--r);padding:10px 12px;margin-bottom:8px">
+      <div style="flex:1;min-width:0">
+        <div style="font-family:var(--head);font-size:14px;font-weight:800;color:var(--forest);text-transform:uppercase;letter-spacing:.3px">${v.label}</div>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${v.fileName||'Unknown filename'}</div>
+        <div style="font-family:var(--mono);font-size:9px;color:var(--muted2);margin-top:1px">Session sync point: ${fmtElapsed(v.sessionElapsed)}</div>
+      </div>
+      <div style="flex-shrink:0">
+        ${linked||isActive
+          ? `<span style="font-family:var(--mono);font-size:10px;color:var(--green);font-weight:700">✓ Linked</span>`
+          : `<button onclick="relinkVid(${i})" style="font-family:var(--head);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;padding:8px 14px;background:var(--amber);color:#fff;border:none;border-radius:var(--r);cursor:pointer;-webkit-appearance:none">Load</button>`
+        }
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function relinkVid(idx){
+  _relinkTarget=idx;
+  $('relinkInput').click();
+}
+
+$('relinkInput').addEventListener('change',e=>{
+  const f=e.target.files[0];e.target.value='';if(!f)return;
+  if(_relinkTarget===null)return;
+  // Load the video and mark it relinked
+  if(vid._url){URL.revokeObjectURL(vid._url);vid._url=null;}
+  vid.pause();vid.removeAttribute('src');vid.load();
+  const url2=URL.createObjectURL(f);
+  vid._url=url2;vid._vidIdx=_relinkTarget;
+  vid.src=url2;
+  vid.onloadedmetadata=()=>{$('vEmpty').style.display='none';vid.style.display='block';vid.onloadedmetadata=null;};
+  // Mark as relinked in vidLog
+  if(DX.vidLog&&DX.vidLog[_relinkTarget]){
+    DX.vidLog[_relinkTarget]._relinked=true;
+    DX.vidLog[_relinkTarget].fileName=f.name;
+  }
+  _relinkTarget=null;
+  renderRelinkList();
+  renderVidLog();
+  _showSaveStatus(`✓ ${f.name} linked`,false);
+  // Check if all linked
+  const allDone=(DX.vidLog||[]).every((v,i)=>v._relinked||(i===(vid._vidIdx||0)&&vid._url));
+  if(allDone){setTimeout(()=>closeRelinkModal(),800);}
+});
+
+function closeRelinkModal(){
+  $('vidRelinkModal').style.display='none';
+  _relinkTarget=null;
+}
+
 const SAVE_KEY='pdx_autosave';
 function _showSaveStatus(msg,warn){const f=$('saveFlash');if(!f)return;f.textContent=msg;f.style.color=warn?'var(--amber)':'var(--green)';f.style.background=warn?'var(--adim)':'var(--gdim)';f.style.borderColor=warn?'rgba(217,119,6,.3)':'rgba(64,145,108,.3)';f.style.opacity='1';clearTimeout(f._t);f._t=setTimeout(()=>f.style.opacity='0',warn?3500:1500);}
 function autosave(){try{localStorage.setItem(SAVE_KEY,JSON.stringify(DX));_showSaveStatus('✓ Saved');return;}catch(e){}try{sessionStorage.setItem(SAVE_KEY,JSON.stringify(DX));_showSaveStatus('✓ Saved (session)');return;}catch(e){}_showSaveStatus('⚠ Use ⬇ JSON to save',true);}
 function checkResume(){let s=null;try{s=localStorage.getItem(SAVE_KEY);}catch(e){}if(!s)try{s=sessionStorage.getItem(SAVE_KEY);}catch(e){}if(!s)return;try{const obj=JSON.parse(s);if(!obj||!obj.setup||!obj.setup.process)return;window._savedState=obj;const wrap=$('resumeBtnWrap');if(wrap)wrap.style.display='block';const hint=$('resumeHint');if(hint)hint.textContent=`${obj.setup.process} · Gate ${obj.gate||1} · ${obj.setup.date||''}`;}catch(e){}}
-function doResume(){if(!window._savedState)return;const obj=window._savedState;Object.assign(DX,obj);if(!DX.afterStudies)DX.afterStudies=[];if(obj.kata)DX.kata=Object.assign({targetCT:'',targetDate:'',conditions:[],successCriteria:'',obstacles:[],experiments:[],weeklyTracking:[]},obj.kata);if(!DX.kata.weeklyTracking)DX.kata.weeklyTracking=[];if(obj.eracs)DX.eracs=obj.eracs;goGate(DX.gate||7);}
+function doResume(){if(!window._savedState)return;const obj=window._savedState;Object.assign(DX,obj);if(!DX.afterStudies)DX.afterStudies=[];if(!DX.vidLog)DX.vidLog=[];if(obj.kata)DX.kata=Object.assign({targetCT:'',targetDate:'',conditions:[],successCriteria:'',obstacles:[],experiments:[],weeklyTracking:[]},obj.kata);if(!DX.kata.weeklyTracking)DX.kata.weeklyTracking=[];if(obj.eracs)DX.eracs=obj.eracs;goGate(DX.gate||7);if(DX.vidLog.length>0)setTimeout(()=>showRelinkModal(),400);}
 function clearSave(){try{localStorage.removeItem(SAVE_KEY);}catch(e){}try{sessionStorage.removeItem(SAVE_KEY);}catch(e){}window._savedState=null;const wrap=$('resumeBtnWrap');if(wrap)wrap.style.display='none';}
 
 // ═══ TAKT CALCULATOR ═══
@@ -2223,7 +2455,7 @@ window.renderOutput=function(){
   // Init FIRST so both savings block and canvas read the same yamStepStates
   initYamStates();
   _origRenderOutput();
-  renderYamazumi();renderYamSliders();renderTimeStudyTable();renderSavingsBlock();
+  renderYamazumi();renderYamSliders();renderTimeStudyTable();renderCycleLog();renderSavingsBlock();
 };
 function renderResStudyButtons(){
   const btn=$('afterStudyBtn');
@@ -2293,6 +2525,9 @@ printStyle.textContent=`
 
   /* Page break AFTER yamazumi — page 2 starts here */
   #timeStudyTable { page-break-before: always !important; }
+
+  /* Page break after time study table — cycle log is page 3 */
+  #cycleLog { page-break-before: always !important; display: block !important; }
 
   /* ── PAGE 2+: TIME STUDY TABLE ── */
   #timeStudyTable { margin: 0 !important; }
