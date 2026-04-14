@@ -1177,12 +1177,14 @@ function capSave(){
   }
   DX.stepStart=DX._pending.elapsed;DX._pending=null;quickNoteBuffer=[];
   DX.frozen=false;$('capSheet').style.display='none';
-  autosave();try{if(vid.src&&vid.readyState>=1)vid.play().catch(()=>{});}catch(e){}
-  $('capStart').textContent='▶ Resume';$('capStart').disabled=false;$('capStep').disabled=true;
+  autosave();
+  try{vid.pause();}catch(e){}
+  $('capStart').textContent='▶ Resume';$('capStart').disabled=true;$('capStep').disabled=true;
+  setTimeout(()=>{$('capStart').disabled=false;},350);
   resetCSFlags();renderCapSteps();
 }
 
-function capDiscard(){DX.frozen=false;DX._pending=null;quickNoteBuffer=[];$('capSheet').style.display='none';$('capStart').textContent='▶ Resume';$('capStart').disabled=false;$('capStep').disabled=true;resetCSFlags();}
+function capDiscard(){DX.frozen=false;DX._pending=null;quickNoteBuffer=[];$('capSheet').style.display='none';try{vid.pause();}catch(e){}$('capStart').textContent='▶ Resume';$('capStart').disabled=true;$('capStep').disabled=true;resetCSFlags();setTimeout(()=>{$('capStart').disabled=false;},350);}
 function capDoEndCycle(){if(DX.running){stopTimer();DX.running=false;}try{vid.pause();}catch(e){}if(DX.cycles[DX.curCycle].length>0){DX.cycles.push([]);capSwitchCycle(DX.cycles.length-1);}resetTimer();$('capStart').textContent='▶ Start';$('capStart').disabled=false;$('capStep').disabled=true;$('capEnd').disabled=true;renderCapTabs();checkCapReady();}
 function gate3Next(){checkCapReady();if($('capNextBtn').disabled){alert('Complete at least 2 valid cycles (cycles 2 and 3+) before proceeding.');return;}autosave();const f=$('saveFlash');if(f){f.textContent='📥 Capture saved — tap ⬇ Save Backup to download';f.style.color='var(--amber)';f.style.background='var(--adim)';f.style.borderColor='rgba(217,119,6,.3)';f.style.opacity='1';clearTimeout(f._t);f._t=setTimeout(()=>{f.style.opacity='0';},5000);}goGate(4);}
 
