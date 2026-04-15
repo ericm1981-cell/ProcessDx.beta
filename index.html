@@ -1533,11 +1533,64 @@ function renderWasteScreen(){
     const isCut=DX.eracs&&DX.eracs[name]==='C';
     const isExchange=DX.eracs&&DX.eracs[name]==='E';
     const reorderBtns=isExchange?`<span style="display:inline-flex;gap:3px;margin-left:8px;vertical-align:middle"><button onclick="moveStep(${stepIdx},-1)" style="font-size:10px;padding:2px 7px;background:rgba(217,119,6,.08);border:1px solid rgba(217,119,6,.3);border-radius:3px;color:var(--amber);cursor:pointer;-webkit-appearance:none${stepIdx===0?';opacity:.3':''}">↑</button><button onclick="moveStep(${stepIdx},1)" style="font-size:10px;padding:2px 7px;background:rgba(217,119,6,.08);border:1px solid rgba(217,119,6,.3);border-radius:3px;color:var(--amber);cursor:pointer;-webkit-appearance:none${stepIdx===names.length-1?';opacity:.3':''}">↓</button></span>`:'';
-    card.innerHTML=`<div class="ergo-step-num">STEP ${String(stepIdx+1).padStart(2,'0')}${isCut?` <span style="font-family:var(--mono);font-size:8px;font-weight:700;color:var(--red);background:var(--rdim);border:1px solid rgba(185,28,28,.25);border-radius:3px;padding:1px 6px">CUT</span>`:''}</div><div class="ergo-step-name" style="${isCut?'text-decoration:line-through;color:var(--muted2)':''}">${name}${reorderBtns}</div><div style="display:flex;gap:16px;margin-bottom:10px;padding:6px 10px;background:var(--s2);border-radius:var(--r);border:1px solid var(--br)"><span style="font-family:var(--mono);font-size:11px;color:var(--muted)">AVG&nbsp;<span style="color:var(--forest);font-weight:700">${avg.toFixed(1)}s</span></span><span style="font-family:var(--mono);font-size:11px;color:var(--muted)">%&nbsp;CT&nbsp;<span style="color:var(--forest);font-weight:700">${stepPct}%</span></span><div style="flex:1;display:flex;align-items:center"><div style="height:4px;background:var(--br);border-radius:2px;width:100%;overflow:hidden"><div style="height:100%;background:${cur==='va'?'var(--green)':cur==='wst'?'var(--red)':cur==='inc'?'var(--amber)':'var(--br2)'};width:${stepPct}%;transition:width .3s"></div></div></div></div>${locks}${locked?'':`<div style="display:flex;flex-direction:column;gap:6px;margin-top:8px">${chips}</div>`}${eracs}`;
+    // Non-cyclical state for this step
+    const ncOn=isNonCyclical(name);const ncN=nonCyclicalN(name);
+    const ncToggle=`<div style="display:flex;align-items:center;gap:8px;margin-top:8px;padding:7px 10px;background:${ncOn?'var(--adim)':'var(--s2)'};border:1px solid ${ncOn?'rgba(217,119,6,.35)':'var(--br)'};border-radius:var(--r);cursor:pointer" onclick="toggleNCStep('${name.replace(/'/g,"\\'")}')">
+      <div style="width:18px;height:18px;border:2px solid ${ncOn?'var(--amber)':'var(--br2)'};border-radius:3px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;background:${ncOn?'var(--amber)':'transparent'};color:#fff">${ncOn?'✓':''}</div>
+      <div style="flex:1"><div style="font-family:var(--mono);font-size:10px;font-weight:700;color:${ncOn?'var(--amber)':'var(--muted)'}">Non-cyclical step</div><div style="font-family:var(--mono);font-size:9px;color:var(--muted2);margin-top:1px">Happens every N units, not every cycle</div></div>
+    </div>
+    ${ncOn?`<div style="display:flex;align-items:center;gap:8px;margin-top:5px;padding:7px 10px;background:var(--adim);border:1px solid rgba(217,119,6,.25);border-radius:var(--r)"><span style="font-family:var(--mono);font-size:9px;color:var(--amber);text-transform:uppercase;letter-spacing:.8px">Every</span><input type="number" min="2" max="999" value="${ncN}" style="width:60px;font-family:var(--mono);font-size:13px;font-weight:700;text-align:center;border:1px solid rgba(217,119,6,.4);border-radius:4px;padding:5px;background:#fff;color:var(--forest)" oninput="setNCFreq('${name.replace(/'/g,"\\'")}',this.value)"><span style="font-family:var(--mono);font-size:9px;color:var(--amber)">units</span><span style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-left:4px">=&nbsp;<strong style="color:var(--forest)">${amortizedCT(name,stepCT(name)*ncN).toFixed(2)}s</strong>&nbsp;raw&nbsp;&rarr;&nbsp;<strong style="color:var(--amber)">${stepCT(name).toFixed(2)}s</strong>/unit</span></div>`:''}`;
+    // Rename button
+    const renameBtn=`<button onclick="renameStep('${name.replace(/'/g,"\\'")}','${name.replace(/'/g,"\\'")}')" style="font-family:var(--mono);font-size:9px;color:var(--muted);background:none;border:1px solid var(--br);border-radius:3px;padding:2px 8px;cursor:pointer;margin-left:6px;-webkit-appearance:none;vertical-align:middle">✎ Rename</button>`;
+    card.innerHTML=`<div class="ergo-step-num">STEP ${String(stepIdx+1).padStart(2,'0')}${isCut?` <span style="font-family:var(--mono);font-size:8px;font-weight:700;color:var(--red);background:var(--rdim);border:1px solid rgba(185,28,28,.25);border-radius:3px;padding:1px 6px">CUT</span>`:''}</div><div class="ergo-step-name" style="${isCut?'text-decoration:line-through;color:var(--muted2)':''}">${name}${reorderBtns}${renameBtn}</div><div style="display:flex;gap:16px;margin-bottom:10px;padding:6px 10px;background:var(--s2);border-radius:var(--r);border:1px solid var(--br)"><span style="font-family:var(--mono);font-size:11px;color:var(--muted)">AVG&nbsp;<span style="color:var(--forest);font-weight:700">${avg.toFixed(1)}s</span></span><span style="font-family:var(--mono);font-size:11px;color:var(--muted)">%&nbsp;CT&nbsp;<span style="color:var(--forest);font-weight:700">${stepPct}%</span></span><div style="flex:1;display:flex;align-items:center"><div style="height:4px;background:var(--br);border-radius:2px;width:100%;overflow:hidden"><div style="height:100%;background:${cur==='va'?'var(--green)':cur==='wst'?'var(--red)':cur==='inc'?'var(--amber)':'var(--br2)'};width:${stepPct}%;transition:width .3s"></div></div></div></div>${locks}${locked?'':`<div style="display:flex;flex-direction:column;gap:6px;margin-top:8px">${chips}</div>`}${eracs}${ncToggle}`;
     list.appendChild(card);
   });
 }
 function setWaste(name,type,el){DX.waste[name]=DX.waste[name]===type?null:type;if(!DX.eracs)DX.eracs={};renderWasteScreen();autosave();}
+
+function toggleNCStep(name){
+  if(!DX.nonCyclicalSteps)DX.nonCyclicalSteps={};
+  if(DX.nonCyclicalSteps[name]){delete DX.nonCyclicalSteps[name];}
+  else{DX.nonCyclicalSteps[name]={n:5};}
+  renderWasteScreen();autosave();
+}
+
+function setNCFreq(name,val){
+  const n=Math.max(2,parseInt(val)||2);
+  if(!DX.nonCyclicalSteps)DX.nonCyclicalSteps={};
+  if(!DX.nonCyclicalSteps[name])DX.nonCyclicalSteps[name]={};
+  DX.nonCyclicalSteps[name].n=n;
+  autosave();
+  // Re-render just the preview without full redraw
+  renderWasteScreen();
+}
+
+function renameStep(oldName){
+  const newName=prompt(`Rename step:\n\n"${oldName}"\n\nNew name:`, oldName);
+  if(!newName||newName.trim()===''||newName.trim()===oldName)return;
+  const n=newName.trim();
+  // Update all references
+  const ergo=DX.ergoSteps.find(s=>s.name===oldName);
+  if(ergo)ergo.name=n;
+  // Rename in all cycle arrays
+  (DX.cycles||[]).forEach(cyc=>(cyc||[]).forEach(s=>{if(s.name===oldName)s.name=n;}));
+  // Rename keyed objects
+  ['waste','eracs','wasteType','variation','varOverrides','nonCyclicalSteps'].forEach(key=>{
+    if(DX[key]&&DX[key][oldName]!==undefined){
+      DX[key][n]=DX[key][oldName];
+      delete DX[key][oldName];
+    }
+  });
+  // varOverrides exclusion arrays use name+'_excl' keys
+  if(DX.varOverrides){
+    const exKey=oldName+'_excl';
+    if(DX.varOverrides[exKey]!==undefined){DX.varOverrides[n+'_excl']=DX.varOverrides[exKey];delete DX.varOverrides[exKey];}
+  }
+  autosave();
+  renderWasteScreen();
+  _showSaveStatus(`✓ Renamed to "${n}"`);
+}
+
 function gate5Next(){autosave();goGate(6);}
 
 // ═══ GATE 7 — OUTPUT ═══
