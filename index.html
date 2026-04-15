@@ -250,7 +250,7 @@ body{overscroll-behavior:none}
       <button onclick="clearSave()" style="width:100%;font-family:var(--mono);font-size:9px;color:var(--muted2);background:none;border:none;cursor:pointer;margin-top:4px;padding:4px;letter-spacing:.5px">✕ Discard saved study and start fresh</button>
     </div>
     <button class="btn-primary" style="width:100%;margin-bottom:8px;font-size:18px" onclick="startNew()">Begin Diagnostic →</button>
-    <button class="btn-secondary" style="width:100%;margin-bottom:8px;border-color:var(--amber);color:var(--amber)" onclick="startDemo()">▶ Demo Mode</button>
+    <button class="btn-secondary" style="width:100%;margin-bottom:8px;border-color:var(--amber);color:var(--amber);font-weight:700" onclick="startTour()">▶ Watch How It Works →</button>
     <div style="display:flex;gap:8px;margin-bottom:8px">
       <button class="btn-secondary" style="flex:1;background:var(--s2);border-color:var(--green);color:var(--forest);font-size:13px" onclick="loadDemoStudy(6)">▶ See Sample Output</button>
       <button class="btn-secondary" style="flex:1;background:var(--s2);border-color:var(--green);color:var(--forest);font-size:13px" onclick="loadDemoStudy(1)">▶ Walk Through Demo</button>
@@ -262,7 +262,29 @@ body{overscroll-behavior:none}
   </div>
 </div>
 
-<!-- GATE 1 -->
+<!-- TOUR OVERLAY -->
+<div id="tourOverlay" style="display:none;position:fixed;inset:0;z-index:800;pointer-events:none">
+  <!-- Dark mask — spotlight hole cut by JS -->
+  <div id="tourMask" style="position:absolute;inset:0;background:rgba(0,0,0,.72);transition:opacity .3s"></div>
+  <!-- Spotlight highlight ring -->
+  <div id="tourSpot" style="position:absolute;border-radius:8px;box-shadow:0 0 0 4px var(--amber),0 0 0 6px rgba(245,158,11,.3);transition:all .35s cubic-bezier(.4,0,.2,1);pointer-events:none;z-index:2"></div>
+  <!-- Callout card -->
+  <div id="tourCard" style="position:absolute;background:var(--forest);border:2px solid var(--amber);border-radius:10px;padding:14px 16px;max-width:300px;width:calc(100vw - 32px);box-shadow:0 8px 24px rgba(0,0,0,.4);z-index:3;pointer-events:all;transition:all .3s cubic-bezier(.4,0,.2,1)">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <span id="tourStepLabel" style="font-family:var(--mono);font-size:9px;color:var(--amber);letter-spacing:2px;text-transform:uppercase"></span>
+      <button onclick="endTour()" style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.4);background:none;border:1px solid rgba(255,255,255,.2);border-radius:3px;padding:2px 8px;cursor:pointer;pointer-events:all;-webkit-appearance:none">✕ Skip</button>
+    </div>
+    <div id="tourText" style="font-size:13px;color:rgba(255,255,255,.92);line-height:1.7;margin-bottom:12px"></div>
+    <!-- Timer bar -->
+    <div style="height:3px;background:rgba(255,255,255,.15);border-radius:2px;margin-bottom:10px;overflow:hidden">
+      <div id="tourTimerBar" style="height:100%;background:var(--amber);border-radius:2px;width:100%;transition:width linear"></div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <div id="tourDots" style="flex:1;display:flex;gap:4px;flex-wrap:wrap"></div>
+      <button onclick="tourStep(1)" style="font-family:var(--mono);font-size:11px;font-weight:700;color:#fff;background:var(--amber);border:none;border-radius:4px;padding:8px 16px;cursor:pointer;pointer-events:all;-webkit-appearance:none;white-space:nowrap" id="tourNextBtn">Next →</button>
+    </div>
+  </div>
+</div>
 <div class="scr" id="S1">
   <div id="prog1"></div>
   <!-- AFTER-STATE LOCK G1 -->
@@ -623,6 +645,24 @@ body{overscroll-behavior:none}
         <button id="csWcVa" onclick="setCSWaste('va')" style="flex:1;font-family:var(--mono);font-size:11px;font-weight:800;padding:10px 6px;border:2px solid var(--br);border-radius:4px;background:var(--s2);color:var(--muted);cursor:pointer;transition:all .12s;-webkit-appearance:none;letter-spacing:.3px">VA</button>
         <button id="csWcWst" onclick="setCSWaste('wst')" style="flex:1;font-family:var(--mono);font-size:11px;font-weight:800;padding:10px 6px;border:2px solid var(--br);border-radius:4px;background:var(--s2);color:var(--muted);cursor:pointer;transition:all .12s;-webkit-appearance:none;letter-spacing:.3px">Waste</button>
       </div>
+      <!-- NON-CYCLICAL FLAG -->
+      <div style="margin-bottom:10px">
+        <div style="display:flex;align-items:center;gap:8px;background:var(--s2);border:1px solid var(--br);border-radius:var(--r);padding:8px 10px;cursor:pointer" onclick="toggleCSNonCyclical()" id="csNonCyclicalRow">
+          <div id="csNonCyclicalCheck" style="width:20px;height:20px;border:2px solid var(--br2);border-radius:4px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;transition:all .12s"></div>
+          <div style="flex:1">
+            <div style="font-family:var(--mono);font-size:10px;font-weight:700;color:var(--forest);letter-spacing:.3px">Non-cyclical step</div>
+            <div style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-top:1px">Happens every N units, not every cycle</div>
+          </div>
+        </div>
+        <div id="csNonCyclicalFreqRow" style="display:none;margin-top:6px;background:var(--adim);border:1px solid rgba(217,119,6,.3);border-radius:var(--r);padding:8px 10px">
+          <div style="font-family:var(--mono);font-size:9px;color:var(--amber);text-transform:uppercase;letter-spacing:1px;margin-bottom:5px">Frequency — occurs every:</div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <input id="csNonCyclicalN" type="number" min="2" max="999" value="5" style="width:70px;font-family:var(--mono);font-size:14px;font-weight:700;text-align:center;border:1px solid rgba(217,119,6,.4);border-radius:4px;padding:6px;background:#fff;color:var(--forest)" oninput="updateNonCyclicalPreview()">
+            <span style="font-family:var(--mono);font-size:10px;color:var(--amber)">units</span>
+            <div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-left:4px" id="csNonCyclicalPreview"></div>
+          </div>
+        </div>
+      </div>
       <div id="csWasteTypeRow" style="display:none;margin-bottom:8px"><div style="font-family:var(--mono);font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:4px">Waste Type (TIMWOODS):</div><div style="display:flex;gap:4px;flex-wrap:wrap" id="csWasteTypeChips"></div></div>
       <div style="font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px">Ergo Flags</div>
       <div style="display:flex;gap:5px;flex-wrap:wrap" id="csErgoFlags">
@@ -692,6 +732,7 @@ const DX={
   quickNotes:[],variation:{},varOverrides:{},waste:{},g5notes:'',
   eracs:{},ctMethod:'avg',wasteType:{},
   vidLog:[],  // [{sessionElapsed, label, idx}] — one entry per video loaded
+  nonCyclicalSteps:{},  // {stepName: {n: frequency}} — steps that occur every N units
   kata:{targetCT:'',targetDate:'',conditions:[],successCriteria:'',obstacles:[],experiments:[],
         weeklyTracking:[]},
   afterStudies:[],afterStudyMode:false,afterStudyDraft:null,_asOrig:null,
@@ -699,6 +740,10 @@ const DX={
 
 const $=id=>document.getElementById(id);
 const fmtMs=ms=>{const s=ms/1000,m=Math.floor(s/60);return`${String(m).padStart(2,'0')}:${(s%60).toFixed(1).padStart(4,'0')}`;};
+function isNonCyclical(name){return !!(DX.nonCyclicalSteps&&DX.nonCyclicalSteps[name]);}
+function nonCyclicalN(name){return DX.nonCyclicalSteps&&DX.nonCyclicalSteps[name]?DX.nonCyclicalSteps[name].n:1;}
+function amortizedCT(name,rawCT){return isNonCyclical(name)?rawCT/nonCyclicalN(name):rawCT;}
+
 // Format elapsed seconds as MM:SS for video scrubbing
 const fmtElapsed=sec=>{const s=+sec||0;const m=Math.floor(s/60);return`${String(m).padStart(2,'0')}:${String(Math.floor(s%60)).padStart(2,'0')}`;};
 
@@ -798,7 +843,7 @@ function startNew(){
     ergoSteps:[],cycles:[[]],curCycle:0,running:false,frozen:false,raf:null,tStart:null,tAccum:0,stepStart:null,
     quickNotes:[],variation:{},varOverrides:{},waste:{},g5notes:'',eracs:{},ctMethod:'avg',wasteType:{},
     kata:{targetCT:'',targetDate:'',conditions:[],successCriteria:'',obstacles:[],experiments:[],weeklyTracking:[]},
-    vidLog:[],
+    vidLog:[],nonCyclicalSteps:{},
     afterStudies:[],afterStudyMode:false,afterStudyDraft:null,_asOrig:null,
     afterStudy:{cycles:[],variation:{},captured:false,ctLog:[]},
     yamStates:{},demoMode:false,
@@ -1312,6 +1357,11 @@ function capSave(){
   const pendingData={name,note:$('csNote').value.trim(),...DX._pending,_elimSkip:elimSkip};
   pendingData.qualityCheck=csFlags.quality;pendingData.capturedWaste=csFlags.waste;pendingData.capturedWasteType=csFlags.wasteType;
   pendingData.capturedErgo=csFlags.ergo.length?[...csFlags.ergo]:[];pendingData.capturedErgoFreq=$('csErgoFreq')?$('csErgoFreq').value:'Every Cycle';
+  pendingData.nonCyclical=csFlags.nonCyclical;pendingData.nonCyclicalN=csFlags.nonCyclical?csFlags.nonCyclicalN:null;
+  // Store non-cyclical metadata at study level (by step name)
+  if(!DX.nonCyclicalSteps)DX.nonCyclicalSteps={};
+  if(csFlags.nonCyclical){DX.nonCyclicalSteps[name]={n:csFlags.nonCyclicalN};}
+  else if(!DX.nonCyclicalSteps[name]){/* leave existing if already set */}
   DX.cycles[DX.curCycle].push(pendingData);
   if(!elimSkip){
     let esEntry=DX.ergoSteps.find(s=>s.name===name);if(!esEntry){esEntry={name,flags:[],freq:{}};DX.ergoSteps.push(esEntry);}
@@ -1353,18 +1403,19 @@ function renderVariation(){
     const exclForStep=(DX.varOverrides&&DX.varOverrides[name+'_excl'])||[];
     const durs=_allDurs.filter((_,i)=>!exclForStep.includes(i)).map(d=>d.dur);if(!durs.length)return;
     const avg=durs.reduce((a,b)=>a+b,0)/durs.length,min=Math.min(...durs),max=Math.max(...durs),cv=avg>0?((max-min)/avg)*100:0;
-    const isShort=avg<5,flagVal=isShort?(max-min)>0.8:cv>15,overridden=DX.varOverrides[name]==='accepted',high=flagVal&&!overridden;
+    const isShort=avg<5,nc=isNonCyclical(name),flagVal=nc?false:(isShort?(max-min)>0.8:cv>15),overridden=DX.varOverrides[name]==='accepted',high=flagVal&&!overridden;
     if(high)anyHigh=true;
     const{lr,flag:lrFlag}=computeLowRep(durs);
     DX.variation[name]={avg,min,max,cv,high,isShort,flagVal,overridden,lowrep:lr,lowrepFlag:lrFlag};
     const tr=document.createElement('tr');
-    const status=overridden?`<span class="var-flag vf-override">Accepted</span>`:flagVal?`<span class="var-flag vf-warn">⚠ Unstable</span>`:`<span class="var-flag vf-ok">✓ Stable</span>`;
-    const overrideBtn=flagVal&&!overridden?`<br><button class="var-override-btn" onclick="overrideVar('${name}')">Proceed as-is →</button>`:'';
+    const status=nc?`<span class="var-flag" style="color:var(--amber);background:var(--adim);border:1px solid rgba(217,119,6,.25)">≠ Non-cyclical</span>`:overridden?`<span class="var-flag vf-override">Accepted</span>`:flagVal?`<span class="var-flag vf-warn">⚠ Unstable</span>`:`<span class="var-flag vf-ok">✓ Stable</span>`;
+    const overrideBtn=!nc&&flagVal&&!overridden?`<br><button class="var-override-btn" onclick="overrideVar('${name}')">Proceed as-is →</button>`:'';
+    const ncNote=nc?`<br><span style="font-family:var(--mono);font-size:9px;color:var(--amber)">Every ${nonCyclicalN(name)} units → ${amortizedCT(name,avg).toFixed(2)}s/unit amortized</span>`:'';
     const lr_disp=DX.ctMethod==='lowrep'?`<span style="color:var(--amber);font-weight:600">${lr.toFixed(2)}s${lrFlag?' ⚠':''}</span>`:`${lr.toFixed(2)}s`;
     const exclKey=name+'_excl';const excl=DX.varOverrides[exclKey]||[];
     const pipHTML=durs.map((d,ci)=>`<span class="cycle-pip ${excl.includes(ci)?'excl':''}" onclick="toggleExclude('${name.replace(/'/g,"\\'")}',${ci})">${d.toFixed(2)}s</span>`).join('');
     const pipRow=durs.length>1?`<div style="margin-top:4px"><span style="font-family:var(--mono);font-size:8px;color:var(--muted2);letter-spacing:.5px">CYCLES — TAP TO EXCLUDE: </span>${pipHTML}</div>`:'';
-    tr.innerHTML=`<td>${name}${pipRow}</td><td>${avg.toFixed(2)}</td><td>${lr_disp}</td><td>${isShort?'Range: '+(max-min).toFixed(2)+'s':cv.toFixed(1)+'%'}</td><td style="font-size:10px">${isShort?'Abs >0.8s':'CV >15%'}</td><td>${status}${overrideBtn}</td>`;
+    tr.innerHTML=`<td>${name}${ncNote}${pipRow}</td><td>${avg.toFixed(2)}</td><td>${lr_disp}</td><td>${nc?'N/A (non-cyclical)':isShort?'Range: '+(max-min).toFixed(2)+'s':cv.toFixed(1)+'%'}</td><td style="font-size:10px">${nc?'—':isShort?'Abs >0.8s':'CV >15%'}</td><td>${status}${overrideBtn}</td>`;
     tbody.appendChild(tr);
   });
   const avgCTs=valid.map(cyc=>cyc.filter(s=>!s._elimSkip).reduce((a,s)=>a+s.dur,0));
@@ -1564,15 +1615,16 @@ function renderTimeStudyTable(){
   const el=$('timeStudyTable');if(!el)return;
   const names=DX.ergoSteps.map(s=>s.name).filter(n=>!isElim(n));
   if(!names.length){el.innerHTML='';return;}
-  const totalCT=names.reduce((sum,name)=>{const vd=DX.variation[name];return sum+(vd?vd.avg:0);},0);
+  const totalCT=names.reduce((sum,name)=>sum+stepCT(name),0);
   if(totalCT===0){el.innerHTML='';return;}
   const takt=DX.setup.takt||0;const ctGap=totalCT-takt;
   const clsColor={'va':'var(--green)','inc':'var(--amber)','wst':'var(--red)'};
   const rowsHTML=names.map((name,i)=>{
+    const nc=isNonCyclical(name);const ncN=nonCyclicalN(name);
     const vd=DX.variation[name];
-    const lr=vd?(vd.lowrep||vd.avg):avg;
+    const rawAvg=vd?vd.avg:0;const rawLR=vd?(vd.lowrep||vd.avg):0;
     const lrFlag=vd&&vd.lowrepFlag;
-    const avg=stepCT(name);const stepPct=totalCT>0?Math.round(avg/totalCT*100):0;
+    const avg=stepCT(name);const stepPct=totalCT>0?Math.round(avg/totalCT*100):0;const ncBadge=nc?` <span style="font-family:var(--mono);font-size:8px;color:var(--amber);background:var(--adim);border:1px solid rgba(217,119,6,.3);border-radius:3px;padding:1px 5px">&#8800; &divide;${ncN}</span>`:'';const avgDisplay=nc?`${avg.toFixed(1)} <span style="font-size:9px;color:var(--muted);font-weight:400">(${rawAvg.toFixed(1)}&divide;${ncN})</span>`:avg.toFixed(1);const lrDisplay=nc?(rawLR/ncN).toFixed(1)+(lrFlag?'*':''):rawLR.toFixed(1)+(lrFlag?'*':'');
     const cls=DX.waste[name];const selectedAct=DX.eracs&&DX.eracs[name];
     const autoRec=cls?(ERACS_MAP[cls]||[]).join(', '):'—';
     const eracs=selectedAct?`<strong style="color:var(--forest)">${selectedAct}</strong> <span style="opacity:.5;font-size:10px">(${autoRec})</span>`:autoRec;
@@ -1581,6 +1633,7 @@ function renderTimeStudyTable(){
     const clsPrintClass=cls==='va'?'print-va':cls==='wst'?'print-wst':'print-unc';
     const es=DX.ergoSteps.find(s=>s.name===name)||{flags:[],freq:{}};
     const notes=[];
+    if(nc)notes.push(`≠ Every ${ncN} units`);
     if((es.flags||[]).length)notes.push('Ergo: '+(es.flags||[]).join(', '));
     if(vd&&vd.high)notes.push(vd.isShort?`Var range ${(vd.max-vd.min).toFixed(2)}s`:`CV ${vd.cv.toFixed(1)}%`);
     if(vd&&vd.overridden)notes.push('Var accepted');
@@ -1595,9 +1648,9 @@ function renderTimeStudyTable(){
     const varPrintClass=notes.some(n=>n.includes('CV')||n.includes('Var'))?'print-var-warn':'print-var-ok';
     const bgEven=i%2===0?'var(--s1)':'var(--s2)';const barColor=cls?clsColor[cls]:'var(--br2)';
     return`<tr>
-      <td style="padding:8px 10px;border-bottom:1px solid var(--br);background:${bgEven}"><span class="step-badge" style="font-family:var(--mono);font-size:9px;color:var(--green);background:var(--gdim);border:1px solid rgba(64,145,108,.25);border-radius:3px;padding:2px 5px;letter-spacing:.5px;margin-right:6px">${String(i+1).padStart(2,'0')}</span>${name}</td>
-      <td class="print-avg" style="padding:8px 10px;border-bottom:1px solid var(--br);font-family:var(--mono);font-size:12px;font-weight:700;color:var(--forest);text-align:center;background:${bgEven}">${avg.toFixed(1)}<div style="height:3px;background:var(--br);border-radius:2px;margin-top:3px;overflow:hidden"><div style="height:100%;background:${barColor};width:${stepPct}%"></div></div></td>
-      <td style="padding:8px 10px;border-bottom:1px solid var(--br);font-family:var(--mono);font-size:11px;text-align:center;color:${lrFlag?'var(--amber)':'var(--forest2)'};font-weight:600;background:${bgEven}">${lr.toFixed(1)}${lrFlag?'*':''}</td>
+      <td style="padding:8px 10px;border-bottom:1px solid var(--br);background:${bgEven}"><span class="step-badge" style="font-family:var(--mono);font-size:9px;color:var(--green);background:var(--gdim);border:1px solid rgba(64,145,108,.25);border-radius:3px;padding:2px 5px;letter-spacing:.5px;margin-right:6px">${String(i+1).padStart(2,'0')}</span>${name}${ncBadge}</td>
+      <td class="print-avg" style="padding:8px 10px;border-bottom:1px solid var(--br);font-family:var(--mono);font-size:12px;font-weight:700;color:var(--forest);text-align:center;background:${bgEven}">${avgDisplay}<div style="height:3px;background:var(--br);border-radius:2px;margin-top:3px;overflow:hidden"><div style="height:100%;background:${barColor};width:${stepPct}%"></div></div></td>
+      <td style="padding:8px 10px;border-bottom:1px solid var(--br);font-family:var(--mono);font-size:11px;text-align:center;color:${lrFlag?'var(--amber)':'var(--forest2)'};font-weight:600;background:${bgEven}">${lrDisplay}</td>
       <td style="padding:8px 10px;border-bottom:1px solid var(--br);font-family:var(--mono);font-size:12px;text-align:center;color:var(--slate);background:${bgEven}">${stepPct}%</td>
       <td class="${clsPrintClass}" style="padding:8px 10px;border-bottom:1px solid var(--br);font-family:var(--mono);font-size:10px;font-weight:600;color:${cls?clsColor[cls]:'var(--muted2)'};background:${bgEven}">${clsDisplay}</td>
       <td style="padding:8px 10px;border-bottom:1px solid var(--br);font-family:var(--mono);font-size:10px;color:var(--forest);font-weight:600;background:${bgEven}">${eracs}</td>
@@ -1605,7 +1658,7 @@ function renderTimeStudyTable(){
     </tr>`;
   }).join('');
   const taktLine=takt>0?`Takt: ${takt}s · Gap: ${ctGap>0?'+':''}${ctGap.toFixed(1)}s`:'Takt: not set';
-  el.innerHTML=`<div class="slbl">Time Study Record — Step Detail</div><div style="overflow-x:auto;border:1px solid var(--br);border-radius:var(--r);box-shadow:var(--shadow);margin-bottom:8px"><table class="ts-table"><thead><tr><th>STEP</th><th class="center">AVG (s)</th><th class="center">LOW REP</th><th class="center">% CT</th><th>CLASSIFICATION</th><th>CLEAR</th><th>NOTES</th></tr></thead><tbody>${rowsHTML}</tbody><tfoot><tr><td style="color:#fff;font-weight:700">TOTAL</td><td style="text-align:center;color:var(--greenlt);font-size:13px;font-weight:700">${totalCT.toFixed(1)}</td><td style="text-align:center;color:rgba(255,255,255,.6);font-size:11px">${names.reduce((s,n)=>{const vd=DX.variation[n];return s+(vd?(vd.lowrep||vd.avg):0);},0).toFixed(1)}</td><td style="text-align:center;color:rgba(255,255,255,.6)">100%</td><td colspan="3" style="color:rgba(255,255,255,.55);font-size:10px">${taktLine} · *No repeatable pair found</td></tr></tfoot></table></div>`;
+  el.innerHTML=`<div class="slbl">Time Study Record — Step Detail</div><div style="overflow-x:auto;border:1px solid var(--br);border-radius:var(--r);box-shadow:var(--shadow);margin-bottom:8px"><table class="ts-table"><thead><tr><th>STEP</th><th class="center">AVG (s)</th><th class="center">LOW REP</th><th class="center">% CT</th><th>CLASSIFICATION</th><th>CLEAR</th><th>NOTES</th></tr></thead><tbody>${rowsHTML}</tbody><tfoot><tr><td style="color:#fff;font-weight:700">TOTAL</td><td style="text-align:center;color:var(--greenlt);font-size:13px;font-weight:700">${totalCT.toFixed(1)}</td><td style="text-align:center;color:rgba(255,255,255,.6);font-size:11px">${names.reduce((s,n)=>s+amortizedCT(n,DX.variation[n]?(DX.variation[n].lowrep||DX.variation[n].avg):0),0).toFixed(1)}</td><td style="text-align:center;color:rgba(255,255,255,.6)">100%</td><td colspan="3" style="color:rgba(255,255,255,.55);font-size:10px">${taktLine} · *No repeatable pair found</td></tr></tfoot></table></div>`;
 }
 
 // ═══ CYCLE LOG — chronological raw record ═══
@@ -1722,12 +1775,32 @@ function swUse(){let secs;if(SW.laps.length>1){secs=SW.laps.reduce((a,b)=>a+b,0)
 function setBn(val){DX.setup.bottleneck=val;['Yes','No','Unk'].forEach(k=>{const btn=$('btnBn'+k);if(!btn)return;btn.style.borderColor='var(--br)';btn.style.background='var(--s2)';btn.style.color='var(--muted)';});if(val===true){$('btnBnYes').style.borderColor='var(--green)';$('btnBnYes').style.background='var(--gdim)';$('btnBnYes').style.color='var(--green)';$('bnWarning').style.display='none';}else if(val===false){$('btnBnNo').style.borderColor='var(--red)';$('btnBnNo').style.background='var(--rdim)';$('btnBnNo').style.color='var(--red)';$('bnWarning').style.display='block';}else{$('btnBnUnk').style.borderColor='var(--amber)';$('btnBnUnk').style.background='var(--adim)';$('btnBnUnk').style.color='var(--amber)';$('bnWarning').style.display='none';}}
 
 // ═══ CAPTURE SHEET FLAGS ═══
-const csFlags={quality:false,waste:null,wasteType:null,ergo:[],ergoFreq:'Every Cycle'};
+const csFlags={quality:false,waste:null,wasteType:null,ergo:[],ergoFreq:'Every Cycle',nonCyclical:false,nonCyclicalN:5};
+
+function toggleCSNonCyclical(){
+  csFlags.nonCyclical=!csFlags.nonCyclical;
+  const chk=$('csNonCyclicalCheck');
+  const row=$('csNonCyclicalRow');
+  const freqRow=$('csNonCyclicalFreqRow');
+  if(chk){chk.style.background=csFlags.nonCyclical?'var(--amber)':'';chk.style.borderColor=csFlags.nonCyclical?'var(--amber)':'var(--br2)';chk.textContent=csFlags.nonCyclical?'✓':'';}
+  if(row){row.style.borderColor=csFlags.nonCyclical?'var(--amber)':'var(--br)';row.style.background=csFlags.nonCyclical?'var(--adim)':'var(--s2)';}
+  if(freqRow)freqRow.style.display=csFlags.nonCyclical?'block':'none';
+  updateNonCyclicalPreview();
+}
+
+function updateNonCyclicalPreview(){
+  const n=parseInt($('csNonCyclicalN')&&$('csNonCyclicalN').value)||5;
+  csFlags.nonCyclicalN=n;
+  const prev=$('csNonCyclicalPreview');
+  const dur=DX._pending?DX._pending.dur:0;
+  if(prev&&dur>0){const amort=dur/n;prev.textContent=`= ${amort.toFixed(2)}s amortized/unit`;}
+  else if(prev){prev.textContent=''}
+}
 function setCSWaste(type){csFlags.waste=csFlags.waste===type?null:type;if(csFlags.waste!=='wst'){csFlags.wasteType=null;}_renderCSWaste();}
 function _renderCSWaste(){const ids={va:'csWcVa',wst:'csWcWst'};const colors={va:'var(--green)',wst:'var(--red)'};Object.entries(ids).forEach(([k,id])=>{const b=$(id);if(!b)return;const on=csFlags.waste===k||(k==='wst'&&csFlags.waste==='inc');b.style.borderColor=on?colors[k]:'var(--br)';b.style.background=on?`rgba(${k==='va'?'64,145,108':'185,28,28'},.1)`:'var(--s2)';b.style.color=on?colors[k]:'var(--muted)';b.style.fontWeight=on?'800':'700';});const wtr=$('csWasteTypeRow');if(wtr)wtr.style.display=csFlags.waste==='wst'?'block':'none';const chips=$('csWasteTypeChips');if(chips&&csFlags.waste==='wst'){const WTYPES={T:'Transport',I:'Inventory',M:'Motion',W:'Waiting',O:'Overproduction',P:'Over-processing',D:'Defects',U:'Unused Skills'};chips.innerHTML=Object.entries(WTYPES).map(([k,v])=>{const on=csFlags.wasteType===k;return`<button style="font-family:var(--mono);font-size:9px;font-weight:600;padding:4px 8px;border:1px solid ${on?'var(--red)':'var(--br)'};border-radius:3px;background:${on?'var(--rdim)':'var(--s2)'};color:${on?'var(--red)':'var(--muted)'};cursor:pointer;-webkit-appearance:none;letter-spacing:.3px" onclick="csFlags.wasteType=csFlags.wasteType==='${k}'?null:'${k}';_renderCSWaste()">${k} — ${v}</button>`;}).join('');}}
 function toggleCSErgo(btn){const flag=btn.dataset.flag;const idx=csFlags.ergo.indexOf(flag);if(idx>=0){csFlags.ergo.splice(idx,1);btn.style.borderColor='var(--br)';btn.style.background='var(--s2)';btn.style.color=flag==='BLIND OPS'?'var(--amber)':'var(--muted)';}else{csFlags.ergo.push(flag);btn.style.borderColor='var(--red)';btn.style.background='var(--rdim)';btn.style.color='var(--red)';if(flag==='BLIND OPS'){btn.style.borderColor='var(--amber)';btn.style.background='var(--adim)';btn.style.color='var(--amber)';}}}
 function toggleCSQual(){csFlags.quality=!csFlags.quality;const b=$('csQualBtn');if(!b)return;b.style.borderColor=csFlags.quality?'var(--green)':'var(--br)';b.style.background=csFlags.quality?'var(--gdim)':'var(--s2)';b.style.color=csFlags.quality?'var(--green)':'var(--muted)';}
-function resetCSFlags(){csFlags.waste=null;csFlags.wasteType=null;csFlags.ergo=[];csFlags.quality=false;csFlags.ergoFreq='Every Cycle';['csWcVa','csWcWst'].forEach(id=>{const b=$(id);if(!b)return;b.style.borderColor='var(--br)';b.style.background='var(--s2)';b.style.color='var(--muted)';b.style.fontWeight='700';});const wtr=$('csWasteTypeRow');if(wtr)wtr.style.display='none';document.querySelectorAll('.csErgoBtn').forEach(b=>{b.style.borderColor='var(--br)';b.style.background='var(--s2)';b.style.color=b.dataset.flag==='BLIND OPS'?'var(--amber)':'var(--muted)';});const qb=$('csQualBtn');if(qb){qb.style.borderColor='var(--br)';qb.style.background='var(--s2)';qb.style.color='var(--muted)';}}
+function resetCSFlags(){csFlags.waste=null;csFlags.wasteType=null;csFlags.ergo=[];csFlags.quality=false;csFlags.ergoFreq='Every Cycle';csFlags.nonCyclical=false;csFlags.nonCyclicalN=5;['csWcVa','csWcWst'].forEach(id=>{const b=$(id);if(!b)return;b.style.borderColor='var(--br)';b.style.background='var(--s2)';b.style.color='var(--muted)';b.style.fontWeight='700';});const wtr=$('csWasteTypeRow');if(wtr)wtr.style.display='none';document.querySelectorAll('.csErgoBtn').forEach(b=>{b.style.borderColor='var(--br)';b.style.background='var(--s2)';b.style.color=b.dataset.flag==='BLIND OPS'?'var(--amber)':'var(--muted)';});const qb=$('csQualBtn');if(qb){qb.style.borderColor='var(--br)';qb.style.background='var(--s2)';qb.style.color='var(--muted)';}const chk=$('csNonCyclicalCheck');if(chk){chk.style.background='';chk.style.borderColor='var(--br2)';chk.textContent='';}const ncRow=$('csNonCyclicalRow');if(ncRow){ncRow.style.borderColor='var(--br)';ncRow.style.background='var(--s2)';}const freqRow=$('csNonCyclicalFreqRow');if(freqRow)freqRow.style.display='none';const ni=$('csNonCyclicalN');if(ni)ni.value=5;}
 
 // ═══ CT LOG / PROGRESS ═══
 function addCTLog(){if(!DX.setup||!DX.setup.takt)return;const ctVal=parseFloat($('ctLogInput').value);const units=parseInt($('ctLogUnits').value)||0;const note=($('ctLogNote').value||'').trim();if(!ctVal||ctVal<=0){$('ctLogInput').style.borderColor='var(--red)';return;}$('ctLogInput').style.borderColor='';if(!DX.afterStudy)DX.afterStudy={cycles:[],variation:{},captured:false,ctLog:[]};if(!DX.afterStudy.ctLog)DX.afterStudy.ctLog=[];DX.afterStudy.ctLog.push({date:new Date().toLocaleDateString('en-US'),ct:ctVal,units,note});$('ctLogInput').value='';$('ctLogUnits').value='';$('ctLogNote').value='';renderProgressLog();autosave();}
@@ -1803,6 +1876,185 @@ function closeRelinkModal(){
   _relinkTarget=null;
 }
 
+// ═══════════════════════════
+// MOVIE-STYLE TOUR ENGINE
+// ═══════════════════════════
+const TOUR_STEPS = [
+  {gate:1, el:"g1proc",         dur:5500, text:"<strong>Start here &mdash; Process name.</strong><br>Be specific. &ldquo;Frame Assembly Cell 3&rdquo; beats &ldquo;Assembly.&rdquo; This name appears on every output and every conversation about this study. Name it the way people on the floor name it."},
+  {gate:1, el:"g1taktShiftMin", dur:5000, text:"<strong>Takt calculator.</strong><br>Enter your shift minutes and units-per-hour target, then tap &rarr; Use. This calculates the pace the station must hit to meet customer demand."},
+  {gate:1, el:"g1takt",         dur:5000, text:"<strong>Takt time &mdash; your benchmark.</strong><br>Every step duration, every cycle time, every dollar exposure in this study is measured against this number. Get it right before you advance."},
+  {gate:1, el:"g1heads",        dur:5000, text:"<strong>Headcount and labor rate.</strong><br>These turn seconds of waste into dollars of exposure. Enter the operators assigned to this station and the straight-time hourly rate."},
+  {gate:1, el:"btnBnYes",       dur:5500, text:"<strong>Bottleneck check &mdash; the most important question before you start.</strong><br>Improving a non-bottleneck does not change line output. Period. If you are not sure, tap Unknown &mdash; but do not skip the question."},
+  {gate:2, el:"swStartBtn",     dur:5500, text:"<strong>Gate 2 &mdash; Baseline CT.</strong><br>This is your before number. Use the stopwatch. Watch 2&ndash;3 cycles first to find a clean boundary, then lap each cycle. The average fills the CT field automatically."},
+  {gate:2, el:"g2ct",           dur:5000, text:"<strong>Lock in the baseline.</strong><br>Tap &ldquo;Use This Time&rdquo; to apply the average here. Do not estimate this number. Do not use the supervisor standard. Measure what is actually happening right now."},
+  {gate:2, el:"gembaChecklist", dur:5500, text:"<strong>Gemba checklist &mdash; all six items before you advance.</strong><br>Operator informed. Normal conditions confirmed. Material staged. If anything is off &mdash; stop, fix the condition, come back. An abnormal baseline contaminates everything downstream."},
+  {gate:2, el:"g2VidBtn",       dur:5000, text:"<strong>Load your video here &mdash; before capture begins.</strong><br>Load it now so it is ready when you hit Start. If you have multiple clips, load the first one here and swap mid-session in Gate 3."},
+  {gate:3, el:"capStart",       dur:5500, text:"<strong>Gate 3 &mdash; Cycle Capture.</strong><br>Hit &blacktriangleright; Start. Timer begins, video plays. When the operator transitions to the next step &mdash; tap &FilledSmallSquare; Step End. Video pauses. Name the step. Save. Repeat."},
+  {gate:3, el:"capStep",        dur:5000, text:"<strong>Step End is the key tap.</strong><br>Tap it the moment the operator motion shifts from one step to the next. Not when you think it ended &mdash; when their hands actually change direction or purpose."},
+  {gate:3, el:"capTabs",        dur:4500, text:"<strong>Cycle tabs.</strong><br>Each completed cycle gets its own tab. Cycle 1 is discarded &mdash; the operator adjusts their pace when first watched. Capture it anyway. Aim for 10 valid cycles total."},
+  {gate:3, el:"quickNote",      dur:5000, text:"<strong>Quick notes &mdash; log what you see without stopping the timer.</strong><br>Hesitation, machine hiccup, misplaced part &mdash; type it and tap &rarr;. When you see a variation spike later, this note is the only record of what happened."},
+  {gate:4, el:"varTbody",       dur:5500, text:"<strong>Gate 4 &mdash; Variation Check.</strong><br>Steps with CV over 15% are flagged unstable. High variation means you do not have one process &mdash; you have several. Stabilize before removing waste or the improvements will not hold."},
+  {gate:4, el:"ctMethodBtn",    dur:5500, text:"<strong>CT Method toggle &mdash; Average vs Lowest Repeatable.</strong><br>Lowest Repeatable finds the two closest observed times within 10% of each other. That is what this station is capable of when the method is right. Use it to set your improvement target."},
+  {gate:5, el:"wasteStepList",  dur:5500, text:"<strong>Gate 5 &mdash; Waste Classification.</strong><br>Two categories only: VA or Waste. No middle ground. The customer would not pay for wait, walk, search, or rework if they knew it was happening. If it adds no value &mdash; it is waste."},
+  {gate:5, el:"wasteStepList",  dur:5500, text:"<strong>CLEAR Actions &mdash; work the sequence.</strong><br>Cut it &rarr; Link it &rarr; Exchange it &rarr; Add to it &rarr; Reduce complexity. Always start with Cut. Never skip to Reduce. Simplifying waste is still waste."},
+  {gate:6, el:"yamCanvas",      dur:6000, text:"<strong>Gate 6 &mdash; Diagnostic Output.</strong><br>The Yamazumi chart. Current CT on the left. Simulated future state on the right. The amber dashed line is takt. Tap any bar to eliminate that step &mdash; watch the future CT drop in real time."},
+  {gate:6, el:"timeStudyTable", dur:5500, text:"<strong>Time Study Record.</strong><br>Every step. Average CT. Lowest Repeatable CT. Classification. CLEAR action. Variation flags. This is the document you bring to the coaching conversation. Every number traceable back to the floor."},
+  {gate:6, el:"roiOutput",      dur:6500, text:"<strong>You have completed the diagnostic.</strong><br>The findings are here. Advance to Gate 7 to set your target condition, list obstacles, and start your first experiment. A finding without a next step is just a report &mdash; the experiment record is where improvement actually begins."},
+];
+
+let _tourIdx = -1;
+let _tourTimer = null;
+let _tourActive = false;
+
+function startTour(){
+  _tourActive = true;
+  _tourIdx = -1;
+  startNew();
+  // First step fires after gate 1 renders
+  setTimeout(()=>tourStep(1), 400);
+}
+
+function endTour(){
+  _tourActive = false;
+  clearTimeout(_tourTimer);
+  const ov = $('tourOverlay');
+  if(ov){ ov.style.opacity='0'; setTimeout(()=>{ ov.style.display='none'; ov.style.opacity='1'; }, 300); }
+  // Remove highlight from any element
+  document.querySelectorAll('._tour_hl').forEach(el=>{
+    el.style.removeProperty('box-shadow');
+    el.style.removeProperty('position');
+    el.style.removeProperty('z-index');
+    el.classList.remove('_tour_hl');
+  });
+}
+
+function tourStep(dir){
+  clearTimeout(_tourTimer);
+  const nextIdx = _tourIdx + dir;
+  if(nextIdx < 0 || nextIdx >= TOUR_STEPS.length){ endTour(); return; }
+  
+  const step = TOUR_STEPS[nextIdx];
+  const curStep = TOUR_STEPS[_tourIdx];
+  _tourIdx = nextIdx;
+
+  // Navigate gate if needed
+  const needNav = !curStep || curStep.gate !== step.gate;
+  if(needNav){
+    goGate(step.gate);
+    setTimeout(()=>_renderTourStep(step), 500);
+  } else {
+    _renderTourStep(step);
+  }
+}
+
+function _renderTourStep(step){
+  const ov = $('tourOverlay');
+  if(!ov) return;
+  ov.style.display = 'block';
+
+  // Find target element
+  const el = $(step.el);
+  
+  // Remove previous highlight
+  document.querySelectorAll('._tour_hl').forEach(e=>{
+    e.style.removeProperty('position');
+    e.style.removeProperty('z-index');
+    e.classList.remove('_tour_hl');
+  });
+
+  // Position spotlight ring
+  const spot = $('tourSpot');
+  if(spot && el){
+    el.scrollIntoView({behavior:'smooth', block:'center'});
+    setTimeout(()=>{
+      const r = el.getBoundingClientRect();
+      const pad = 6;
+      spot.style.left = (r.left - pad) + 'px';
+      spot.style.top = (r.top - pad + window.scrollY) + 'px';
+      spot.style.width = (r.width + pad*2) + 'px';
+      spot.style.height = (r.height + pad*2) + 'px';
+      spot.style.display = 'block';
+      
+      // Position callout card
+      _positionCard(r);
+    }, 300);
+  } else if(spot){
+    spot.style.display = 'none';
+    _positionCard(null);
+  }
+
+  // Update card content
+  const total = TOUR_STEPS.length;
+  $('tourStepLabel').textContent = `Step ${_tourIdx + 1} of ${total}`;
+  $('tourText').innerHTML = step.text;
+  
+  // Dots (show only nearby steps)
+  const dots = $('tourDots');
+  if(dots){
+    const show = 7;
+    const half = Math.floor(show/2);
+    let start = Math.max(0, _tourIdx - half);
+    let end = Math.min(total-1, start + show - 1);
+    start = Math.max(0, end - show + 1);
+    dots.innerHTML = Array.from({length: end-start+1},(_,i)=>{
+      const idx = start+i;
+      const isActive = idx === _tourIdx;
+      return `<span style="width:${isActive?'16':'6'}px;height:6px;border-radius:3px;background:${isActive?'var(--amber)':'rgba(255,255,255,.25)'};transition:all .2s;flex-shrink:0"></span>`;
+    }).join('');
+  }
+
+  // Next button
+  const nb = $('tourNextBtn');
+  if(nb){
+    if(_tourIdx === total-1){ nb.textContent='Done ✓'; nb.style.background='var(--green)'; }
+    else { nb.textContent='Next →'; nb.style.background='var(--amber)'; }
+  }
+
+  // Timer bar
+  const bar = $('tourTimerBar');
+  if(bar){
+    bar.style.transition = 'none';
+    bar.style.width = '100%';
+    setTimeout(()=>{
+      bar.style.transition = `width ${step.dur}ms linear`;
+      bar.style.width = '0%';
+    }, 50);
+  }
+
+  // Auto-advance
+  _tourTimer = setTimeout(()=>tourStep(1), step.dur);
+}
+
+function _positionCard(targetRect){
+  const card = $('tourCard');
+  if(!card) return;
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const cardH = 220; // approx
+  const cardW = Math.min(300, vw - 32);
+  card.style.width = cardW + 'px';
+
+  if(!targetRect){
+    // Center card
+    card.style.left = ((vw - cardW)/2) + 'px';
+    card.style.top = ((vh - cardH)/2) + 'px';
+    return;
+  }
+
+  // Try to place card below target, fallback above
+  const pad = 16;
+  let top = targetRect.bottom + pad;
+  if(top + cardH > vh - 20) top = targetRect.top - cardH - pad;
+  if(top < 60) top = 60;
+  
+  let left = targetRect.left;
+  if(left + cardW > vw - pad) left = vw - cardW - pad;
+  if(left < pad) left = pad;
+
+  card.style.left = left + 'px';
+  card.style.top = top + 'px';
+}
+
 const SAVE_KEY='pdx_autosave';
 function _showSaveStatus(msg,warn){const f=$('saveFlash');if(!f)return;f.textContent=msg;f.style.color=warn?'var(--amber)':'var(--green)';f.style.background=warn?'var(--adim)':'var(--gdim)';f.style.borderColor=warn?'rgba(217,119,6,.3)':'rgba(64,145,108,.3)';f.style.opacity='1';clearTimeout(f._t);f._t=setTimeout(()=>f.style.opacity='0',warn?3500:1500);}
 function autosave(){try{localStorage.setItem(SAVE_KEY,JSON.stringify(DX));_showSaveStatus('✓ Saved');return;}catch(e){}try{sessionStorage.setItem(SAVE_KEY,JSON.stringify(DX));_showSaveStatus('✓ Saved (session)');return;}catch(e){}_showSaveStatus('⚠ Use ⬇ JSON to save',true);}
@@ -1840,7 +2092,7 @@ function computeLowRep(durs){
   // No repeatable pair found — return average with flag
   return{lr:avg,flag:true};
 }
-function stepCT(name){const vd=DX.variation[name];if(!vd)return 0;return DX.ctMethod==='lowrep'?(vd.lowrep||vd.avg):vd.avg;}
+function stepCT(name){const vd=DX.variation[name];if(!vd)return 0;const raw=DX.ctMethod==='lowrep'?(vd.lowrep||vd.avg):vd.avg;return amortizedCT(name,raw);}
 function toggleCtMethod(btn){DX.ctMethod=DX.ctMethod==='avg'?'lowrep':'avg';const isLR=DX.ctMethod==='lowrep';btn.textContent=isLR?'Method: Lowest Repeatable ▾':'Method: Average ▾';btn.className='ctmethod-toggle'+(isLR?' lowrep':'');const note=$('ctMethodNote');if(note)note.style.display=isLR?'block':'none';renderVariation();autosave();}
 
 // ═══ ERACS / WASTE TYPE ═══
