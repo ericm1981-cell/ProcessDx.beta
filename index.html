@@ -2493,6 +2493,7 @@ printStyle.textContent=`
   #yamSliders, #studyMeta, #afterStudySection, #afterStudyBtnWrap,
   #progressLog, #weeklyTrackingSection, #kataSection,
   #phase1Output, #phase2Output, #phase3Output,
+  #savingsBlock,
   #S6 .gate-hdr,
   button, .qbtn, .ctmethod-toggle, .var-override-btn,
   .save-flash { display: none !important; }
@@ -2524,10 +2525,38 @@ printStyle.textContent=`
   #yamLegend { display: flex !important; flex-wrap: wrap; gap: 8pt; font-size: 8pt; margin-top: 6pt; }
 
   /* Page break AFTER yamazumi — page 2 starts here */
-  #timeStudyTable { page-break-before: always !important; }
+  #timeStudyTable {
+    page-break-before: always !important;
+    break-before: page !important;
+  }
 
   /* Page break after time study table — cycle log is page 3 */
-  #cycleLog { page-break-before: always !important; display: block !important; }
+  #cycleLog {
+    page-break-before: always !important;
+    break-before: page !important;
+    display: block !important;
+    margin-top: 0 !important;
+  }
+
+  /* Cycle log print styles */
+  #cycleLog .slbl {
+    font-family: 'Barlow Condensed', sans-serif !important;
+    font-size: 11pt !important; font-weight: 800 !important;
+    color: #1B4332 !important; text-transform: uppercase !important;
+    letter-spacing: 2px !important; border-bottom: 2pt solid #1B4332 !important;
+    padding-bottom: 4pt !important; margin-bottom: 10pt !important;
+  }
+  #cycleLog table { width: 100% !important; border-collapse: collapse !important; font-size: 9pt !important; }
+  #cycleLog td { padding: 4pt 6pt !important; border-bottom: 0.5pt solid #C3D9C9 !important; font-size: 9pt !important; }
+  #cycleLog th { padding: 4pt 6pt !important; font-size: 7.5pt !important; }
+  /* Cycle header bars — force color print */
+  #cycleLog div[style*="background:var(--forest)"],
+  #cycleLog div[style*="background:var(--red)"] {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  /* Keep each cycle block together where possible */
+  #cycleLog > div > div { break-inside: avoid !important; page-break-inside: avoid !important; margin-bottom: 8pt !important; }
 
   /* ── PAGE 2+: TIME STUDY TABLE ── */
   #timeStudyTable { margin: 0 !important; }
