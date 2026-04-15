@@ -389,53 +389,88 @@ body{overscroll-behavior:none}
     </div>
     <div class="fg" style="margin-top:12px"><label>Abnormal Conditions / Additional Notes</label><textarea id="g2abnormal" rows="2" placeholder="Document anything abnormal."></textarea></div>
     <div id="gembaTimestamp" style="margin-top:8px;display:none"><span class="ts-badge" style="background:var(--gdim);border-color:rgba(64,145,108,.3);color:var(--forest)">📋 <span id="gembaTS">Logged --:--</span></span></div>
+
+    <!-- VIDEO PRE-LOAD -->
+    <div style="margin-top:16px;margin-bottom:4px">
+      <div style="font-family:var(--head);font-size:11px;font-weight:700;color:var(--forest);text-transform:uppercase;letter-spacing:2px;border-bottom:2px solid var(--forest);padding-bottom:4px;margin-bottom:10px">Load Study Video</div>
+      <div class="info-box" style="margin-bottom:10px">Load your video <strong>before capture begins.</strong> The video stays loaded when you advance to Gate 3. If you have multiple clips, load the first one here — you can swap mid-session.</div>
+      <div id="g2VidStatus" style="display:none;background:var(--gdim);border:1px solid rgba(64,145,108,.3);border-radius:var(--r);padding:10px 12px;margin-bottom:10px;display:flex;align-items:center;gap:10px">
+        <span style="font-size:18px">🎬</span>
+        <div style="flex:1;min-width:0">
+          <div style="font-family:var(--head);font-size:13px;font-weight:700;color:var(--forest);text-transform:uppercase">Video Loaded</div>
+          <div id="g2VidName" style="font-family:var(--mono);font-size:10px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px"></div>
+        </div>
+        <button onclick="$('vidInput').click()" style="font-family:var(--mono);font-size:10px;color:var(--amber);border:1px solid var(--amber);background:var(--adim);border-radius:var(--r);padding:5px 10px;cursor:pointer;flex-shrink:0;-webkit-appearance:none">Swap</button>
+      </div>
+      <button id="g2VidBtn" onclick="$('vidInput').click()" style="width:100%;font-family:var(--head);font-size:15px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:14px;background:var(--s2);border:2px dashed var(--br2);border-radius:var(--r);color:var(--muted);cursor:pointer;-webkit-appearance:none">🎬 Load Video File</button>
+    </div>
   </div>
   <div class="foot"><button class="btn-secondary" onclick="goGate(1)">← Back</button><button class="btn-primary" onclick="gate2Next()">Log &amp; Continue →</button></div>
 </div>
 
-<!-- GATE 4 -->
+<!-- GATE 3 — CAPTURE (split layout: video left, controls right) -->
 <div class="scr" id="S3">
   <div id="prog3"></div>
-  <div class="gate-hdr" style="padding-bottom:10px"><div class="gate-tag">Gate 3 of 7 — Mura Setup</div><div class="gate-title">Cycle Capture</div><div class="gate-desc">Video-synced or free-running. Minimum 3 cycles — 10 preferred. Cycle 1 discarded (Hawthorne). More cycles = more reliable low-rep CT.</div></div>
-  <div class="cap-bar">
-    <button class="cap-btn cap-go" id="capStart" onclick="capDoStart()">▶ Start</button>
-    <button class="cap-btn cap-step" id="capStep" onclick="capDoStep()" disabled>◼ Step End</button>
-    <div class="cap-timer" id="capTimer">00:00.0</div>
-    <button class="cap-btn cap-end" id="capEnd" onclick="capDoEndCycle()" disabled>◉ End Cycle</button>
-  </div>
-  <div class="quick-note-bar">
-    <input type="text" class="qn-input" id="quickNote" placeholder="Quick note — tap mic or type, then →" onkeydown="if(event.key==='Enter')saveQuickNote()"/>
-    <button class="qn-save" onclick="saveQuickNote()">→ Log</button>
-  </div>
-  <div class="cycle-tabs" id="capTabs">
-    <button class="ctab on" data-ci="0">Cycle 1 ⚠</button>
-    <button style="font-family:var(--mono);font-size:9px;padding:4px 9px;border:1px dashed var(--br2);border-radius:3px;background:transparent;color:var(--muted2);cursor:pointer;-webkit-appearance:none" onclick="capAddCycle()">＋ Cycle</button>
-  </div>
-  <div style="background:#0a0a0a;flex-shrink:0;position:relative">
-    <div id="vEmpty" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:28px 16px;min-height:200px">
-      <div style="font-size:32px;opacity:.25">🎬</div>
-      <div style="font-family:var(--head);font-size:14px;font-weight:700;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:1px">Load Video</div>
-      <div style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.25);text-align:center;line-height:1.8">Optional but recommended.<br>Video pauses automatically on Step End.</div>
-      <button class="vpick-btn" onclick="$('vidInput').click()">Choose Video</button>
+  <!-- SPLIT CONTAINER -->
+  <div style="display:flex;flex-direction:row;flex:1;overflow:hidden;min-height:0">
+
+    <!-- LEFT: VIDEO PANEL -->
+    <div style="flex:1.15;background:#0a0a0a;display:flex;flex-direction:column;position:relative;min-width:0">
+      <div id="vEmpty" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:20px 12px;flex:1">
+        <div style="font-size:28px;opacity:.25">🎬</div>
+        <div style="font-family:var(--head);font-size:13px;font-weight:700;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:1px;text-align:center">Load Video<br>on Gate 2</div>
+        <button class="vpick-btn" style="font-size:10px;padding:7px 14px" onclick="$('vidInput').click()">Choose</button>
+      </div>
+      <video id="vid" playsinline webkit-playsinline preload="metadata" style="width:100%;object-fit:contain;display:none;background:#000;max-height:calc(100% - 80px)"></video>
+      <div class="ptrack"><div class="pfill" id="pFill"></div></div>
+      <!-- Video controls — always pinned, 3 buttons -->
+      <div style="display:flex;gap:4px;padding:8px 8px;background:rgba(0,0,0,.85);flex-shrink:0;border-top:1px solid rgba(255,255,255,.1)">
+        <button onclick="toggleVidPause.call(this)" style="flex:1;font-family:var(--mono);font-size:11px;font-weight:600;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);color:#fff;border-radius:4px;padding:10px 4px;cursor:pointer;-webkit-appearance:none;text-align:center">⏸ Play</button>
+        <button onclick="vidRwLastStep.call(this)" style="flex:2;font-family:var(--mono);font-size:11px;font-weight:600;background:rgba(217,119,6,.2);border:1px solid rgba(245,158,11,.4);color:var(--amber2);border-radius:4px;padding:10px 4px;cursor:pointer;-webkit-appearance:none;text-align:center">⟲ Last Step</button>
+        <button onclick="vidRw2.call(this)" style="flex:1;font-family:var(--mono);font-size:11px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.6);border-radius:4px;padding:10px 4px;cursor:pointer;-webkit-appearance:none;text-align:center">−2s</button>
+      </div>
+      <input type="file" id="vidInput" accept="video/*" style="display:none">
     </div>
-    <video id="vid" playsinline webkit-playsinline preload="metadata" style="width:100%;max-height:300px;object-fit:contain;display:none;background:#000"></video>
-    <div class="ptrack"><div class="pfill" id="pFill"></div></div>
-    <div style="display:flex;gap:6px;padding:8px 10px;background:rgba(0,0,0,.6)">
-      <button onclick="toggleVidPause.call(this)" style="flex:2;font-family:var(--mono);font-size:11px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:var(--r);padding:8px;cursor:pointer;letter-spacing:.3px;-webkit-appearance:none">⏸ Pause / Play</button>
-      <button onclick="vidRwLastStep.call(this)" style="flex:2;font-family:var(--mono);font-size:11px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:var(--amber2);border-radius:var(--r);padding:8px;cursor:pointer;letter-spacing:.3px;-webkit-appearance:none">⟲ Last Step End</button>
-      <button onclick="vidRw2.call(this)" style="flex:1;font-family:var(--mono);font-size:11px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.6);border-radius:var(--r);padding:8px;cursor:pointer;letter-spacing:.3px;-webkit-appearance:none">−2s</button>
+
+    <!-- RIGHT: CONTROLS PANEL -->
+    <div style="flex:1;display:flex;flex-direction:column;background:var(--forest);min-width:0;overflow:hidden">
+      <!-- Capture buttons -->
+      <div style="padding:8px 8px 6px;display:flex;flex-direction:column;gap:5px;flex-shrink:0">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px">
+          <button class="cap-btn cap-go" id="capStart" onclick="capDoStart()" style="font-size:13px;padding:12px 4px">▶ Start</button>
+          <button class="cap-btn cap-step" id="capStep" onclick="capDoStep()" disabled style="font-size:11px;padding:12px 4px">◼ Step End</button>
+        </div>
+        <div style="display:flex;align-items:center;gap:5px">
+          <div class="cap-timer" id="capTimer" style="flex:1;font-size:18px;text-align:center;padding:8px 6px">00:00.0</div>
+          <button class="cap-btn cap-end" id="capEnd" onclick="capDoEndCycle()" disabled style="flex:1;font-size:11px;padding:8px 4px">◉ End<br>Cycle</button>
+        </div>
+      </div>
+      <!-- Quick note -->
+      <div style="padding:0 8px 6px;flex-shrink:0">
+        <div style="display:flex;gap:5px">
+          <input type="text" class="qn-input" id="quickNote" placeholder="Quick note…" onkeydown="if(event.key==='Enter')saveQuickNote()" style="font-size:11px;padding:6px 9px"/>
+          <button class="qn-save" onclick="saveQuickNote()" style="padding:6px 10px;font-size:10px">→</button>
+        </div>
+      </div>
+      <!-- Cycle tabs -->
+      <div class="cycle-tabs" id="capTabs" style="padding:5px 8px;background:var(--forest2)">
+        <button class="ctab on" data-ci="0">C1 ⚠</button>
+        <button style="font-family:var(--mono);font-size:9px;padding:3px 7px;border:1px dashed var(--br2);border-radius:3px;background:transparent;color:var(--muted2);cursor:pointer;-webkit-appearance:none" onclick="capAddCycle()">＋</button>
+      </div>
+      <!-- Sync banner -->
+      <div id="vidSyncBanner" style="display:none;background:var(--amber);color:#fff;font-family:var(--mono);font-size:10px;padding:6px 10px;text-align:center;font-weight:600;flex-shrink:0"></div>
+      <!-- Step list -->
+      <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:8px 8px 80px;background:var(--bg)">
+        <div class="info-box" id="capCycle1Warning" style="font-size:11px;padding:8px 10px;margin-bottom:8px"><strong>Cycle 1 discarded.</strong> Target 10 cycles.</div>
+        <div id="capStepList"><div class="empty-state" style="padding:20px 8px;font-size:10px">Tap ▶ Start.<br>Tap ◼ Step End after each step.</div></div>
+        <div id="vidLogDisplay" style="display:none;margin-bottom:8px"></div>
+        <div id="capSumBar" style="display:none;background:var(--forest);border-radius:var(--r);padding:8px 10px;margin-top:6px;display:flex;justify-content:space-between;align-items:center">
+          <div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.55)" id="capSumLbl">Cycle 1</div>
+          <div style="font-family:var(--mono);font-size:16px;color:var(--greenlt)" id="capSumVal">0.00s</div>
+        </div>
+      </div>
     </div>
-    <input type="file" id="vidInput" accept="video/*" style="display:none">
-  </div>
-  <div id="vidSyncBanner" style="display:none;background:var(--amber);color:#fff;font-family:var(--mono);font-size:12px;padding:10px 16px;text-align:center;letter-spacing:.3px;font-weight:600;flex-shrink:0"></div>
-  <div class="scroll" style="padding-top:10px">
-    <div class="info-box" id="capCycle1Warning"><strong>Cycle 1 will be discarded.</strong> Operators adjust pace when first observed (Hawthorne effect). Capture it — only cycles 2+ are used for analysis.<br><br><strong style="color:var(--amber)">Target 10 cycles.</strong> 3 is the minimum to proceed. With only 3, you get 2 usable data points — not enough to confirm a reliable low-rep pair. 10 cycles gives the variation analysis real signal and makes the lowest-repeatable CT defensible to anyone reviewing your work.</div>
-    <div id="capStepList"><div class="empty-state">Tap ▶ Start.<br>When operator finishes a step — tap ◼ Step End.<br>Video pauses. Name the step. Save &amp; Continue.</div></div>
-    <div id="vidLogDisplay" style="display:none;margin-bottom:10px"></div>
-    <div id="capSumBar" style="display:none;background:var(--forest);border-radius:var(--r);padding:10px 14px;margin-top:8px;display:flex;justify-content:space-between;align-items:center">
-      <div style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.55)" id="capSumLbl">Cycle 1</div>
-      <div style="font-family:var(--mono);font-size:18px;color:var(--greenlt)" id="capSumVal">0.00s</div>
-    </div>
+
   </div>
   <div class="foot"><button class="btn-secondary" onclick="goGate(2)">← Back</button><button class="btn-primary" id="capNextBtn" onclick="gate3Next()" disabled>Analyze Variation →</button></div>
 </div>
@@ -1130,6 +1165,11 @@ function loadVid(file){
   vid._vidIdx=vidIdx;
   vid.onloadedmetadata=()=>{
     $('vEmpty').style.display='none';vid.style.display='block';vid.onloadedmetadata=null;
+    // Update Gate 2 video status indicator
+    const btn=$('g2VidBtn'),status=$('g2VidStatus'),fname=$('g2VidName');
+    if(btn)btn.style.display='none';
+    if(status)status.style.display='flex';
+    if(fname)fname.textContent=file.name||'Video loaded';
     // Show sync banner if there are already captured cycles
     const hasCycles=DX.cycles.slice(1).some(c=>c&&c.length>0);
     if(hasCycles&&vidIdx>0){
@@ -1213,7 +1253,7 @@ function capDoStep(){
   $('csName').value='';$('csNote').value='';
   if(quickNoteBuffer.length){$('csQuickNotes').style.display='block';$('csQuickNotesList').innerHTML=quickNoteBuffer.map(n=>'• '+n.text).join('<br>');}else{$('csQuickNotes').style.display='none';}
   buildPriorOptions();DX._pending={dur,elapsed:endT};
-  const foot4=document.querySelector('#S4 .foot');if(foot4)foot4.style.visibility='hidden';
+  const foot4=document.querySelector('#S3 .foot');if(foot4)foot4.style.visibility='hidden';
   $('capSheet').style.display='flex';setTimeout(()=>$('csName').focus(),300);
 }
 
@@ -1280,7 +1320,7 @@ function capSave(){
   }
   DX.stepStart=DX._pending.elapsed;DX._pending=null;quickNoteBuffer=[];
   DX.frozen=false;$('capSheet').style.display='none';
-  const foot4s=document.querySelector('#S4 .foot');if(foot4s)foot4s.style.visibility='visible';
+  const foot4s=document.querySelector('#S3 .foot');if(foot4s)foot4s.style.visibility='visible';
   autosave();
   try{vid.pause();}catch(e){}
   $('capStart').textContent='▶ Resume';$('capStart').disabled=true;$('capStep').disabled=true;
@@ -1293,7 +1333,7 @@ function capDiscard(){
   $('capSheet').style.display='none';
   try{vid.pause();}catch(e){}
   // Restore footer visibility
-  const foot=document.querySelector('#S4 .foot');if(foot)foot.style.visibility='visible';
+  const foot=document.querySelector('#S3 .foot');if(foot)foot.style.visibility='visible';
   $('capStart').textContent='▶ Resume';$('capStart').disabled=true;$('capStep').disabled=true;
   resetCSFlags();autosave();
   setTimeout(()=>{$('capStart').disabled=false;},350);
