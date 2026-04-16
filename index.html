@@ -270,7 +270,7 @@ body{overscroll-behavior:none}
 <!-- TOUR OVERLAY -->
 <div id="tourOverlay" style="display:none;position:fixed;inset:0;z-index:800;pointer-events:none">
   <!-- Dark mask — spotlight hole cut by JS -->
-  <div id="tourMask" style="position:absolute;inset:0;background:rgba(0,0,0,.72);transition:opacity .3s"></div>
+  <div id="tourMask" style="position:absolute;inset:0;background:rgba(0,0,0,.48);transition:opacity .3s"></div>
   <!-- Spotlight highlight ring -->
   <div id="tourSpot" style="position:absolute;border-radius:8px;box-shadow:0 0 0 4px var(--amber),0 0 0 6px rgba(245,158,11,.3);transition:all .35s cubic-bezier(.4,0,.2,1);pointer-events:none;z-index:2"></div>
   <!-- Callout card -->
@@ -2092,9 +2092,10 @@ let _tourActive = false;
 function startTour(){
   _tourActive = true;
   _tourIdx = -1;
-  startNew();
+  // Load demo data so every gate has content to show
+  loadDemoStudy(1);
   // First step fires after gate 1 renders
-  setTimeout(()=>tourStep(1), 400);
+  setTimeout(()=>tourStep(1), 500);
 }
 
 function endTour(){
@@ -2149,14 +2150,14 @@ function _renderTourStep(step){
   const spot = $('tourSpot');
   if(spot && el){
     el.scrollIntoView({behavior:'smooth', block:'center'});
-    // Wait for scroll to settle using rAF chain before measuring rect
     const _measureAfterScroll = ()=>{
       requestAnimationFrame(()=>{
         requestAnimationFrame(()=>{
           const r = el.getBoundingClientRect();
-          const pad = 6;
+          const pad = 8;
+          // Use pure viewport coords — app is fixed layout, no page scroll
           spot.style.left = (r.left - pad) + 'px';
-          spot.style.top = (r.top - pad + window.scrollY) + 'px';
+          spot.style.top = (r.top - pad) + 'px';
           spot.style.width = (r.width + pad*2) + 'px';
           spot.style.height = (r.height + pad*2) + 'px';
           spot.style.display = 'block';
@@ -2164,7 +2165,6 @@ function _renderTourStep(step){
         });
       });
     };
-    // Give smooth scroll time to complete, then measure
     setTimeout(_measureAfterScroll, 380);
   } else if(spot){
     spot.style.display = 'none';
