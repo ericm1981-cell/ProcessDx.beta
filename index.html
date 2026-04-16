@@ -243,18 +243,18 @@ body{overscroll-behavior:none}
 <body>
 
 <!-- WELCOME -->
-<div class="scr on" id="S0" style="align-items:center;justify-content:center;padding:32px 24px;background-image:repeating-linear-gradient(0deg,transparent,transparent 23px,rgba(27,67,50,.04) 23px,rgba(27,67,50,.04) 24px)">
+<div class="scr on" id="S0" style="align-items:center;justify-content:flex-start;overflow-y:auto;padding:32px 24px;padding-top:calc(32px + var(--st));background-image:repeating-linear-gradient(0deg,transparent,transparent 23px,rgba(27,67,50,.04) 23px,rgba(27,67,50,.04) 24px)">
   <div style="width:100%;max-width:360px">
     <div style="font-family:var(--head);font-size:54px;font-weight:800;color:var(--forest);text-transform:uppercase;letter-spacing:-1px;line-height:1;margin-bottom:2px">Process <em style="color:var(--green);font-style:normal">Dx</em></div>
     <div style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:3px;text-transform:uppercase;border-bottom:2px solid var(--forest);padding-bottom:8px;margin-bottom:16px">Muri · Mura · Muda</div>
     <div style="font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.5px;margin-bottom:16px;line-height:2">Seven gates. Right sequence.<br><span style="color:var(--red)">Fix overburden first.</span><br><span style="color:var(--amber)">Stabilize variation second.</span><br><span style="color:var(--green)">Remove waste third.</span></div>
     <div style="font-family:var(--mono);font-size:10px;color:var(--muted2);line-height:1.8;margin-bottom:24px;background:var(--s2);border:1px solid var(--br);border-radius:var(--r);padding:10px 12px">At the end of this study you will have a <strong style="color:var(--forest)">prioritized action list</strong>, a <strong style="color:var(--forest)">time study record</strong>, and a <strong style="color:var(--forest)">target condition</strong> ready for your next coaching conversation.</div>
+    <button class="btn-primary" style="width:100%;margin-bottom:12px;font-size:18px" onclick="startNew()">Begin Diagnostic →</button>
     <div id="resumeBtnWrap" style="display:none;margin-bottom:12px">
       <button id="resumeBtn" class="btn-primary" style="width:100%;background:var(--amber);border-color:var(--amber);font-size:16px;padding:16px" onclick="doResume()">↩ Resume Last Study →</button>
       <div id="resumeHint" style="font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;margin-top:5px;padding:4px;background:var(--gdim);border-radius:4px"></div>
       <button onclick="clearSave()" style="width:100%;font-family:var(--mono);font-size:9px;color:var(--muted2);background:none;border:none;cursor:pointer;margin-top:4px;padding:4px;letter-spacing:.5px">✕ Discard saved study and start fresh</button>
     </div>
-    <button class="btn-primary" style="width:100%;margin-bottom:8px;font-size:18px" onclick="startNew()">Begin Diagnostic →</button>
     <button class="btn-secondary" style="width:100%;margin-bottom:8px;border-color:var(--amber);color:var(--amber);font-weight:700" onclick="startTour()">▶ Watch How It Works →</button>
     <div style="display:flex;gap:8px;margin-bottom:8px">
       <button class="btn-secondary" style="flex:1;background:var(--s2);border-color:var(--green);color:var(--forest);font-size:13px" onclick="loadDemoStudy(6)">▶ See Sample Output</button>
@@ -310,6 +310,16 @@ body{overscroll-behavior:none}
       <div class="fg"><label>Date</label><input type="text" id="g1date"/></div>
     </div>
     <div class="fg"><label>Operator / Subject</label><input type="text" id="g1operator" placeholder="Name or ID — optional"/></div>
+    <!-- STUDY FILENAME — moved into scroll area so it's reachable -->
+    <div style="background:var(--s2);border:1px solid var(--br);border-radius:var(--r);padding:10px 12px;margin-bottom:12px">
+      <div style="font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px">Study File Name</div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-family:var(--mono);font-size:11px;color:var(--muted2);flex-shrink:0">ProcessDx_</span>
+        <input type="text" id="g1filename" placeholder="auto from process name" style="flex:1;font-family:var(--mono);font-size:11px;border:1px solid var(--br);border-radius:4px;padding:6px 8px;background:var(--s1);color:var(--forest)" oninput="DX.studyFilename=this.value.trim();autosave()">
+        <span style="font-family:var(--mono);font-size:11px;color:var(--muted2);flex-shrink:0">.json</span>
+      </div>
+      <div style="font-family:var(--mono);font-size:9px;color:var(--muted2);margin-top:5px">Set this once. Every save uses the same name — no more (1)(2)(3).</div>
+    </div>
     <div class="fg"><label>Supervisor (Line Owner)</label><input type="text" id="g1supervisor" placeholder="Who owns this line?"/></div>
     <div class="fg" style="margin-top:4px"><label style="font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px;display:flex;align-items:center;gap:6px">Is this the line bottleneck station?</label>
       <div style="display:flex;gap:8px">
@@ -364,18 +374,6 @@ body{overscroll-behavior:none}
           <div style="font-family:var(--mono);font-size:9px;color:var(--muted)" id="effTaktSub"></div>
         </div>
       </div>
-    </div>
-  </div>
-  <!-- STUDY FILENAME -->
-  <div style="padding:0 18px 12px">
-    <div style="background:var(--s2);border:1px solid var(--br);border-radius:var(--r);padding:10px 12px">
-      <div style="font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px">Study File Name</div>
-      <div style="display:flex;align-items:center;gap:8px">
-        <span style="font-family:var(--mono);font-size:11px;color:var(--muted2);flex-shrink:0">ProcessDx_</span>
-        <input type="text" id="g1filename" placeholder="auto from process name" style="flex:1;font-family:var(--mono);font-size:11px;border:1px solid var(--br);border-radius:4px;padding:6px 8px;background:var(--s1);color:var(--forest)" oninput="DX.studyFilename=this.value.trim();autosave()">
-        <span style="font-family:var(--mono);font-size:11px;color:var(--muted2);flex-shrink:0">.json</span>
-      </div>
-      <div style="font-family:var(--mono);font-size:9px;color:var(--muted2);margin-top:5px">Set this once. Every save uses the same name — no more (1)(2)(3).</div>
     </div>
   </div>
   <div id="g1err" style="display:none;background:var(--rdim);border:1px solid rgba(185,28,28,.3);border-radius:var(--r);padding:10px 14px;margin:0 18px 8px;font-family:var(--mono);font-size:11px;color:var(--red);line-height:1.6"></div>
@@ -1137,6 +1135,7 @@ function gate1Next(){
   if(errEl)errEl.style.display='none';
   const shiftsDay=parseInt($('g1shiftsday').value)||1,daysWeek=parseInt($('g1daysweek').value)||5,weeks=parseInt($('g1weeks').value)||50;
   const effTarget=DX.setup.effTarget||parseFloat($('g1eff').value)||90;
+  DX.studyFilename=($('g1filename').value.trim())||proc;
   DX.setup={process:proc,dept:$('g1dept').value.trim(),analyst,supervisor:$('g1supervisor').value.trim(),date:$('g1date').value.trim()||new Date().toLocaleDateString('en-US'),operator:$('g1operator').value.trim(),takt,shiftMin:parseFloat($('g1shiftmin').value)||455,heads:parseFloat($('g1heads').value)||1,rate:parseFloat($('g1rate').value)||0,shiftsDay,daysWeek,weeks,annualShifts:shiftsDay*daysWeek*weeks,effTarget};
   DX.setup.effectiveTakt=Math.round(takt*(effTarget/100)*10)/10;
   DX.setup.target=Math.floor((DX.setup.shiftMin*60)/DX.setup.takt);
@@ -1242,8 +1241,11 @@ function setFreq(idx,flag,freq){const s=DX.ergoSteps[idx];if(!s.freq)s.freq={};s
 const vid=$('vid');
 $('vidInput').addEventListener('change',e=>{const f=e.target.files[0];e.target.value='';if(f)loadVid(f);});
 function loadVid(file){
+  // Fully release previous video before loading new one (prevents iOS freeze)
   if(vid._url){URL.revokeObjectURL(vid._url);vid._url=null;}
-  vid.pause();vid.removeAttribute('src');vid.load();
+  vid.pause();
+  vid.removeAttribute('src');
+  vid.load();
   const url=URL.createObjectURL(file);vid._url=url;
   // Log sync point — capture session elapsed at moment this video was loaded
   if(!DX.vidLog)DX.vidLog=[];
@@ -1251,22 +1253,23 @@ function loadVid(file){
   const syncElapsed=elapsed()/1000;
   DX.vidLog.push({sessionElapsed:syncElapsed,label:'Video '+(vidIdx+1),idx:vidIdx,fileName:file.name});
   vid._vidIdx=vidIdx;
-  vid.onloadedmetadata=()=>{
-    $('vEmpty').style.display='none';vid.style.display='block';vid.onloadedmetadata=null;
-    // Update Gate 2 video status indicator
-    const btn=$('g2VidBtn'),status=$('g2VidStatus'),fname=$('g2VidName');
-    if(btn)btn.style.display='none';
-    if(status)status.style.display='flex';
-    if(fname)fname.textContent=file.name||'Video loaded';
-    // Show sync banner if there are already captured cycles
-    const hasCycles=DX.cycles.slice(1).some(c=>c&&c.length>0);
-    if(hasCycles&&vidIdx>0){
-      _showSaveStatus(`Video ${vidIdx+1} loaded · sync @ ${fmtElapsed(syncElapsed)}`,true);
-    }
-  };
-  vid.onerror=()=>{vid.style.display='none';$('vEmpty').style.display='flex';};
-  vid.src=url;
-  autosave();
+  // Small defer to let iOS fully release previous stream before assigning new src
+  setTimeout(()=>{
+    vid.onloadedmetadata=()=>{
+      $('vEmpty').style.display='none';vid.style.display='block';vid.onloadedmetadata=null;
+      const btn=$('g2VidBtn'),status=$('g2VidStatus'),fname=$('g2VidName');
+      if(btn)btn.style.display='none';
+      if(status)status.style.display='flex';
+      if(fname)fname.textContent=file.name||'Video loaded';
+      const hasCycles=DX.cycles.slice(1).some(c=>c&&c.length>0);
+      if(hasCycles&&vidIdx>0){
+        _showSaveStatus(`Video ${vidIdx+1} loaded · sync @ ${fmtElapsed(syncElapsed)}`,true);
+      }
+    };
+    vid.onerror=()=>{vid.style.display='none';$('vEmpty').style.display='flex';};
+    vid.src=url;
+    autosave();
+  },80);
 }
 vid.addEventListener('timeupdate',()=>{if(vid.duration)$('pFill').style.width=(vid.currentTime/vid.duration*100)+'%';});
 function flashBtn(btn,msg,ms){if(!btn)return;const orig=btn.textContent;btn.textContent=msg;setTimeout(()=>{btn.textContent=orig;},ms||600);}
