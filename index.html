@@ -2975,21 +2975,52 @@ printStyle.textContent=`
   body { background: #fff !important; margin: 0; padding: 0; font-family: 'Barlow', sans-serif; }
 
   /* ── HIDE EVERYTHING ── */
-  #S0, #S1, #S2, #S3, #S4, #S5, #S7,
+  #S0, #S1, #S2, #S3, #S4, #S5,
   #coachOverlay, #tipModal, #stepModal, #capSheet,
-  .foot, #prog6, .cap-bar, .quick-note-bar, .cycle-tabs,
+  .foot, #prog6, #prog7, .cap-bar, .quick-note-bar, .cycle-tabs,
   #yamSliders, #studyMeta, #afterStudySection, #afterStudyBtnWrap,
-  #progressLog, #weeklyTrackingSection, #kataSection,
-  #phase1Output, #phase2Output, #phase3Output,
+  #progressLog, #weeklyTrackingSection,
   #savingsBlock,
-  #S6 .gate-hdr,
+  #S6 .gate-hdr, #S7 .gate-hdr,
   button, .qbtn, .ctmethod-toggle, .var-override-btn,
   .save-flash { display: none !important; }
 
-  /* ── SHOW GATE 6 (DIAGNOSTIC OUTPUT) ONLY ── */
+  /* ── SHOW ACTIVE GATE ONLY ── */
   .scr { display: none !important; min-height: auto !important; }
-  #S6 { display: block !important; }
-  #S6 .scroll { overflow: visible !important; padding: 0 !important; }
+  .scr.on { display: block !important; }
+  .scr.on .scroll { overflow: visible !important; padding: 0 !important; }
+
+  /* ── GATE 6 SPECIFIC HIDES (only when S6 is printing) ── */
+  #S6.on #kataSection,
+  #S6.on #phase1Output,
+  #S6.on #phase2Output,
+  #S6.on #phase3Output { display: none !important; }
+
+  /* ── GATE 7 SPECIFIC HIDES (only when S7 is printing) ── */
+  #S7.on #savingsBlock { display: none !important; }
+
+  /* ── GATE 7 PRINT STYLES ── */
+  #S7.on #kataSection { display: block !important; }
+  #S7.on #weeklyTrackingSection { display: block !important; }
+  #S7.on .scroll { overflow: visible !important; padding: 0 !important; }
+  #kataSection .kata-card {
+    background: #fff !important;
+    border: 1pt solid #C3D9C9 !important;
+    border-radius: 4pt !important;
+    padding: 10pt 12pt !important;
+    margin-bottom: 10pt !important;
+    break-inside: avoid !important;
+  }
+  #kataSection .kata-label {
+    font-family: 'Barlow Condensed', sans-serif !important;
+    font-size: 8pt !important; font-weight: 700 !important;
+    color: #1B4332 !important; text-transform: uppercase !important;
+    letter-spacing: 2px !important; margin-bottom: 4pt !important;
+  }
+  #kataSection .kata-value {
+    font-size: 11pt !important; color: #1a1a1a !important; line-height: 1.5 !important;
+  }
+  #weeklyTrackingSection { break-before: page !important; page-break-before: always !important; }
 
   /* ── PAGE 1: ROI header + Yamazumi ── */
   #roiOutput { margin-bottom: 12pt; }
