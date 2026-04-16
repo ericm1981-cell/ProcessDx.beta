@@ -4,7 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ProcessDx">
 <meta name="theme-color" content="#1B4332">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="processdx-icon-180.png">
 <title>Process Dx</title>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -243,7 +247,8 @@ body{overscroll-behavior:none}
   <div style="width:100%;max-width:360px">
     <div style="font-family:var(--head);font-size:54px;font-weight:800;color:var(--forest);text-transform:uppercase;letter-spacing:-1px;line-height:1;margin-bottom:2px">Process <em style="color:var(--green);font-style:normal">Dx</em></div>
     <div style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:3px;text-transform:uppercase;border-bottom:2px solid var(--forest);padding-bottom:8px;margin-bottom:16px">Muri · Mura · Muda</div>
-    <div style="font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.5px;margin-bottom:24px;line-height:2">Seven gates. Right sequence.<br><span style="color:var(--red)">Fix overburden first.</span><br><span style="color:var(--amber)">Stabilize variation second.</span><br><span style="color:var(--green)">Remove waste third.</span></div>
+    <div style="font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.5px;margin-bottom:16px;line-height:2">Seven gates. Right sequence.<br><span style="color:var(--red)">Fix overburden first.</span><br><span style="color:var(--amber)">Stabilize variation second.</span><br><span style="color:var(--green)">Remove waste third.</span></div>
+    <div style="font-family:var(--mono);font-size:10px;color:var(--muted2);line-height:1.8;margin-bottom:24px;background:var(--s2);border:1px solid var(--br);border-radius:var(--r);padding:10px 12px">At the end of this study you will have a <strong style="color:var(--forest)">prioritized action list</strong>, a <strong style="color:var(--forest)">time study record</strong>, and a <strong style="color:var(--forest)">target condition</strong> ready for your next coaching conversation.</div>
     <div id="resumeBtnWrap" style="display:none;margin-bottom:12px">
       <button id="resumeBtn" class="btn-primary" style="width:100%;background:var(--amber);border-color:var(--amber);font-size:16px;padding:16px" onclick="doResume()">↩ Resume Last Study →</button>
       <div id="resumeHint" style="font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;margin-top:5px;padding:4px;background:var(--gdim);border-radius:4px"></div>
@@ -297,7 +302,7 @@ body{overscroll-behavior:none}
   <div class="scroll">
     <div class="slbl">Process Information</div>
     <div class="frow">
-      <div class="fg"><label>Process / Station *</label><input type="text" id="g1proc" placeholder="e.g. Frame Assembly"/></div>
+      <div class="fg"><label>Process / Station *</label><input type="text" id="g1proc" placeholder="e.g. Frame Assembly" oninput="if(!DX.studyFilename){const fn=$('g1filename');if(fn)fn.placeholder=this.value.replace(/[^a-z0-9\-_\s]+/gi,' ').trim().replace(/\s+/g,'_')||'auto from process name';}"/></div>
       <div class="fg"><label>Department</label><input type="text" id="g1dept" placeholder="e.g. Assembly"/></div>
     </div>
     <div class="frow">
@@ -305,6 +310,7 @@ body{overscroll-behavior:none}
       <div class="fg"><label>Date</label><input type="text" id="g1date"/></div>
     </div>
     <div class="fg"><label>Operator / Subject</label><input type="text" id="g1operator" placeholder="Name or ID — optional"/></div>
+    <div class="fg"><label>Supervisor (Line Owner)</label><input type="text" id="g1supervisor" placeholder="Who owns this line?"/></div>
     <div class="fg" style="margin-top:4px"><label style="font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px;display:flex;align-items:center;gap:6px">Is this the line bottleneck station?</label>
       <div style="display:flex;gap:8px">
         <button id="btnBnYes" style="flex:1;padding:10px;font-family:var(--head);font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;border-radius:var(--r);border:2px solid var(--br);background:var(--s2);color:var(--muted);cursor:pointer;-webkit-appearance:none" onclick="setBn(true)">Yes — Bottleneck</button>
@@ -358,6 +364,18 @@ body{overscroll-behavior:none}
           <div style="font-family:var(--mono);font-size:9px;color:var(--muted)" id="effTaktSub"></div>
         </div>
       </div>
+    </div>
+  </div>
+  <!-- STUDY FILENAME -->
+  <div style="padding:0 18px 12px">
+    <div style="background:var(--s2);border:1px solid var(--br);border-radius:var(--r);padding:10px 12px">
+      <div style="font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px">Study File Name</div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-family:var(--mono);font-size:11px;color:var(--muted2);flex-shrink:0">ProcessDx_</span>
+        <input type="text" id="g1filename" placeholder="auto from process name" style="flex:1;font-family:var(--mono);font-size:11px;border:1px solid var(--br);border-radius:4px;padding:6px 8px;background:var(--s1);color:var(--forest)" oninput="DX.studyFilename=this.value.trim();autosave()">
+        <span style="font-family:var(--mono);font-size:11px;color:var(--muted2);flex-shrink:0">.json</span>
+      </div>
+      <div style="font-family:var(--mono);font-size:9px;color:var(--muted2);margin-top:5px">Set this once. Every save uses the same name — no more (1)(2)(3).</div>
     </div>
   </div>
   <div id="g1err" style="display:none;background:var(--rdim);border:1px solid rgba(185,28,28,.3);border-radius:var(--r);padding:10px 14px;margin:0 18px 8px;font-family:var(--mono);font-size:11px;color:var(--red);line-height:1.6"></div>
@@ -516,11 +534,21 @@ body{overscroll-behavior:none}
     <div class="calc-grid" id="varTaktCalc"></div>
     <div class="fg" id="varNotesWrap">
       <label style="display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:4px">
-        Variation Notes — Root Cause Required When Steps Are Flagged
+        Variation Root Cause
         <span id="varNotesRequired" style="display:none;color:var(--red);font-size:9px;font-weight:700">⚠ Required</span>
       </label>
-      <textarea id="g5notes" rows="3" placeholder="REQUIRED before proceeding: What is driving the variation? Name the step, the suspected cause (method / material / equipment / operator technique), and what you would test to confirm it." oninput="$('g5notesWarn').style.display=this.value.trim()?'none':'block'"></textarea>
-      <div id="g5notesWarn" style="font-family:var(--mono);font-size:10px;color:var(--amber);background:var(--adim);border:1px solid rgba(217,119,6,.3);border-radius:var(--r);padding:6px 10px;margin-top:4px">⚠ Document your root cause hypothesis before proceeding — this is what drives your first experiment.</div>
+      <!-- Root cause category chips -->
+      <div style="margin-bottom:8px">
+        <div style="font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Select category — what is driving the instability?</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap" id="rcChips">
+          <button class="rc-chip" data-rc="Method" onclick="toggleRCChip(this)" style="font-family:var(--mono);font-size:10px;font-weight:700;padding:7px 14px;border:2px solid var(--br);border-radius:4px;background:var(--s2);color:var(--muted);cursor:pointer;-webkit-appearance:none;transition:all .12s;letter-spacing:.3px">Method</button>
+          <button class="rc-chip" data-rc="Material" onclick="toggleRCChip(this)" style="font-family:var(--mono);font-size:10px;font-weight:700;padding:7px 14px;border:2px solid var(--br);border-radius:4px;background:var(--s2);color:var(--muted);cursor:pointer;-webkit-appearance:none;transition:all .12s;letter-spacing:.3px">Material</button>
+          <button class="rc-chip" data-rc="Equipment" onclick="toggleRCChip(this)" style="font-family:var(--mono);font-size:10px;font-weight:700;padding:7px 14px;border:2px solid var(--br);border-radius:4px;background:var(--s2);color:var(--muted);cursor:pointer;-webkit-appearance:none;transition:all .12s;letter-spacing:.3px">Equipment</button>
+          <button class="rc-chip" data-rc="Operator Technique" onclick="toggleRCChip(this)" style="font-family:var(--mono);font-size:10px;font-weight:700;padding:7px 14px;border:2px solid var(--br);border-radius:4px;background:var(--s2);color:var(--muted);cursor:pointer;-webkit-appearance:none;transition:all .12s;letter-spacing:.3px">Operator</button>
+        </div>
+      </div>
+      <textarea id="g5notes" rows="3" placeholder="Add detail — which step, what you observed, what you would test to confirm it." oninput="DX.g5notes=this.value;autosave();$('g5notesWarn').style.display=this.value.trim()?'none':'block'"></textarea>
+      <div id="g5notesWarn" style="font-family:var(--mono);font-size:10px;color:var(--amber);background:var(--adim);border:1px solid rgba(217,119,6,.3);border-radius:var(--r);padding:6px 10px;margin-top:4px">⚠ Select a root cause category and add detail before proceeding — this drives your first experiment.</div>
     </div>
   </div>
   <div class="foot"><button class="btn-secondary" onclick="goGate(3)">← Back</button><button class="btn-primary" onclick="gate4Next()">Proceed to Waste →</button></div>
@@ -703,6 +731,20 @@ body{overscroll-behavior:none}
 </div>
 
 <!-- TOOLTIP MODAL -->
+<!-- GATE 6 CHECKPOINT MODAL -->
+<div id="gate6Checkpoint" style="display:none;position:fixed;inset:0;background:rgba(27,67,50,.6);z-index:350;align-items:flex-end;backdrop-filter:blur(4px)">
+  <div style="background:var(--s1);border-top:4px solid var(--amber);border-radius:14px 14px 0 0;padding:20px 20px calc(24px + var(--sb));width:100%;max-height:75vh;overflow-y:auto">
+    <div style="font-family:var(--mono);font-size:9px;color:var(--amber);letter-spacing:2px;text-transform:uppercase;margin-bottom:6px">Before You Generate Output</div>
+    <div style="font-family:var(--head);font-size:20px;font-weight:800;color:var(--forest);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Review These Items</div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:14px;line-height:1.6">The following items are unresolved. You can proceed anyway — but your output will reflect these gaps. Address them now for a cleaner diagnostic.</div>
+    <div id="gate6CheckpointList" style="margin-bottom:18px"></div>
+    <div style="display:flex;gap:10px">
+      <button onclick="$('gate6Checkpoint').style.display='none'" class="btn-secondary" style="flex:1">← Review First</button>
+      <button onclick="$('gate6Checkpoint').style.display='none';autosave();goGate(6);" class="btn-primary" style="flex:1.5;background:var(--amber);font-size:14px">Proceed Anyway →</button>
+    </div>
+  </div>
+</div>
+
 <div id="tipModal"><div class="tip-box"><div class="tip-title" id="tipTitle">—</div><div class="tip-body" id="tipBody" style="white-space:pre-line">—</div><button class="tip-close" onclick="$('tipModal').style.display='none'">Got It</button></div></div>
 
 <!-- VIDEO RE-LINK MODAL -->
@@ -729,10 +771,11 @@ const DX={
   gate:0,setup:{},baseline:{},gemba:{checks:{cycle:true,operator:true,material:true,equipment:true,quality:true,normal:true},blind:false,abnormal:'',timestamp:'',notes:''},
   ergoSteps:[],cycles:[[]],curCycle:0,
   running:false,frozen:false,raf:null,tStart:null,tAccum:0,stepStart:null,
-  quickNotes:[],variation:{},varOverrides:{},waste:{},g5notes:'',
+  quickNotes:[],variation:{},varOverrides:{},varRootCause:{},waste:{},g5notes:'',
   eracs:{},ctMethod:'avg',wasteType:{},
   vidLog:[],  // [{sessionElapsed, label, idx}] — one entry per video loaded
-  nonCyclicalSteps:{},  // {stepName: {n: frequency}} — steps that occur every N units
+  nonCyclicalSteps:{},  // {stepName: {n: frequency}}
+  studyFilename:'',     // custom save filename (set in Gate 1)
   kata:{targetCT:'',targetDate:'',conditions:[],successCriteria:'',obstacles:[],experiments:[],
         weeklyTracking:[]},
   afterStudies:[],afterStudyMode:false,afterStudyDraft:null,_asOrig:null,
@@ -827,7 +870,7 @@ function goGate(n){
   }
   if(n===2){calcBaseline();syncGembaChecklist();}
   if(n===3)renderCapScreen();
-  if(n===4){renderVariation();const nw=$('g5notesWarn');if(nw)nw.style.display=(DX.g5notes&&DX.g5notes.trim())?'none':'block';}
+  if(n===4){renderVariation();const nw=$('g5notesWarn');if(nw)nw.style.display=(DX.g5notes&&DX.g5notes.trim())?'none':'block';const notesEl=$('g5notes');if(notesEl)notesEl.value=DX.g5notes||'';setTimeout(_restoreRCChips,50);}
   if(n===5)renderWasteScreen();
   // After-state: when in re-study mode, Gate 7 shows commit/cancel
   if(n===7&&DX.afterStudyMode)renderResStudyButtons();
@@ -841,7 +884,7 @@ function startNew(){
     gate:0,setup:{},baseline:{},
     gemba:{checks:{cycle:false,operator:false,material:false,equipment:false,quality:false,normal:false},blind:false,abnormal:'',timestamp:'',notes:''},
     ergoSteps:[],cycles:[[]],curCycle:0,running:false,frozen:false,raf:null,tStart:null,tAccum:0,stepStart:null,
-    quickNotes:[],variation:{},varOverrides:{},waste:{},g5notes:'',eracs:{},ctMethod:'avg',wasteType:{},
+    quickNotes:[],variation:{},varOverrides:{},varRootCause:{},waste:{},g5notes:'',eracs:{},ctMethod:'avg',wasteType:{},
     kata:{targetCT:'',targetDate:'',conditions:[],successCriteria:'',obstacles:[],experiments:[],weeklyTracking:[]},
     vidLog:[],nonCyclicalSteps:{},
     afterStudies:[],afterStudyMode:false,afterStudyDraft:null,_asOrig:null,
@@ -859,7 +902,7 @@ function startDemo(){
     // Demo: all gemba checks pre-confirmed
     gemba:{checks:{cycle:true,operator:true,material:true,equipment:true,quality:true,normal:true},blind:false,abnormal:'',timestamp:'',notes:''},
     ergoSteps:[],cycles:[[]],curCycle:0,running:false,frozen:false,raf:null,tStart:null,tAccum:0,stepStart:null,
-    quickNotes:[],variation:{},varOverrides:{},waste:{},g5notes:'',eracs:{},ctMethod:'avg',wasteType:{},
+    quickNotes:[],variation:{},varOverrides:{},varRootCause:{},waste:{},g5notes:'',eracs:{},ctMethod:'avg',wasteType:{},
     kata:{targetCT:'',targetDate:'',conditions:[],successCriteria:'',obstacles:[],experiments:[],weeklyTracking:[]},
     vidLog:[],
     afterStudies:[],afterStudyMode:false,afterStudyDraft:null,_asOrig:null,
@@ -1094,7 +1137,7 @@ function gate1Next(){
   if(errEl)errEl.style.display='none';
   const shiftsDay=parseInt($('g1shiftsday').value)||1,daysWeek=parseInt($('g1daysweek').value)||5,weeks=parseInt($('g1weeks').value)||50;
   const effTarget=DX.setup.effTarget||parseFloat($('g1eff').value)||90;
-  DX.setup={process:proc,dept:$('g1dept').value.trim(),analyst,date:$('g1date').value.trim()||new Date().toLocaleDateString('en-US'),operator:$('g1operator').value.trim(),takt,shiftMin:parseFloat($('g1shiftmin').value)||455,heads:parseFloat($('g1heads').value)||1,rate:parseFloat($('g1rate').value)||0,shiftsDay,daysWeek,weeks,annualShifts:shiftsDay*daysWeek*weeks,effTarget};
+  DX.setup={process:proc,dept:$('g1dept').value.trim(),analyst,supervisor:$('g1supervisor').value.trim(),date:$('g1date').value.trim()||new Date().toLocaleDateString('en-US'),operator:$('g1operator').value.trim(),takt,shiftMin:parseFloat($('g1shiftmin').value)||455,heads:parseFloat($('g1heads').value)||1,rate:parseFloat($('g1rate').value)||0,shiftsDay,daysWeek,weeks,annualShifts:shiftsDay*daysWeek*weeks,effTarget};
   DX.setup.effectiveTakt=Math.round(takt*(effTarget/100)*10)/10;
   DX.setup.target=Math.floor((DX.setup.shiftMin*60)/DX.setup.takt);
   autosave();goGate(2);
@@ -1415,7 +1458,18 @@ function renderVariation(){
     const exclKey=name+'_excl';const excl=DX.varOverrides[exclKey]||[];
     const pipHTML=durs.map((d,ci)=>`<span class="cycle-pip ${excl.includes(ci)?'excl':''}" onclick="toggleExclude('${name.replace(/'/g,"\\'")}',${ci})">${d.toFixed(2)}s</span>`).join('');
     const pipRow=durs.length>1?`<div style="margin-top:4px"><span style="font-family:var(--mono);font-size:8px;color:var(--muted2);letter-spacing:.5px">CYCLES — TAP TO EXCLUDE: </span>${pipHTML}</div>`:'';
-    tr.innerHTML=`<td>${name}${ncNote}${pipRow}</td><td>${avg.toFixed(2)}</td><td>${lr_disp}</td><td>${nc?'N/A (non-cyclical)':isShort?'Range: '+(max-min).toFixed(2)+'s':cv.toFixed(1)+'%'}</td><td style="font-size:10px">${nc?'—':isShort?'Abs >0.8s':'CV >15%'}</td><td>${status}${overrideBtn}</td>`;
+    // FIX 2: Root cause selector for flagged steps
+    const rcSel=high?`<div style="margin-top:6px;padding:8px 10px;background:var(--rdim);border:1px solid rgba(185,28,28,.2);border-radius:var(--r)">
+      <div style="font-family:var(--mono);font-size:9px;color:var(--red);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Root Cause — what is driving this variation?</div>
+      <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:6px">
+        ${['Method','Material','Equipment','Operator'].map(cat=>{
+          const sel=(DX.varRootCause&&DX.varRootCause[name]&&DX.varRootCause[name].category===cat);
+          return `<button onclick="setVarRC('${name.replace(/'/g,"\\'")}','${cat}')" style="font-family:var(--mono);font-size:10px;padding:5px 10px;border-radius:4px;cursor:pointer;-webkit-appearance:none;border:1px solid ${sel?'var(--red)':'var(--br)'};background:${sel?'var(--rdim)':'var(--s2)'};color:${sel?'var(--red)':'var(--muted)'};font-weight:${sel?'700':'400'}">${cat}</button>`;
+        }).join('')}
+      </div>
+      <input type="text" value="${(DX.varRootCause&&DX.varRootCause[name]&&DX.varRootCause[name].hypothesis)||''}" placeholder="Hypothesis — what exactly would you test to confirm it?" style="width:100%;font-family:var(--body);font-size:12px;border:1px solid rgba(185,28,28,.25);border-radius:var(--r);padding:7px 9px;background:#fff;color:var(--txt)" oninput="setVarRCNote('${name.replace(/'/g,"\\'")}',this.value)">
+    </div>`:'';
+    tr.innerHTML=`<td>${name}${ncNote}${pipRow}${rcSel}</td><td>${avg.toFixed(2)}</td><td>${lr_disp}</td><td>${nc?'N/A (non-cyclical)':isShort?'Range: '+(max-min).toFixed(2)+'s':cv.toFixed(1)+'%'}</td><td style="font-size:10px">${nc?'—':isShort?'Abs >0.8s':'CV >15%'}</td><td>${status}${overrideBtn}</td>`;
     tbody.appendChild(tr);
   });
   const avgCTs=valid.map(cyc=>cyc.filter(s=>!s._elimSkip).reduce((a,s)=>a+s.dur,0));
@@ -1451,7 +1505,47 @@ function renderVariation(){
   }
   const reqEl=$('varNotesRequired');if(reqEl)reqEl.style.display=anyHigh?'inline':'none';
 }
+function toggleRCChip(btn){
+  const rc=btn.dataset.rc;
+  const on=btn.classList.toggle('rc-on');
+  btn.style.borderColor=on?'var(--forest)':'var(--br)';
+  btn.style.background=on?'var(--forest)':'var(--s2)';
+  btn.style.color=on?'#fff':'var(--muted)';
+  const selected=[...document.querySelectorAll('.rc-chip.rc-on')].map(b=>b.dataset.rc);
+  const notes=$('g5notes');
+  if(notes){
+    let txt=notes.value.replace(/^Root cause: [^\n]+\n?/,'').trimStart();
+    if(selected.length){notes.value=`Root cause: ${selected.join(' + ')}\n${txt}`;}
+    else{notes.value=txt;}
+    DX.g5notes=notes.value;autosave();
+    $('g5notesWarn').style.display=notes.value.trim()?'none':'block';
+  }
+}
+function _restoreRCChips(){
+  const notes=DX.g5notes||'';
+  const match=notes.match(/^Root cause: ([^\n]+)/);
+  document.querySelectorAll('.rc-chip').forEach(btn=>{
+    const on=!!(match&&match[1].includes(btn.dataset.rc));
+    btn.classList.toggle('rc-on',on);
+    btn.style.borderColor=on?'var(--forest)':'var(--br)';
+    btn.style.background=on?'var(--forest)':'var(--s2)';
+    btn.style.color=on?'#fff':'var(--muted)';
+  });
+}
 function overrideVar(name){const reason=prompt(`Accept "${name}" variation and proceed?\n\nEnter your reason:`,'');if(reason===null)return;DX.varOverrides[name]='accepted';DX.variation[name].high=false;DX.variation[name].overridden=true;DX.variation[name].overrideReason=reason||'Accepted by analyst';renderVariation();}
+
+function setVarRC(name,category){
+  if(!DX.varRootCause)DX.varRootCause={};
+  if(!DX.varRootCause[name])DX.varRootCause[name]={};
+  DX.varRootCause[name].category=DX.varRootCause[name].category===category?null:category;
+  renderVariation();autosave();
+}
+function setVarRCNote(name,val){
+  if(!DX.varRootCause)DX.varRootCause={};
+  if(!DX.varRootCause[name])DX.varRootCause[name]={};
+  DX.varRootCause[name].hypothesis=val;
+  autosave();
+}
 function gate4Next(){
   DX.g5notes=$('g5notes').value.trim();
   const anyHigh=Object.values(DX.variation||{}).some(v=>v.high);
@@ -1556,13 +1650,14 @@ function toggleNCStep(name){
 }
 
 function setNCFreq(name,val){
-  const n=Math.max(2,parseInt(val)||2);
-  if(!DX.nonCyclicalSteps)DX.nonCyclicalSteps={};
-  if(!DX.nonCyclicalSteps[name])DX.nonCyclicalSteps[name]={};
-  DX.nonCyclicalSteps[name].n=n;
-  autosave();
-  // Re-render just the preview without full redraw
-  renderWasteScreen();
+  clearTimeout(setNCFreq._t);
+  setNCFreq._t=setTimeout(()=>{
+    const n=Math.max(2,parseInt(val)||2);
+    if(!DX.nonCyclicalSteps)DX.nonCyclicalSteps={};
+    if(!DX.nonCyclicalSteps[name])DX.nonCyclicalSteps[name]={};
+    DX.nonCyclicalSteps[name].n=n;
+    autosave();renderWasteScreen();
+  },400);
 }
 
 function renameStep(oldName){
@@ -1591,7 +1686,26 @@ function renameStep(oldName){
   _showSaveStatus(`✓ Renamed to "${n}"`);
 }
 
-function gate5Next(){autosave();goGate(6);}
+function gate5Next(){
+  const names=DX.ergoSteps.map(s=>s.name).filter(n=>!isElim(n));
+  const unclassified=names.filter(n=>!DX.waste[n]);
+  const unresolvedErgo=DX.ergoSteps.filter(s=>{
+    if(isElim(s.name))return false;
+    return(s.flags||[]).some(f=>['Every Cycle','Frequent'].includes(s.freq&&s.freq[f]));
+  });
+  const varFlagged=Object.entries(DX.variation||{}).filter(([,v])=>v.high);
+  const issues=[];
+  if(unclassified.length)issues.push(`<strong>${unclassified.length} step${unclassified.length>1?'s':''} not classified</strong> — ${unclassified.join(', ')}`);
+  if(unresolvedErgo.length)issues.push(`<strong>${unresolvedErgo.length} lock-level ergo flag${unresolvedErgo.length>1?'s':''} unresolved</strong> — ${unresolvedErgo.map(s=>s.name).join(', ')}`);
+  if(varFlagged.length)issues.push(`<strong>${varFlagged.length} high-variation step${varFlagged.length>1?'s':''} not overridden</strong> — ${varFlagged.map(([n])=>n).join(', ')}`);
+  if(issues.length){
+    const list=$('gate6CheckpointList');
+    if(list)list.innerHTML=issues.map(i=>`<div style="display:flex;align-items:flex-start;gap:8px;padding:9px 0;border-bottom:1px solid var(--br)"><span style="color:var(--amber);flex-shrink:0;font-size:15px">⚠</span><span style="font-size:13px;color:var(--slate);line-height:1.5">${i}</span></div>`).join('');
+    const modal=$('gate6Checkpoint');if(modal)modal.style.display='flex';
+    return;
+  }
+  autosave();goGate(6);
+}
 
 // ═══ GATE 7 — OUTPUT ═══
 function renderROIScorecard(){
@@ -1637,7 +1751,7 @@ function renderOutput(){
   $('phase1Output').innerHTML=`<div class="output-phase"><div class="output-phase-hdr"><div class="phase-num ph1">1</div><div><div class="phase-title">Fix First — Muri (Ergo)</div><div class="phase-sub">Resolve before re-timing. Fix the body before you time the method.</div></div></div>${hardErgo.map(s=>`<div class="output-item"><span class="out-step red">LOCK</span><div class="out-text"><b>${s.name}</b><br>Risks (every cycle/frequent): ${(s.flags||[]).filter(f=>FREQ_LOCK.includes(s.freq&&s.freq[f])).join(', ')}<br>${s.notes?`<span style="color:var(--slate);font-style:italic">${s.notes}</span><br>`:''}Fix the physical condition. Re-study after correction before classifying waste.</div></div>`).join('')}${softErgo.map(s=>`<div class="output-item"><span class="out-step amber">NOTE</span><div class="out-text"><b>${s.name}</b><br>Occasional risks: ${(s.flags||[]).join(', ')}${s.notes?`<br><span style="color:var(--slate);font-style:italic">${s.notes}</span>`:''}</div></div>`).join('')}${!ergoFlagged.length?`<div class="out-empty">✓ No ergonomic risks flagged.</div>`:''}${DX.gemba.abnormal?`<div class="output-item"><span class="out-step amber">COND</span><div class="out-text"><b>Abnormal conditions noted:</b><br>${DX.gemba.abnormal}</div></div>`:''}</div>`;
   const varFlagged=Object.entries(variation).filter(([,v])=>v.high);
   const varAccepted=Object.entries(DX.varOverrides||{}).filter(([,v])=>v==='accepted');
-  $('phase2Output').innerHTML=`<div class="output-phase"><div class="output-phase-hdr"><div class="phase-num ph2">2</div><div><div class="phase-title">Stabilize — Mura (Variation)</div><div class="phase-sub">${varFlagged.length} flagged · ${varAccepted.length} accepted by analyst.</div></div></div>${varFlagged.map(([name,v])=>`<div class="output-item"><span class="out-step amber">VAR</span><div class="out-text"><b>${name}</b><br>${v.isShort?`Short cycle (avg ${v.avg.toFixed(2)}s) — Range: ${(v.max-v.min).toFixed(2)}s exceeds 0.8s threshold`:`CV: ${v.cv.toFixed(1)}% (Avg: ${v.avg.toFixed(2)}s)`}<br>Stabilize method before removing waste from this step.</div></div>`).join('')}${varAccepted.map(([name])=>{const v=DX.variation[name]||{};return`<div class="output-item"><span class="out-step" style="color:var(--muted)">ACCPT</span><div class="out-text"><b>${name}</b> — variation accepted by analyst.<br>Reason: ${v.overrideReason||'Not stated'}</div></div>`;}).join('')}${!varFlagged.length&&!varAccepted.length?`<div class="out-empty">✓ All steps within variation threshold.</div>`:''}${DX.g5notes?`<div class="output-item"><span class="out-step">NOTES</span><div class="out-text">${DX.g5notes}</div></div>`:''}</div>`;
+  $('phase2Output').innerHTML=`<div class="output-phase"><div class="output-phase-hdr"><div class="phase-num ph2">2</div><div><div class="phase-title">Stabilize — Mura (Variation)</div><div class="phase-sub">${varFlagged.length} flagged · ${varAccepted.length} accepted by analyst.</div></div></div>${varFlagged.map(([name,v])=>{const rc=DX.varRootCause&&DX.varRootCause[name];const rcTag=rc&&rc.category?`<span style="font-family:var(--mono);font-size:9px;color:var(--amber);background:var(--adim);border:1px solid rgba(217,119,6,.3);border-radius:3px;padding:1px 6px;margin-left:4px">${rc.category}</span>`:'<span style="font-family:var(--mono);font-size:9px;color:var(--red);background:var(--rdim);border:1px solid rgba(185,28,28,.2);border-radius:3px;padding:1px 6px;margin-left:4px">Root cause not categorized</span>';const hypo=rc&&rc.hypothesis?`<br><em style="color:var(--slate)">"${rc.hypothesis}"</em>`:'';return`<div class="output-item"><span class="out-step amber">VAR</span><div class="out-text"><b>${name}</b>${rcTag}<br>${v.isShort?`Short cycle (avg ${v.avg.toFixed(2)}s) — Range: ${(v.max-v.min).toFixed(2)}s exceeds 0.8s threshold`:`CV: ${v.cv.toFixed(1)}% (Avg: ${v.avg.toFixed(2)}s)`}${hypo}<br>Stabilize method before removing waste from this step.</div></div>`;}).join('')}${varAccepted.map(([name])=>{const v=DX.variation[name]||{};return`<div class="output-item"><span class="out-step" style="color:var(--muted)">ACCPT</span><div class="out-text"><b>${name}</b> — variation accepted by analyst.<br>Reason: ${v.overrideReason||'Not stated'}</div></div>`;}).join('')}${!varFlagged.length&&!varAccepted.length?`<div class="out-empty">✓ All steps within variation threshold.</div>`:''}${DX.g5notes?`<div class="output-item"><span class="out-step">NOTES</span><div class="out-text">${DX.g5notes}</div></div>`:''}</div>`;
   const wstItems=Object.entries(waste).filter(([,v])=>v==='wst'||v==='inc');
   const eracs_fn=name=>(DX.eracs&&DX.eracs[name])||'—';
   $('phase3Output').innerHTML=`<div class="output-phase"><div class="output-phase-hdr"><div class="phase-num ph3">3</div><div><div class="phase-title">Remove Waste — Muda</div><div class="phase-sub">${wstItems.length} waste step${wstItems.length!==1?'s':''}</div></div></div>${wstItems.map(([name])=>{const wt=DX.wasteType&&DX.wasteType[name];const WTLBL={T:'Transport',I:'Inventory',M:'Motion',W:'Waiting',O:'Overproduction',P:'Over-processing',D:'Defects',U:'Unused Skills'};return`<div class="output-item"><span class="out-step red">WASTE</span><div class="out-text"><b>${name}</b>${wt?` <span style="font-family:var(--mono);font-size:9px;color:var(--red);background:var(--rdim);border:1px solid rgba(185,28,28,.2);border-radius:3px;padding:1px 5px">${WTLBL[wt]||wt}</span>`:''}<br>CLEAR: <span style="color:var(--forest);font-weight:600">${eracs_fn(name)}</span></div></div>`;}).join('')}${!wstItems.length?`<div class="out-empty">${Object.values(waste).some(v=>v)?'All steps classified as VA.':'Return to Gate 6 to classify.'}</div>`:''}</div>`;
@@ -1808,8 +1922,24 @@ function closeStepModal(){$('stepModal').style.display='none';}
 function saveStepModal(){const name=$('stepModalName').value.trim();if(!name){$('stepModalName').style.borderColor='var(--red)';$('stepModalName').focus();return;}$('stepModalName').style.borderColor='';if(!DX.ergoSteps.find(s=>s.name===name)){DX.ergoSteps.push({name,flags:[],freq:{}});}if(!DX.waste[name])DX.waste[name]=null;closeStepModal();autosave();}
 
 // ═══ JSON ═══
-function quickSaveJSON(){if(!DX.setup||!DX.setup.process)return;const state={app:'ProcessDx',version:'2.1',exportedAt:new Date().toISOString(),...DX};const proc=(DX.setup.process||'Study').replace(/[^a-zA-Z0-9]+/g,'_').replace(/^_|_$/g,'');const fn=`${proc}_Study.json`;const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(state,null,2)],{type:'application/json'}));a.download=fn;document.body.appendChild(a);a.click();a.remove();_showSaveStatus('✓ JSON downloaded');}
-function exportJSON(){const state={app:'ProcessDx',version:'2.1',exportedAt:new Date().toISOString(),...DX};const proc=(DX.setup.process||'ProcessDx').replace(/[^a-z0-9\-_]+/gi,'_');const d=new Date(),p=n=>String(n).padStart(2,'0');const fn=`${proc}_${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}_ProcessDx.json`;const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(state,null,2)],{type:'application/json'}));a.download=fn;document.body.appendChild(a);a.click();a.remove();}
+function quickSaveJSON(){
+  const state={app:'ProcessDx',version:'2.1',exportedAt:new Date().toISOString(),...DX};
+  const proc=(DX.studyFilename||DX.setup.process||'Study').replace(/[^a-z0-9\-_\s]+/gi,' ').trim().replace(/\s+/g,'_');
+  const fn=`ProcessDx_${proc}.json`;
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([JSON.stringify(state,null,2)],{type:'application/json'}));
+  a.download=fn;document.body.appendChild(a);a.click();a.remove();
+  _showSaveStatus(`✓ Saved as ${fn}`);
+}
+function exportJSON(){
+  const state={app:'ProcessDx',version:'2.1',exportedAt:new Date().toISOString(),...DX};
+  const proc=(DX.studyFilename||DX.setup.process||'ProcessDx').replace(/[^a-z0-9\-_\s]+/gi,' ').trim().replace(/\s+/g,'_');
+  const fn=`ProcessDx_${proc}.json`;
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([JSON.stringify(state,null,2)],{type:'application/json'}));
+  a.download=fn;document.body.appendChild(a);a.click();a.remove();
+  _showSaveStatus(`✓ Saved as ${fn}`);
+}
 $('resumeInput').addEventListener('change',async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;try{const obj=JSON.parse(await f.text());if(obj.app!=='ProcessDx')throw new Error('Not a Process Dx file');Object.assign(DX,obj);if(!DX.afterStudies)DX.afterStudies=[];if(!DX.vidLog)DX.vidLog=[];if(!DX.kata.weeklyTracking)DX.kata.weeklyTracking=[];goGate(DX.gate||7);if(DX.vidLog.length>0)setTimeout(()=>showRelinkModal(),400);}catch(err){alert('Could not load: '+(err.message||err));}});
 
 $('g1date').value=new Date().toLocaleDateString('en-US');
@@ -2019,18 +2149,23 @@ function _renderTourStep(step){
   const spot = $('tourSpot');
   if(spot && el){
     el.scrollIntoView({behavior:'smooth', block:'center'});
-    setTimeout(()=>{
-      const r = el.getBoundingClientRect();
-      const pad = 6;
-      spot.style.left = (r.left - pad) + 'px';
-      spot.style.top = (r.top - pad + window.scrollY) + 'px';
-      spot.style.width = (r.width + pad*2) + 'px';
-      spot.style.height = (r.height + pad*2) + 'px';
-      spot.style.display = 'block';
-      
-      // Position callout card
-      _positionCard(r);
-    }, 300);
+    // Wait for scroll to settle using rAF chain before measuring rect
+    const _measureAfterScroll = ()=>{
+      requestAnimationFrame(()=>{
+        requestAnimationFrame(()=>{
+          const r = el.getBoundingClientRect();
+          const pad = 6;
+          spot.style.left = (r.left - pad) + 'px';
+          spot.style.top = (r.top - pad + window.scrollY) + 'px';
+          spot.style.width = (r.width + pad*2) + 'px';
+          spot.style.height = (r.height + pad*2) + 'px';
+          spot.style.display = 'block';
+          _positionCard(r);
+        });
+      });
+    };
+    // Give smooth scroll time to complete, then measure
+    setTimeout(_measureAfterScroll, 380);
   } else if(spot){
     spot.style.display = 'none';
     _positionCard(null);
@@ -2327,7 +2462,15 @@ function renderPDCASection(){
   <div class="pdca-card"><div class="pdca-hdr">2 — Target State</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px"><div><div class="pdca-lbl">Target CT (sec)</div><input id="g7targetCT" class="pdca-field" type="number" value="${k.targetCT||''}" placeholder="e.g. ${effTakt||takt?Math.ceil((effTakt||takt)*0.95):''}" oninput="DX.kata.targetCT=this.value;autosave()">${effTakt?`<div style="font-family:var(--mono);font-size:9px;color:var(--green);margin-top:4px">Efficiency target: ${DX.setup.effTarget||90}% × ${takt}s = ${effTakt}s</div>`:''}</div><div><div class="pdca-lbl">Target Date</div><input class="pdca-field" type="text" value="${k.targetDate||''}" placeholder="e.g. Apr 30" oninput="DX.kata.targetDate=this.value;autosave()"></div></div>
   <div style="font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:6px">Target Conditions</div>${(k.conditions||[]).map((c,ci)=>`<div style="display:flex;gap:6px;margin-bottom:6px;align-items:flex-start"><div style="flex:1.5"><input class="pdca-field" value="${(c.condition||'').replace(/"/g,'&quot;')}" placeholder="Condition" oninput="DX.kata.conditions[${ci}].condition=this.value;autosave()"></div><div style="flex:1"><input class="pdca-field" value="${(c.measurement||'').replace(/"/g,'&quot;')}" placeholder="Measurement" oninput="DX.kata.conditions[${ci}].measurement=this.value;autosave()"></div><button onclick="removePDCACondition(${ci})" style="background:none;border:none;color:var(--muted2);font-size:14px;cursor:pointer;padding:10px 4px;flex-shrink:0">✕</button></div>`).join('')}
   <button onclick="addPDCACondition()" style="width:100%;font-family:var(--head);font-size:12px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:9px;background:var(--s2);border:1px dashed var(--br2);color:var(--muted);border-radius:var(--r);cursor:pointer;-webkit-appearance:none;margin-bottom:12px">＋ Add Condition + Measurement</button>
-  <div><div class="pdca-lbl">Success Criteria</div><textarea class="pdca-field" rows="2" placeholder="e.g. 5 consecutive cycles at or under target CT." oninput="DX.kata.successCriteria=this.value;autosave()">${k.successCriteria||''}</textarea></div></div>
+  <div><div class="pdca-lbl">Success Criteria</div><textarea class="pdca-field" rows="2" placeholder="e.g. 5 consecutive cycles at or under target CT." oninput="DX.kata.successCriteria=this.value;autosave()">${k.successCriteria||''}</textarea></div>
+  <div style="margin-top:12px;padding:12px 14px;background:${k.supervisorConfirmed?'var(--gdim)':'var(--s2)'};border:1px solid ${k.supervisorConfirmed?'rgba(64,145,108,.35)':'var(--br)'};border-radius:var(--r)">
+    <div style="font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:8px">Supervisor Confirmation</div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;cursor:pointer" onclick="DX.kata.supervisorConfirmed=!DX.kata.supervisorConfirmed;DX.kata.supervisorConfirmDate=DX.kata.supervisorConfirmed?new Date().toLocaleDateString('en-US'):'';autosave();renderKataSection()">
+      <div style="width:22px;height:22px;border:2px solid ${k.supervisorConfirmed?'var(--green)':'var(--br2)'};border-radius:4px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;background:${k.supervisorConfirmed?'var(--green)':'transparent'};color:#fff">${k.supervisorConfirmed?'✓':''}</div>
+      <div><div style="font-family:var(--mono);font-size:11px;font-weight:700;color:${k.supervisorConfirmed?'var(--forest)':'var(--muted)'}">${(DX.setup&&DX.setup.supervisor)||'Supervisor'} has reviewed and agreed to the target condition</div><div style="font-family:var(--mono);font-size:9px;color:var(--muted2);margin-top:1px">${k.supervisorConfirmed?('Confirmed '+k.supervisorConfirmDate):'Not yet confirmed — share Target Sheet export'}</div></div>
+    </div>
+    ${k.supervisorConfirmed?'':'<div style="font-family:var(--mono);font-size:10px;color:var(--amber);background:var(--adim);border:1px solid rgba(217,119,6,.25);border-radius:var(--r);padding:8px 10px">The study is not complete until the line supervisor has seen this target condition and agreed to it.</div>'}
+  </div></div>
   <div class="pdca-card"><div class="pdca-hdr">3 — What\'s Stopping You</div>${_buildTier1HTML()}${_buildTier2HTML()}
   <div style="display:flex;gap:8px;margin-top:10px"><input id="obsInput" class="pdca-field" style="flex:1;margin-bottom:0" type="text" placeholder="Add your own obstacle…" onkeydown="if(event.key==='Enter'){addPDCAObs();event.preventDefault()}"><button onclick="addPDCAObs()" style="font-family:var(--head);font-size:12px;font-weight:700;padding:9px 14px;background:var(--forest2);color:#fff;border:none;border-radius:var(--r);cursor:pointer;white-space:nowrap;-webkit-appearance:none">+ Add</button></div></div>
   <div class="pdca-card"><div class="pdca-hdr">4 — Experiment Record <span style="font-family:var(--mono);font-size:9px;font-weight:400;color:var(--muted);letter-spacing:.5px;text-transform:none">tap cells to edit</span></div><div style="overflow-x:auto"><table class="pdca-exp-table"><thead><tr><th style="min-width:70px">Date</th><th style="min-width:110px">Step</th><th style="min-width:130px">What I tried</th><th style="min-width:130px">What I think will happen</th><th style="min-width:120px">How it really happened</th><th style="min-width:120px">The lesson I learned</th><th style="min-width:100px">Next step</th><th style="width:28px"></th></tr></thead><tbody id="pdcaExpBody">${expHTML}</tbody></table></div><button onclick="addPDCAExp()" style="font-family:var(--head);font-size:12px;font-weight:700;padding:10px 18px;background:var(--s2);border:1px dashed var(--br2);color:var(--muted);border-radius:var(--r);cursor:pointer;width:100%;margin-top:4px;letter-spacing:.5px;-webkit-appearance:none">＋ Add Experiment</button></div>`;
@@ -3121,6 +3264,7 @@ function loadDemoStudy(targetGate){
     sf('g1date',s.date);sf('g1operator',s.operator);
     sf('g1takt',s.takt);sf('g1shiftmin',s.shiftMin);
     sf('g1heads',s.heads);sf('g1rate',s.rate);
+    if(DX.studyFilename){const fn=$('g1filename');if(fn)fn.value=DX.studyFilename;}
     sf('g1weeks',s.weeks);
     const sd=$('g1shiftsday');if(sd)sd.value=s.shiftsDay||1;
     const dw=$('g1daysweek');if(dw)dw.value=s.daysWeek||5;
@@ -3132,6 +3276,15 @@ function loadDemoStudy(targetGate){
     sf('g2abnormal',DX.gemba.abnormal||'');
     calcBaseline();
   }
+}
+
+// ── PWA SERVICE WORKER REGISTRATION ──
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('/sw.js')
+      .then(reg=>console.log('ProcessDx SW registered',reg.scope))
+      .catch(err=>console.log('SW registration failed',err));
+  });
 }
 
 </script>
