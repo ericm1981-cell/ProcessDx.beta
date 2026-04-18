@@ -461,11 +461,12 @@ body{overscroll-behavior:none}
       </div>
       <video id="vid" playsinline webkit-playsinline preload="metadata" style="width:100%;object-fit:contain;display:none;background:#000;max-height:calc(100% - 80px)"></video>
       <div class="ptrack"><div class="pfill" id="pFill"></div></div>
-      <!-- Video controls — always pinned, 3 buttons -->
+      <!-- Video controls — always pinned, 4 buttons including swap -->
       <div style="display:flex;gap:4px;padding:8px 8px;background:rgba(0,0,0,.85);flex-shrink:0;border-top:1px solid rgba(255,255,255,.1)">
         <button onclick="toggleVidPause.call(this)" style="flex:1;font-family:var(--mono);font-size:11px;font-weight:600;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);color:#fff;border-radius:4px;padding:10px 4px;cursor:pointer;-webkit-appearance:none;text-align:center">⏸ Play</button>
         <button onclick="vidRwLastStep.call(this)" style="flex:2;font-family:var(--mono);font-size:11px;font-weight:600;background:rgba(217,119,6,.2);border:1px solid rgba(245,158,11,.4);color:var(--amber2);border-radius:4px;padding:10px 4px;cursor:pointer;-webkit-appearance:none;text-align:center">⟲ Last Step</button>
         <button onclick="vidRw2.call(this)" style="flex:1;font-family:var(--mono);font-size:11px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.6);border-radius:4px;padding:10px 4px;cursor:pointer;-webkit-appearance:none;text-align:center">−2s</button>
+        <button onclick="$('vidInput').click()" style="flex:1;font-family:var(--mono);font-size:11px;font-weight:700;background:rgba(64,145,108,.25);border:1px solid rgba(116,198,157,.4);color:var(--greenlt);border-radius:4px;padding:10px 4px;cursor:pointer;-webkit-appearance:none;text-align:center">＋ Vid</button>
       </div>
       <input type="file" id="vidInput" accept="video/*" style="display:none">
     </div>
@@ -483,11 +484,12 @@ body{overscroll-behavior:none}
           <button class="cap-btn cap-end" id="capEnd" onclick="capDoEndCycle()" disabled style="flex:1;font-size:11px;padding:8px 4px">◉ End<br>Cycle</button>
         </div>
       </div>
-      <!-- Quick note -->
+      <!-- Quick note + vid swap row -->
       <div style="padding:0 8px 6px;flex-shrink:0">
         <div style="display:flex;gap:5px">
-          <input type="text" class="qn-input" id="quickNote" placeholder="Quick note…" onkeydown="if(event.key==='Enter')saveQuickNote()" style="font-size:11px;padding:6px 9px"/>
+          <input type="text" class="qn-input" id="quickNote" placeholder="Quick note…" onkeydown="if(event.key==='Enter')saveQuickNote()" style="font-size:11px;padding:6px 9px;flex:1"/>
           <button class="qn-save" onclick="saveQuickNote()" style="padding:6px 10px;font-size:10px">→</button>
+          <button onclick="$('vidInput').click()" style="font-family:var(--mono);font-size:10px;font-weight:700;background:rgba(64,145,108,.25);border:1px solid rgba(116,198,157,.4);color:var(--greenlt);border-radius:var(--r);padding:6px 10px;cursor:pointer;-webkit-appearance:none;flex-shrink:0">＋ Vid</button>
         </div>
       </div>
       <!-- Cycle tabs -->
@@ -600,6 +602,7 @@ body{overscroll-behavior:none}
     <button class="btn-secondary" style="flex:0.8" onclick="goGate(5)">← Back</button>
     <div style="display:flex;gap:8px;flex:2">
       <button class="btn-secondary" style="flex:0.5;font-size:11px;padding:8px 4px" onclick="exportJSON()">⬇ Save</button>
+      <button class="btn-secondary" style="flex:0.5;font-size:11px;padding:8px 4px;border-color:var(--green);color:var(--green)" onclick="exportTimeStudyXLS()">⬇ XLS</button>
       <button class="btn-primary" style="font-size:15px;letter-spacing:.5px" onclick="goToKata()">Improvement Plan →</button>
     </div>
   </div>
@@ -1934,6 +1937,85 @@ function quickSaveJSON(){
   a.download=fn;document.body.appendChild(a);a.click();a.remove();
   _showSaveStatus(`✓ Saved as ${fn}`);
 }
+
+// ── Plain Excel (CSV) export — no tool branding ──
+function exportTimeStudyXLS(){
+  const{setup,baseline,variation,waste,wasteType,eracs}=DX;
+  const names=(DX.ergoSteps||[]).map(s=>s.name).filter(n=>DX.waste[n]!=='elim');
+  if(!names.length){alert('Complete waste classification in Gate 5 before exporting.');return;}
+
+  const totalCT=names.reduce((s,n)=>{const v=variation[n];return s+(v?v.avg:0);},0);
+  const takt=setup.takt||0;
+  const WTLBL={T:'Transport',I:'Inventory',M:'Motion',W:'Waiting',O:'Overproduction',P:'Over-processing',D:'Defects',U:'Unused Skills'};
+  const CLEAR_DESC={C:'Cut it',L:'Link it',E:'Exchange it',A:'Add to it',R:'Reduce complexity'};
+
+  // ── Escape CSV cell ──
+  const esc=v=>{const s=String(v==null?'':v);return s.includes(',')||s.includes('"')||s.includes('\n')?`"${s.replace(/"/g,'""')}"`:s;};
+
+  // ── Header block ──
+  const rows=[];
+  rows.push([esc('Time Study — Work Content Analysis')]);
+  rows.push([esc('Process'),esc(setup.process||''),esc('Prepared by'),esc(setup.analyst||''),esc('Date'),esc(setup.date||'')]);
+  rows.push([esc('Takt Time (s)'),esc(takt||''),esc('Baseline CT (s)'),esc(baseline&&baseline.ct?baseline.ct:''),esc('Study CT (s)'),esc(totalCT.toFixed(1))]);
+  rows.push([esc('Dept'),esc(setup.dept||''),esc('Operator'),esc(setup.operator||''),esc('Shift Min'),esc(setup.shiftMin||455)]);
+  rows.push(['']);
+
+  // ── Column headers ──
+  rows.push(['#','Step','Avg CT (s)','% of Total','Min (s)','Max (s)','CV %','Classification','Waste Type','CLEAR Action','Notes'].map(esc).join(','));
+
+  // ── Step rows ──
+  names.forEach((name,i)=>{
+    const v=variation[name]||{};
+    const avg=v.avg||0;
+    const pct=totalCT>0?(avg/totalCT*100).toFixed(1):'';
+    const cls=waste[name];
+    const clsLabel=cls==='va'?'Value Adding':cls==='wst'?'Waste':cls==='inc'?'Incidental':'—';
+    const wt=wasteType&&wasteType[name]?WTLBL[wasteType[name]]||wasteType[name]:'';
+    const act=eracs&&eracs[name]?`${eracs[name]} — ${CLEAR_DESC[eracs[name]]||eracs[name]}`:'';
+    const notes=[];
+    const es=(DX.ergoSteps||[]).find(s=>s.name===name)||{flags:[],freq:{}};
+    if((es.flags||[]).length)notes.push('Ergo: '+(es.flags||[]).join('/'));
+    if(v.high)notes.push(v.isShort?`Range ${(v.max-v.min).toFixed(2)}s`:`CV ${v.cv.toFixed(1)}%`);
+    if(v.overridden)notes.push('Var accepted');
+    rows.push([
+      i+1,
+      esc(name),
+      avg.toFixed(2),
+      pct,
+      v.min!=null?v.min.toFixed(2):'',
+      v.max!=null?v.max.toFixed(2):'',
+      v.cv!=null?v.cv.toFixed(1):'',
+      esc(clsLabel),
+      esc(wt),
+      esc(act),
+      esc(notes.join(' · '))
+    ].join(','));
+  });
+
+  // ── Totals row ──
+  const wstTime=names.filter(n=>waste[n]==='wst'||waste[n]==='inc').reduce((s,n)=>{const v=variation[n];return s+(v?v.avg:0);},0);
+  const vaTime=names.filter(n=>waste[n]==='va').reduce((s,n)=>{const v=variation[n];return s+(v?v.avg:0);},0);
+  rows.push(['']);
+  rows.push([esc('TOTAL'),'',esc(totalCT.toFixed(2)),'100%','','','','','','',''].join(','));
+  rows.push([esc('Value Adding'),'',esc(vaTime.toFixed(2)),esc((totalCT>0?vaTime/totalCT*100:0).toFixed(1)+'%'),'','','','','','',''].join(','));
+  rows.push([esc('Waste / Incidental'),'',esc(wstTime.toFixed(2)),esc((totalCT>0?wstTime/totalCT*100:0).toFixed(1)+'%'),'','','','','','',''].join(','));
+  if(takt>0){
+    rows.push(['']);
+    rows.push([esc('CT vs Takt'),'',esc((totalCT-takt).toFixed(2)+' s'),'','','','','','','',''].join(','));
+    rows.push([esc('Target if waste removed'),'',esc((totalCT-wstTime).toFixed(2)+' s'),'','','','','','','',''].join(','));
+  }
+
+  // ── Convert rows array — header block rows are arrays, step rows are already joined strings ──
+  const csv=rows.map(r=>Array.isArray(r)?r.join(','):r).join('\r\n');
+
+  const proc=(setup.process||'TimeStudy').replace(/[^a-zA-Z0-9]+/g,'_').replace(/^_|_$/g,'');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'}));
+  a.download=`${proc}_WorkContent.csv`;
+  document.body.appendChild(a);a.click();a.remove();
+  _showSaveStatus('✓ CSV downloaded — open in Excel');
+}
+
 function exportJSON(){
   const state={app:'ProcessDx',version:'2.1',exportedAt:new Date().toISOString(),...DX};
   const proc=(DX.studyFilename||DX.setup.process||'ProcessDx').replace(/[^a-z0-9\-_\s]+/gi,' ').trim().replace(/\s+/g,'_');
