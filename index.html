@@ -261,9 +261,11 @@ body{overscroll-behavior:none}
       <button class="btn-secondary" style="flex:1;background:var(--s2);border-color:var(--green);color:var(--forest);font-size:13px" onclick="loadDemoStudy(1)">▶ Walk Through Demo</button>
     </div>
     <div style="font-family:var(--mono);font-size:9px;color:var(--muted2);text-align:center;margin-bottom:10px;letter-spacing:.3px">Pre-loaded example study — Door Panel Sub-Assembly</div>
-    <button class="btn-secondary" style="width:100%" onclick="$('resumeInput').click()">Load Saved Study (JSON)</button>
+    <button class="btn-secondary" style="width:100%" onclick="$('resumeInput').click()">&#x2B06; Load Study &#x2014; Single</button>
+    <button class="btn-secondary" style="width:100%;margin-top:6px;border-color:var(--green);color:var(--green);font-weight:700" onclick="$('resumeMulti').click()">&#x2B06; Load Multiple Studies</button>
     <div style="font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;margin-top:14px;line-height:1.8;background:var(--s2);border:1px solid var(--br);border-radius:var(--r);padding:10px 12px"><span style="color:var(--amber);font-weight:700">⬇ Save Backup</span> appears in the header bar after setup.<br>Tap it at any time to download your study file.<br><span style="color:var(--muted2);font-size:9px">Auto-saves locally · Use backup before closing tab</span></div>
     <input type="file" id="resumeInput" accept="application/json" style="display:none">
+    <input type="file" id="resumeMulti" accept="application/json" multiple style="display:none">
   </div>
 </div>
 
@@ -310,15 +312,29 @@ body{overscroll-behavior:none}
       <div class="fg"><label>Date</label><input type="text" id="g1date"/></div>
     </div>
     <div class="fg"><label>Operator / Subject</label><input type="text" id="g1operator" placeholder="Name or ID — optional"/></div>
-    <!-- STUDY FILENAME — moved into scroll area so it's reachable -->
+    <!-- FILE NAMING: Plant · Line · Station -->
     <div style="background:var(--s2);border:1px solid var(--br);border-radius:var(--r);padding:10px 12px;margin-bottom:12px">
-      <div style="font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px">Study File Name</div>
-      <div style="display:flex;align-items:center;gap:8px">
-        <span style="font-family:var(--mono);font-size:11px;color:var(--muted2);flex-shrink:0">ProcessDx_</span>
-        <input type="text" id="g1filename" placeholder="auto from process name" style="flex:1;font-family:var(--mono);font-size:11px;border:1px solid var(--br);border-radius:4px;padding:6px 8px;background:var(--s1);color:var(--forest)" oninput="DX.studyFilename=this.value.trim();autosave()">
-        <span style="font-family:var(--mono);font-size:11px;color:var(--muted2);flex-shrink:0">.json</span>
+      <div style="font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px">File Naming — Plant · Line · Station</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:8px">
+        <div>
+          <div style="font-family:var(--mono);font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px">Plant</div>
+          <input type="text" id="g1plant" placeholder="e.g. Viwinco" maxlength="20" style="width:100%;font-family:var(--mono);font-size:12px;border:1px solid var(--br);border-radius:4px;padding:6px 8px;background:var(--s1);color:var(--forest)" oninput="updateStudyFilename()">
+        </div>
+        <div>
+          <div style="font-family:var(--mono);font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px">Line</div>
+          <input type="text" id="g1line" placeholder="e.g. L2" maxlength="20" style="width:100%;font-family:var(--mono);font-size:12px;border:1px solid var(--br);border-radius:4px;padding:6px 8px;background:var(--s1);color:var(--forest)" oninput="updateStudyFilename()">
+        </div>
+        <div>
+          <div style="font-family:var(--mono);font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px">Station</div>
+          <input type="text" id="g1station" placeholder="e.g. ScreenBuild" maxlength="30" style="width:100%;font-family:var(--mono);font-size:12px;border:1px solid var(--br);border-radius:4px;padding:6px 8px;background:var(--s1);color:var(--forest)" oninput="updateStudyFilename()">
+        </div>
       </div>
-      <div style="font-family:var(--mono);font-size:9px;color:var(--muted2);margin-top:5px">Set this once. Every save uses the same name — no more (1)(2)(3).</div>
+      <div style="display:flex;align-items:center;gap:6px;background:var(--s1);border:1px solid var(--br);border-radius:4px;padding:7px 10px">
+        <span style="font-family:var(--mono);font-size:9px;color:var(--muted2)">File:</span>
+        <span id="g1filenamePreview" style="font-family:var(--mono);font-size:10px;color:var(--forest);font-weight:600;flex:1;word-break:break-all">—</span>
+        <span style="font-family:var(--mono);font-size:9px;color:var(--muted2)">.json</span>
+      </div>
+      <div style="font-family:var(--mono);font-size:9px;color:var(--muted2);margin-top:4px">Plant-Line-Station · One file per station · Saves to your folder</div>
     </div>
     <div class="fg"><label>Supervisor (Line Owner)</label><input type="text" id="g1supervisor" placeholder="Who owns this line?"/></div>
     <div class="fg" style="margin-top:4px"><label style="font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px;display:flex;align-items:center;gap:6px">Is this the line bottleneck station?</label>
@@ -374,6 +390,12 @@ body{overscroll-behavior:none}
           <div style="font-family:var(--mono);font-size:9px;color:var(--muted)" id="effTaktSub"></div>
         </div>
       </div>
+    </div>
+    <div class="slbl">Product Variants <span style="font-family:var(--body);font-size:11px;font-weight:400;color:var(--muted);text-transform:none;letter-spacing:0">(optional)</span></div>
+    <div style="margin-bottom:12px">
+      <div style="font-family:var(--mono);font-size:10px;color:var(--muted);line-height:1.7;margin-bottom:8px">Define product types that run this station (Full, Half, C5). Tag cycles during capture. Set mix % in output for weighted CT.</div>
+      <div id="variantList" style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px"></div>
+      <button onclick="addVariant()" style="width:100%;font-family:var(--mono);font-size:11px;padding:9px;background:var(--s2);border:1px dashed var(--br2);color:var(--muted);border-radius:var(--r);cursor:pointer;-webkit-appearance:none;letter-spacing:.5px">&#xFF0B; Add Variant</button>
     </div>
   </div>
   <div id="g1err" style="display:none;background:var(--rdim);border:1px solid rgba(185,28,28,.3);border-radius:var(--r);padding:10px 14px;margin:0 18px 8px;font-family:var(--mono);font-size:11px;color:var(--red);line-height:1.6"></div>
@@ -497,6 +519,11 @@ body{overscroll-behavior:none}
         <button class="ctab on" data-ci="0">C1 ⚠</button>
         <button style="font-family:var(--mono);font-size:9px;padding:3px 7px;border:1px dashed var(--br2);border-radius:3px;background:transparent;color:var(--muted2);cursor:pointer;-webkit-appearance:none" onclick="capAddCycle()">＋</button>
       </div>
+      <!-- Variant tag pills -->
+      <div id="variantTagRow" style="display:none;padding:4px 8px 0;background:var(--forest2);flex-shrink:0">
+        <div style="font-family:var(--mono);font-size:8px;color:rgba(255,255,255,.4);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px">Tag this cycle:</div>
+        <div id="variantPills" style="display:flex;gap:4px;flex-wrap:wrap;padding-bottom:4px"></div>
+      </div>
       <!-- Sync banner -->
       <div id="vidSyncBanner" style="display:none;background:var(--amber);color:#fff;font-family:var(--mono);font-size:10px;padding:6px 10px;text-align:center;font-weight:600;flex-shrink:0"></div>
       <!-- Step list -->
@@ -590,6 +617,7 @@ body{overscroll-behavior:none}
     <div id="phase2Output"></div>
     <div id="phase3Output"></div>
     <div id="savingsBlock" style="margin:16px 0"></div>
+    <div id="productMixBlock" style="margin-bottom:12px"></div>
     <div id="timeStudyTable" style="margin-bottom:12px"></div>
     <div id="cycleLog" style="margin-bottom:12px"></div>
     <!-- capture observations — quick notes + step notes render here -->
@@ -776,7 +804,8 @@ const DX={
   eracs:{},ctMethod:'avg',wasteType:{},
   vidLog:[],  // [{sessionElapsed, label, idx}] — one entry per video loaded
   nonCyclicalSteps:{},  // {stepName: {n: frequency}}
-  studyFilename:'',     // custom save filename (set in Gate 1)
+  studyFilename:'',
+  productMix:[],        // [{name,ctOverride,mixPct}] — mixed model variants     // custom save filename (set in Gate 1)
   kata:{targetCT:'',targetDate:'',conditions:[],successCriteria:'',obstacles:[],experiments:[],
         weeklyTracking:[]},
   afterStudies:[],afterStudyMode:false,afterStudyDraft:null,_asOrig:null,
@@ -869,6 +898,7 @@ function goGate(n){
       if(ref&&DX._asOrig)ref.innerHTML=`Original Baseline CT: <strong>${DX._asOrig.baseline&&DX._asOrig.baseline.ct?DX._asOrig.baseline.ct+'s':'—'}</strong> &nbsp;|&nbsp; Takt: <strong>${DX.setup.takt||'—'}s</strong>`;
     } else g2l.style.display='none';
   }
+  if(n===1){renderVariantList();updateStudyFilename();}
   if(n===2){calcBaseline();syncGembaChecklist();}
   if(n===3)renderCapScreen();
   if(n===4){renderVariation();const nw=$('g5notesWarn');if(nw)nw.style.display=(DX.g5notes&&DX.g5notes.trim())?'none':'block';const notesEl=$('g5notes');if(notesEl)notesEl.value=DX.g5notes||'';setTimeout(_restoreRCChips,50);}
@@ -888,6 +918,7 @@ function startNew(){
     quickNotes:[],variation:{},varOverrides:{},varRootCause:{},waste:{},g5notes:'',eracs:{},ctMethod:'avg',wasteType:{},
     kata:{targetCT:'',targetDate:'',conditions:[],successCriteria:'',obstacles:[],experiments:[],weeklyTracking:[]},
     vidLog:[],nonCyclicalSteps:{},
+    productMix:[],
     afterStudies:[],afterStudyMode:false,afterStudyDraft:null,_asOrig:null,
     afterStudy:{cycles:[],variation:{},captured:false,ctLog:[]},
     yamStates:{},demoMode:false,
@@ -1101,6 +1132,117 @@ function renderAfterStateComparison(){
   </div>`;
 }
 
+// ═══ NAMING CONVENTION ═══
+function updateStudyFilename(){
+  const plant=($('g1plant')&&$('g1plant').value||'').trim().replace(/[^a-zA-Z0-9]/g,'');
+  const line=($('g1line')&&$('g1line').value||'').trim().replace(/[^a-zA-Z0-9]/g,'');
+  const station=($('g1station')&&$('g1station').value||'').trim().replace(/[^a-zA-Z0-9]/g,'');
+  const parts=[plant,line,station].filter(Boolean);
+  const base=parts.length?parts.join('-'):(DX.setup.process||'').replace(/[^a-zA-Z0-9]+/g,'').replace(/\s+/g,'-')||'Study';
+  DX.studyFilename=base;
+  const preview=$('g1filenamePreview');if(preview)preview.textContent=base||'—';
+  autosave();
+}
+function buildFilename(){
+  return DX.studyFilename||(DX.setup.process||'Study').replace(/[^a-zA-Z0-9\-]+/g,'-').replace(/^-|-$/g,'')||'Study';
+}
+
+// ═══ PRODUCT VARIANTS ═══
+function renderVariantList(){
+  const list=$('variantList');if(!list)return;
+  const variants=DX.setup.variants||[];
+  list.innerHTML='';
+  if(!variants.length){list.innerHTML='<div style="font-family:var(--mono);font-size:10px;color:var(--muted2);padding:4px 0">No variants — single product station</div>';return;}
+  variants.forEach((v,i)=>{
+    const row=document.createElement('div');
+    row.style.cssText='display:flex;align-items:center;gap:8px;background:var(--s2);border:1px solid var(--br);border-radius:var(--r);padding:8px 10px';
+    row.innerHTML='<span style="font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;flex-shrink:0">V'+(i+1)+'</span>'
+      +'<input type="text" value="'+v.replace(/"/g,'&quot;')+'" placeholder="e.g. Full Screen" maxlength="30"'
+      +' style="flex:1;font-family:var(--body);font-size:14px;border:1px solid var(--br);border-radius:4px;padding:6px 9px;background:#fff;color:var(--forest)"'
+      +' oninput="updateVariantName('+i+',this.value)">'
+      +'<button onclick="removeVariant('+i+')" style="background:none;border:none;color:var(--muted2);font-size:16px;cursor:pointer;padding:2px 5px;flex-shrink:0">&#x2715;</button>';
+    list.appendChild(row);
+  });
+}
+function addVariant(){
+  if(!DX.setup.variants)DX.setup.variants=[];
+  if(DX.setup.variants.length>=8){alert('Maximum 8 variants.');return;}
+  DX.setup.variants.push('Variant '+(DX.setup.variants.length+1));
+  renderVariantList();
+}
+function removeVariant(i){if(!DX.setup.variants)return;DX.setup.variants.splice(i,1);renderVariantList();}
+function updateVariantName(i,val){if(!DX.setup.variants)return;DX.setup.variants[i]=val.trim()||('Variant '+(i+1));}
+
+function renderVariantPills(){
+  const row=$('variantTagRow');const pills=$('variantPills');if(!row||!pills)return;
+  const variants=DX.setup.variants||[];
+  if(!variants.length){row.style.display='none';return;}
+  row.style.display='block';
+  const curTag=(DX.cycles[DX.curCycle]&&DX.cycles[DX.curCycle].variant)||null;
+  pills.innerHTML=variants.map(v=>{
+    const on=curTag===v;
+    return'<button onclick="tagCycle(''+v.replace(/'/g,"\'")+'',this)"'
+      +' style="font-family:var(--mono);font-size:10px;font-weight:'+(on?700:500)+';padding:4px 11px;border-radius:4px;cursor:pointer;-webkit-appearance:none;'
+      +'border:1px solid '+(on?'var(--amber2)':'rgba(255,255,255,.25)')+';'
+      +'background:'+(on?'var(--amber)':'rgba(255,255,255,.1)')+';'
+      +'color:'+(on?'#fff':'rgba(255,255,255,.65)')+'">'+v+'</button>';
+  }).join('')+'<button onclick="tagCycle(null)"'
+    +' style="font-family:var(--mono);font-size:10px;padding:4px 9px;border-radius:4px;cursor:pointer;-webkit-appearance:none;border:1px solid rgba(255,255,255,.15);background:transparent;color:rgba(255,255,255,.35)">&#x2715; Clear</button>';
+}
+function tagCycle(variant){
+  const cyc=DX.cycles[DX.curCycle];if(!cyc)return;
+  cyc.variant=variant||null;renderVariantPills();renderCapTabs();
+}
+
+function renderProductMixBlock(){
+  const el=$('productMixBlock');if(!el)return;
+  const variants=DX.setup.variants||[];
+  if(!variants.length){el.innerHTML='';return;}
+  if(!DX.productMix)DX.productMix=[];
+  variants.forEach(name=>{if(!DX.productMix.find(m=>m.name===name))DX.productMix.push({name,ctOverride:null,mixPct:''});});
+  DX.productMix=DX.productMix.filter(m=>variants.includes(m.name));
+  const validCycles=(DX.cycles||[]).slice(1).filter(c=>c&&c.length>0);
+  const takt=DX.setup.takt||0;
+  const taggedCT={};const taggedCount={};
+  validCycles.forEach(cyc=>{const tag=cyc.variant;if(!tag)return;const ct=cyc.filter(s=>!s._elimSkip).reduce((a,s)=>a+s.dur,0);if(!taggedCT[tag]){taggedCT[tag]=[];taggedCount[tag]=0;}taggedCT[tag].push(ct);taggedCount[tag]++;});
+  const taggedAvg={};Object.keys(taggedCT).forEach(k=>{taggedAvg[k]=taggedCT[k].reduce((a,b)=>a+b,0)/taggedCT[k].length;});
+  const totalPct=DX.productMix.reduce((a,m)=>a+(parseFloat(m.mixPct)||0),0);
+  let blendedCT=0;const canBlend=totalPct>0;
+  DX.productMix.forEach(m=>{const ct=m.ctOverride!=null?parseFloat(m.ctOverride):(taggedAvg[m.name]||0);blendedCT+=ct*((parseFloat(m.mixPct)||0)/100);});
+  const rowsHTML=DX.productMix.map((m,i)=>{
+    const auto=taggedAvg[m.name];const count=taggedCount[m.name]||0;
+    const ctVal=m.ctOverride!=null?m.ctOverride:(auto?auto.toFixed(1):'');
+    const pctVal=m.mixPct||'';const contrib=ctVal&&pctVal?(parseFloat(ctVal)*(parseFloat(pctVal)/100)).toFixed(1):'—';
+    const autoStyle=auto&&m.ctOverride==null?'border:1px solid var(--green);background:var(--gdim)':'border:1px solid var(--br);background:#fff';
+    return'<tr style="background:'+(i%2===0?'var(--s1)':'var(--s2)')+'"><td style="padding:8px 10px;font-weight:600;font-size:13px;color:var(--forest)">'+m.name+'</td>'
+      +'<td style="padding:5px 7px;text-align:center"><input type="number" step="0.1" value="'+ctVal+'" placeholder="'+(count?'Auto':'Enter CT')+'"'
+      +' style="width:75px;font-family:var(--mono);font-size:12px;text-align:center;'+autoStyle+';border-radius:4px;padding:5px 6px;color:var(--forest)"'
+      +' oninput="DX.productMix['+i+'].ctOverride=this.value===''?null:this.value;renderProductMixBlock();autosave()">'
+      +(count?'<div style="font-family:var(--mono);font-size:8px;color:var(--green);margin-top:2px">'+count+' cycle'+(count>1?'s':'')+' tagged</div>':'')+'</td>'
+      +'<td style="padding:5px 7px;text-align:center"><input type="number" min="0" max="100" step="1" value="'+pctVal+'" placeholder="0"'
+      +' style="width:60px;font-family:var(--mono);font-size:12px;text-align:center;border:1px solid var(--br);border-radius:4px;padding:5px 6px;background:#fff;color:var(--forest)"'
+      +' oninput="DX.productMix['+i+'].mixPct=this.value;renderProductMixBlock();autosave()"><span style="font-family:var(--mono);font-size:11px;color:var(--muted)">%</span></td>'
+      +'<td style="padding:8px 10px;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--forest);text-align:center">'+contrib+'s</td></tr>';
+  }).join('');
+  const blendColor=blendedCT>takt?'var(--red)':'var(--green)';
+  const pctWarn=totalPct>0&&Math.abs(totalPct-100)>1?'<div style="font-family:var(--mono);font-size:10px;color:var(--amber);margin-top:6px">&#x26A0; Mix % totals '+totalPct.toFixed(0)+'% — should be 100%</div>':'';
+  const blendVsTakt=takt>0&&canBlend?'<span style="font-family:var(--mono);font-size:11px;color:'+blendColor+';margin-left:12px">'+(blendedCT>takt?'+':'&#x2212;')+Math.abs(blendedCT-takt).toFixed(1)+'s vs takt</span>':'';
+  el.innerHTML='<div style="background:var(--s1);border:1px solid var(--br);border-left:3px solid var(--amber);border-radius:var(--r2);padding:14px;box-shadow:var(--shadow)">'
+    +'<div style="font-family:var(--head);font-size:13px;font-weight:800;color:var(--forest);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Product Mix &#x2014; Blended CT</div>'
+    +'<div style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-bottom:12px">Enter mix % for weighted CT. Tag cycles during capture for auto CT &#x2014; or enter manually.</div>'
+    +'<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse"><thead><tr style="border-bottom:2px solid var(--forest)">'
+    +'<th style="font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;padding:5px 10px;text-align:left">Variant</th>'
+    +'<th style="font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;padding:5px 7px;text-align:center">Avg CT (s)</th>'
+    +'<th style="font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;padding:5px 7px;text-align:center">Mix %</th>'
+    +'<th style="font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;padding:5px 10px;text-align:center">Contribution</th>'
+    +'</tr></thead><tbody>'+rowsHTML+'</tbody>'
+    +'<tfoot><tr style="background:var(--forest)">'
+    +'<td colspan="2" style="padding:9px 10px;font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.6)">Blended CT'+blendVsTakt+'</td>'
+    +'<td style="padding:9px 7px;font-family:var(--mono);font-size:11px;color:'+(Math.abs(totalPct-100)<1?'var(--greenlt)':'var(--amber2)')+';text-align:center;font-weight:700">'+totalPct.toFixed(0)+'%</td>'
+    +'<td style="padding:9px 10px;font-family:var(--mono);font-size:18px;font-weight:800;color:'+(canBlend?blendColor:'rgba(255,255,255,.4)')+';text-align:center">'+(canBlend?blendedCT.toFixed(1)+'s':'&#x2014;')+'</td>'
+    +'</tr></tfoot></table></div>'+pctWarn+'</div>';
+}
+
 // ═══ GATE 1 ═══
 function setEff(pct){
   if(!pct||pct<50||pct>100)return;
@@ -1138,10 +1280,16 @@ function gate1Next(){
   if(errEl)errEl.style.display='none';
   const shiftsDay=parseInt($('g1shiftsday').value)||1,daysWeek=parseInt($('g1daysweek').value)||5,weeks=parseInt($('g1weeks').value)||50;
   const effTarget=DX.setup.effTarget||parseFloat($('g1eff').value)||90;
-  DX.studyFilename=($('g1filename').value.trim())||proc;
+  // Build Plant-Line-Station filename
+  const plant=($('g1plant')&&$('g1plant').value||'').trim().replace(/[^a-zA-Z0-9]/g,'');
+  const lineSeg=($('g1line')&&$('g1line').value||'').trim().replace(/[^a-zA-Z0-9]/g,'');
+  const stationSeg=($('g1station')&&$('g1station').value||'').trim().replace(/[^a-zA-Z0-9]/g,'');
+  const fnParts=[plant,lineSeg,stationSeg].filter(Boolean);
+  DX.studyFilename=fnParts.length?fnParts.join('-'):proc.replace(/[^a-zA-Z0-9\-]+/g,'-').replace(/^-|-$/g,'');
   DX.setup={process:proc,dept:$('g1dept').value.trim(),analyst,supervisor:$('g1supervisor').value.trim(),date:$('g1date').value.trim()||new Date().toLocaleDateString('en-US'),operator:$('g1operator').value.trim(),takt,shiftMin:parseFloat($('g1shiftmin').value)||455,heads:parseFloat($('g1heads').value)||1,rate:parseFloat($('g1rate').value)||0,shiftsDay,daysWeek,weeks,annualShifts:shiftsDay*daysWeek*weeks,effTarget};
   DX.setup.effectiveTakt=Math.round(takt*(effTarget/100)*10)/10;
   DX.setup.target=Math.floor((DX.setup.shiftMin*60)/DX.setup.takt);
+  if(!DX.setup.variants)DX.setup.variants=[];
   autosave();goGate(2);
 }
 
@@ -1284,7 +1432,7 @@ function toggleAllClear(){DX.ergoAllClear=!DX.ergoAllClear;const btn=$('allClear
 let quickNoteBuffer=[];
 function saveQuickNote(){const v=$('quickNote').value.trim();if(!v)return;const note={text:v,cycle:DX.curCycle+1,t:fmtS(elapsed()/1000)};quickNoteBuffer.push(note);DX.quickNotes.push(note);$('quickNote').value='';renderCapSteps();}
 
-function renderCapScreen(){renderCapTabs();renderCapSteps();renderVidLog();checkCapReady();}
+function renderCapScreen(){renderCapTabs();renderCapSteps();renderVidLog();renderVariantPills();checkCapReady();}
 
 function renderVidLog(){
   const el=$('vidLogDisplay');if(!el)return;
@@ -1305,9 +1453,9 @@ function renderVidLog(){
 function renderCapTabs(){
   const tabs=$('capTabs');tabs.querySelectorAll('.ctab').forEach(t=>t.remove());
   const add=tabs.querySelector('button:not(.ctab)');
-  DX.cycles.forEach((_,i)=>{const t=document.createElement('button');t.className='ctab'+(i===DX.curCycle?' on':'');t.textContent='Cycle '+(i+1)+(i===0?' ⚠':'');t.onclick=()=>capSwitchCycle(i);tabs.insertBefore(t,add);});
+  DX.cycles.forEach((cyc,i)=>{const t=document.createElement('button');t.className='ctab'+(i===DX.curCycle?' on':'');const tag=cyc&&cyc.variant?' · '+cyc.variant:'';t.textContent='C'+(i+1)+(i===0?' ⚠':tag);t.onclick=()=>capSwitchCycle(i);tabs.insertBefore(t,add);});
 }
-function capSwitchCycle(i){if(DX.running)stopTimer();DX.curCycle=i;DX.stepStart=null;quickNoteBuffer=[];renderCapTabs();renderCapSteps();$('capStart').textContent='▶ Start';$('capStart').disabled=false;$('capStep').disabled=true;$('capEnd').disabled=true;$('capCycle1Warning').style.display=i===0?'block':'none';}
+function capSwitchCycle(i){if(DX.running)stopTimer();DX.curCycle=i;DX.stepStart=null;quickNoteBuffer=[];renderCapTabs();renderCapSteps();renderVariantPills();$('capStart').textContent='▶ Start';$('capStart').disabled=false;$('capStep').disabled=true;$('capEnd').disabled=true;$('capCycle1Warning').style.display=i===0?'block':'none';}
 function capAddCycle(){DX.cycles.push([]);capSwitchCycle(DX.cycles.length-1);}
 
 function renderCapSteps(){
@@ -1927,137 +2075,202 @@ function showAddStepModal(){$('stepModalName').value='';$('stepModal').style.dis
 function closeStepModal(){$('stepModal').style.display='none';}
 function saveStepModal(){const name=$('stepModalName').value.trim();if(!name){$('stepModalName').style.borderColor='var(--red)';$('stepModalName').focus();return;}$('stepModalName').style.borderColor='';if(!DX.ergoSteps.find(s=>s.name===name)){DX.ergoSteps.push({name,flags:[],freq:{}});}if(!DX.waste[name])DX.waste[name]=null;closeStepModal();autosave();}
 
-// ═══ JSON ═══
-function quickSaveJSON(){
-  const state={app:'ProcessDx',version:'2.1',exportedAt:new Date().toISOString(),...DX};
-  const proc=(DX.studyFilename||DX.setup.process||'Study').replace(/[^a-z0-9\-_\s]+/gi,' ').trim().replace(/\s+/g,'_');
-  const fn=`ProcessDx_${proc}.json`;
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(new Blob([JSON.stringify(state,null,2)],{type:'application/json'}));
-  a.download=fn;document.body.appendChild(a);a.click();a.remove();
-  _showSaveStatus(`✓ Saved as ${fn}`);
-}
-
-// ── Plain Excel (CSV) export — no tool branding ──
+// ═══ XLS EXPORT ═══
 function exportTimeStudyXLS(){
   const{setup,baseline,variation,waste,wasteType,eracs}=DX;
-  const names=(DX.ergoSteps||[]).map(s=>s.name).filter(n=>DX.waste[n]!=='elim');
-  if(!names.length){alert('Complete waste classification in Gate 5 before exporting.');return;}
-
+  const names=(DX.ergoSteps||[]).map(s=>s.name).filter(n=>waste[n]!=='elim');
+  if(!names.length){alert('Complete waste classification before exporting.');return;}
   const totalCT=names.reduce((s,n)=>{const v=variation[n];return s+(v?v.avg:0);},0);
   const takt=setup.takt||0;
   const WTLBL={T:'Transport',I:'Inventory',M:'Motion',W:'Waiting',O:'Overproduction',P:'Over-processing',D:'Defects',U:'Unused Skills'};
   const CLEAR_DESC={C:'Cut it',L:'Link it',E:'Exchange it',A:'Add to it',R:'Reduce complexity'};
-
-  // ── Escape CSV cell ──
   const esc=v=>{const s=String(v==null?'':v);return s.includes(',')||s.includes('"')||s.includes('\n')?`"${s.replace(/"/g,'""')}"`:s;};
-
-  // ── Header block ──
   const rows=[];
+  // Header
   rows.push([esc('Time Study — Work Content Analysis')]);
   rows.push([esc('Process'),esc(setup.process||''),esc('Prepared by'),esc(setup.analyst||''),esc('Date'),esc(setup.date||'')]);
-  rows.push([esc('Takt Time (s)'),esc(takt||''),esc('Baseline CT (s)'),esc(baseline&&baseline.ct?baseline.ct:''),esc('Study CT (s)'),esc(totalCT.toFixed(1))]);
+  rows.push([esc('Station'),esc(buildFilename()),esc('Takt (s)'),esc(takt||''),esc('Study CT (s)'),esc(totalCT.toFixed(1))]);
   rows.push([esc('Dept'),esc(setup.dept||''),esc('Operator'),esc(setup.operator||''),esc('Shift Min'),esc(setup.shiftMin||455)]);
   rows.push(['']);
-
-  // ── Column headers ──
-  rows.push(['#','Step','Avg CT (s)','% of Total','Min (s)','Max (s)','CV %','Classification','Waste Type','CLEAR Action','Notes'].map(esc).join(','));
-
-  // ── Step rows ──
+  // Summary columns
+  rows.push(['#','Step','Avg CT (s)','Amortized CT','% of Total CT','% of Volume','Classification','Waste Type','CLEAR Action','Notes'].map(esc).join(','));
   names.forEach((name,i)=>{
-    const v=variation[name]||{};
-    const avg=v.avg||0;
-    const pct=totalCT>0?(avg/totalCT*100).toFixed(1):'';
-    const cls=waste[name];
-    const clsLabel=cls==='va'?'Value Adding':cls==='wst'?'Waste':cls==='inc'?'Incidental':'—';
+    const v=variation[name]||{};const avg=v.avg||0;
+    const nc=isNonCyclical(name);const ncN=nonCyclicalN(name);
+    const amortized=nc?(avg/ncN).toFixed(2):avg.toFixed(2);
+    const pctCT=totalCT>0?(avg/totalCT*100).toFixed(1):'';
+    const pctVol=nc?((1/ncN)*100).toFixed(1):'100.0';
+    const cls=waste[name];const clsLabel=cls==='va'?'Value Adding':cls==='wst'?'Waste':cls==='inc'?'Incidental':'—';
     const wt=wasteType&&wasteType[name]?WTLBL[wasteType[name]]||wasteType[name]:'';
     const act=eracs&&eracs[name]?`${eracs[name]} — ${CLEAR_DESC[eracs[name]]||eracs[name]}`:'';
     const notes=[];
     const es=(DX.ergoSteps||[]).find(s=>s.name===name)||{flags:[],freq:{}};
     if((es.flags||[]).length)notes.push('Ergo: '+(es.flags||[]).join('/'));
+    if(nc)notes.push(`Non-cyclical: every ${ncN} units`);
     if(v.high)notes.push(v.isShort?`Range ${(v.max-v.min).toFixed(2)}s`:`CV ${v.cv.toFixed(1)}%`);
     if(v.overridden)notes.push('Var accepted');
-    rows.push([
-      i+1,
-      esc(name),
-      avg.toFixed(2),
-      pct,
-      v.min!=null?v.min.toFixed(2):'',
-      v.max!=null?v.max.toFixed(2):'',
-      v.cv!=null?v.cv.toFixed(1):'',
-      esc(clsLabel),
-      esc(wt),
-      esc(act),
-      esc(notes.join(' · '))
-    ].join(','));
+    rows.push([i+1,esc(name),avg.toFixed(2),amortized,pctCT,pctVol+'%',esc(clsLabel),esc(wt),esc(act),esc(notes.join(' · '))].join(','));
   });
-
-  // ── Totals row ──
+  // Totals
   const wstTime=names.filter(n=>waste[n]==='wst'||waste[n]==='inc').reduce((s,n)=>{const v=variation[n];return s+(v?v.avg:0);},0);
   const vaTime=names.filter(n=>waste[n]==='va').reduce((s,n)=>{const v=variation[n];return s+(v?v.avg:0);},0);
   rows.push(['']);
-  rows.push([esc('TOTAL'),'',esc(totalCT.toFixed(2)),'100%','','','','','','',''].join(','));
-  rows.push([esc('Value Adding'),'',esc(vaTime.toFixed(2)),esc((totalCT>0?vaTime/totalCT*100:0).toFixed(1)+'%'),'','','','','','',''].join(','));
-  rows.push([esc('Waste / Incidental'),'',esc(wstTime.toFixed(2)),esc((totalCT>0?wstTime/totalCT*100:0).toFixed(1)+'%'),'','','','','','',''].join(','));
-  if(takt>0){
+  rows.push([esc('TOTAL'),'',esc(totalCT.toFixed(2)),'','100%','','','','',''].join(','));
+  rows.push([esc('Value Adding'),'',esc(vaTime.toFixed(2)),'',esc((totalCT>0?vaTime/totalCT*100:0).toFixed(1)+'%'),'','','','',''].join(','));
+  rows.push([esc('Waste / Incidental'),'',esc(wstTime.toFixed(2)),'',esc((totalCT>0?wstTime/totalCT*100:0).toFixed(1)+'%'),'','','','',''].join(','));
+  if(takt>0){rows.push(['']);rows.push([esc('CT vs Takt'),'',esc((totalCT-takt).toFixed(2)+' s'),'','','','','','',''].join(','));rows.push([esc('Target if waste removed'),'',esc((totalCT-wstTime).toFixed(2)+' s'),'','','','','','',''].join(','));}
+  // Raw cycle matrix
+  const validCycles=(DX.cycles||[]).slice(1).filter(c=>c&&c.length>0);
+  if(validCycles.length){
+    rows.push(['']);rows.push(['']);
+    rows.push([esc('RAW CYCLE DATA — All Steps × All Cycles')]);
+    rows.push([esc('Cycle 1 discarded (Hawthorne). Times in seconds.')]);rows.push(['']);
+    const cycleHdrs=validCycles.map((_,i)=>esc('Cycle '+(i+2)));
+    rows.push(['#',esc('Step'),...cycleHdrs,esc('Avg'),esc('Amortized'),esc('Min'),esc('Max'),esc('CV %'),esc('% Volume'),esc('Classification')].join(','));
+    names.forEach((name,i)=>{
+      const v=variation[name]||{};const nc=isNonCyclical(name);const ncN=nonCyclicalN(name);
+      const cls=waste[name];const clsLabel=cls==='va'?'VA':cls==='wst'?'Waste':cls==='inc'?'Incidental':'—';
+      const pctVol=nc?((1/ncN)*100).toFixed(1)+'%':'100%';
+      const amortized=nc&&v.avg?(v.avg/ncN).toFixed(2):'';
+      const ncLabel=nc?` [every ${ncN}]`:'';
+      const cycleTimes=validCycles.map(cyc=>{const s=cyc.find(x=>x.name===name&&!x._elimSkip);return s?s.dur.toFixed(2):'';});
+      rows.push([i+1,esc(name+ncLabel),...cycleTimes,v.avg!=null?v.avg.toFixed(2):'',amortized,v.min!=null?v.min.toFixed(2):'',v.max!=null?v.max.toFixed(2):'',v.cv!=null?v.cv.toFixed(1):'',pctVol,esc(clsLabel)].join(','));
+    });
+    const cycleTotals=validCycles.map(cyc=>cyc.filter(s=>!s._elimSkip).reduce((a,s)=>a+s.dur,0).toFixed(2));
     rows.push(['']);
-    rows.push([esc('CT vs Takt'),'',esc((totalCT-takt).toFixed(2)+' s'),'','','','','','','',''].join(','));
-    rows.push([esc('Target if waste removed'),'',esc((totalCT-wstTime).toFixed(2)+' s'),'','','','','','','',''].join(','));
+    rows.push([esc('CYCLE TOTAL'),'', ...cycleTotals,cycleTotals.length?(cycleTotals.reduce((a,v)=>a+parseFloat(v),0)/cycleTotals.length).toFixed(2):'','','','','','',esc('Full cycle')].join(','));
+    const flagged=names.filter(n=>variation[n]&&variation[n].high);
+    if(flagged.length){rows.push(['']);rows.push([esc('HIGH VARIATION:')]);flagged.forEach(n=>{const v=variation[n];rows.push([esc('  ⚠ '+n),esc(v.isShort?`Range ${(v.max-v.min).toFixed(2)}s`:`CV ${v.cv.toFixed(1)}%`)].join(','));});}
   }
-
-  // ── Convert rows array — header block rows are arrays, step rows are already joined strings ──
+  // Product mix
+  const xlsVariants=setup.variants||[];const xlsProductMix=DX.productMix||[];
+  if(xlsVariants.length&&xlsProductMix.length){
+    const taggedCTXLS={};
+    validCycles.forEach(cyc=>{const tag=cyc.variant;if(!tag)return;const ct=cyc.filter(s=>!s._elimSkip).reduce((a,s)=>a+s.dur,0);if(!taggedCTXLS[tag])taggedCTXLS[tag]=[];taggedCTXLS[tag].push(ct);});
+    const taggedAvgXLS={};Object.keys(taggedCTXLS).forEach(k=>{taggedAvgXLS[k]=taggedCTXLS[k].reduce((a,b)=>a+b,0)/taggedCTXLS[k].length;});
+    const totalPctXLS=xlsProductMix.reduce((a,m)=>a+(parseFloat(m.mixPct)||0),0);
+    let blendedXLS=0;xlsProductMix.forEach(m=>{const ct=m.ctOverride!=null?parseFloat(m.ctOverride):(taggedAvgXLS[m.name]||0);blendedXLS+=ct*((parseFloat(m.mixPct)||0)/100);});
+    rows.push(['']);rows.push(['']);rows.push([esc('PRODUCT MIX — BLENDED CYCLE TIME')]);
+    rows.push(['Variant','Avg CT (s)','Source','Mix %','Contribution (s)'].map(esc).join(','));
+    xlsProductMix.forEach(m=>{
+      const auto=taggedAvgXLS[m.name];const ct=m.ctOverride!=null?parseFloat(m.ctOverride):(auto||0);
+      const src=m.ctOverride!=null?'Manual':(auto?`${taggedCTXLS[m.name].length} tagged cycles`:'Manual — no cycles tagged');
+      const pct=parseFloat(m.mixPct)||0;
+      rows.push([esc(m.name),ct?ct.toFixed(2):'',esc(src),pct||'',ct&&pct?(ct*(pct/100)).toFixed(2):''].join(','));
+    });
+    rows.push(['']);
+    rows.push([esc('Mix % Total'),'','',esc(totalPctXLS.toFixed(0)+'%'),''].join(','));
+    rows.push([esc('Blended CT'),'','','',esc(blendedXLS.toFixed(2)+' s')].join(','));
+    if(takt>0)rows.push([esc('Blended CT vs Takt'),'','','',esc((blendedXLS-takt).toFixed(2)+' s')].join(','));
+  }
   const csv=rows.map(r=>Array.isArray(r)?r.join(','):r).join('\r\n');
-
-  const proc=(setup.process||'TimeStudy').replace(/[^a-zA-Z0-9]+/g,'_').replace(/^_|_$/g,'');
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'}));
-  a.download=`${proc}_WorkContent.csv`;
-  document.body.appendChild(a);a.click();a.remove();
+  const xlsBlob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
+  const fn=buildFilename()+'_WorkContent.csv';
+  if(window.showSaveFilePicker){
+    window.showSaveFilePicker({suggestedName:fn,types:[{description:'CSV Spreadsheet',accept:{'text/csv':['.csv']}}]})
+      .then(async h=>{const w=await h.createWritable();await w.write(xlsBlob);await w.close();_showSaveStatus('✓ Saved — '+fn);})
+      .catch(e=>{if(e.name!=='AbortError'){const a=document.createElement('a');a.href=URL.createObjectURL(xlsBlob);a.download=fn;document.body.appendChild(a);a.click();a.remove();_showSaveStatus('✓ Downloaded — '+fn);}});
+    return;
+  }
+  const a=document.createElement('a');a.href=URL.createObjectURL(xlsBlob);a.download=fn;document.body.appendChild(a);a.click();a.remove();
   _showSaveStatus('✓ CSV downloaded — open in Excel');
 }
 
-function exportJSON(){
+// ═══ SAVE ═══
+async function quickSaveJSON(){
   const state={app:'ProcessDx',version:'2.1',exportedAt:new Date().toISOString(),...DX};
-  const proc=(DX.studyFilename||DX.setup.process||'ProcessDx').replace(/[^a-z0-9\-_\s]+/gi,' ').trim().replace(/\s+/g,'_');
-  const fn=`ProcessDx_${proc}.json`;
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(new Blob([JSON.stringify(state,null,2)],{type:'application/json'}));
-  a.download=fn;document.body.appendChild(a);a.click();a.remove();
-  _showSaveStatus(`✓ Saved as ${fn}`);
+  const fn=buildFilename()+'.json';
+  const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
+  if(window.showSaveFilePicker){
+    try{const h=await window.showSaveFilePicker({suggestedName:fn,types:[{description:'ProcessDx Study',accept:{'application/json':['.json']}}]});const w=await h.createWritable();await w.write(blob);await w.close();_showSaveStatus('✓ Saved — '+fn);return;}
+    catch(e){if(e.name==='AbortError')return;}
+  }
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=fn;document.body.appendChild(a);a.click();a.remove();
+  _showSaveStatus('✓ Downloaded — '+fn);
+}
+async function exportJSON(){
+  const state={app:'ProcessDx',version:'2.1',exportedAt:new Date().toISOString(),...DX};
+  const fn=buildFilename()+'.json';
+  const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
+  if(window.showSaveFilePicker){
+    try{const h=await window.showSaveFilePicker({suggestedName:fn,types:[{description:'ProcessDx Study',accept:{'application/json':['.json']}}]});const w=await h.createWritable();await w.write(blob);await w.close();_showSaveStatus('✓ Saved — '+fn);return;}
+    catch(e){if(e.name==='AbortError')return;}
+  }
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=fn;document.body.appendChild(a);a.click();a.remove();
+  _showSaveStatus('✓ Downloaded — '+fn);
+}
+
+// ═══ LOAD / RESUME ═══
+let _loadedStudies=[];
+function _applyLoadedStudy(obj){
+  Object.assign(DX,obj);
+  if(!DX.afterStudies)DX.afterStudies=[];if(!DX.vidLog)DX.vidLog=[];
+  if(!DX.kata)DX.kata={};if(!DX.kata.weeklyTracking)DX.kata.weeklyTracking=[];
+  if(!DX.productMix)DX.productMix=[];
+  if(DX.setup&&DX.setup.process){
+    const s=DX.setup;const sf=(id,v)=>{const el=$(id);if(el&&v!=null)el.value=v;};
+    sf('g1proc',s.process);sf('g1dept',s.dept);sf('g1analyst',s.analyst);
+    sf('g1date',s.date);sf('g1operator',s.operator);
+    if(s.supervisor)sf('g1supervisor',s.supervisor);
+    sf('g1takt',s.takt);sf('g1shiftmin',s.shiftMin);
+    sf('g1heads',s.heads);sf('g1rate',s.rate);sf('g1weeks',s.weeks);
+    // Restore Plant/Line/Station fields from studyFilename
+    if(DX.studyFilename){
+      const p=DX.studyFilename.split('-');
+      sf('g1plant',p[0]||'');sf('g1line',p[1]||'');sf('g1station',p.slice(2).join('-')||'');
+      const prev=$('g1filenamePreview');if(prev)prev.textContent=DX.studyFilename;
+    }
+    const sd=$('g1shiftsday');if(sd)sd.value=s.shiftsDay||1;
+    const dw=$('g1daysweek');if(dw)dw.value=s.daysWeek||5;
+    setBn(s.bottleneck);if(s.effTarget)setEff(s.effTarget);
+    if(DX.baseline){sf('g2ct',DX.baseline.ct);calcBaseline();}
+    sf('g2baselineNote',DX.gemba&&DX.gemba.baselineNote);
+    sf('g2abnormal',DX.gemba&&DX.gemba.abnormal||'');
+    if(DX.g5notes)sf('g5notes',DX.g5notes);
+    renderVariantList();
+  }
+  goGate(DX.gate||6);
+  if(DX.vidLog&&DX.vidLog.length>0)setTimeout(()=>showRelinkModal(),400);
 }
 $('resumeInput').addEventListener('change',async e=>{
   const f=e.target.files[0];e.target.value='';if(!f)return;
-  try{
-    const obj=JSON.parse(await f.text());
-    if(obj.app!=='ProcessDx')throw new Error('Not a Process Dx file');
-    Object.assign(DX,obj);
-    if(!DX.afterStudies)DX.afterStudies=[];
-    if(!DX.vidLog)DX.vidLog=[];
-    if(!DX.kata)DX.kata={};
-    if(!DX.kata.weeklyTracking)DX.kata.weeklyTracking=[];
-    // Backfill all form inputs so prior gate data is visible if user navigates back
-    if(DX.setup&&DX.setup.process){
-      const s=DX.setup;
-      const sf=(id,v)=>{const el=$(id);if(el&&v!=null)el.value=v;};
-      sf('g1proc',s.process);sf('g1dept',s.dept);sf('g1analyst',s.analyst);
-      sf('g1date',s.date);sf('g1operator',s.operator);
-      if(s.supervisor)sf('g1supervisor',s.supervisor);
-      sf('g1takt',s.takt);sf('g1shiftmin',s.shiftMin);
-      sf('g1heads',s.heads);sf('g1rate',s.rate);sf('g1weeks',s.weeks);
-      if(DX.studyFilename){const fn=$('g1filename');if(fn)fn.value=DX.studyFilename;}
-      const sd=$('g1shiftsday');if(sd)sd.value=s.shiftsDay||1;
-      const dw=$('g1daysweek');if(dw)dw.value=s.daysWeek||5;
-      setBn(s.bottleneck);
-      if(s.effTarget)setEff(s.effTarget);
-      if(DX.baseline){sf('g2ct',DX.baseline.ct);calcBaseline();}
-      sf('g2baselineNote',DX.gemba&&DX.gemba.baselineNote);
-      sf('g2abnormal',DX.gemba&&DX.gemba.abnormal||'');
-      if(DX.g5notes)sf('g5notes',DX.g5notes);
-    }
-    goGate(DX.gate||7);
-    if(DX.vidLog.length>0)setTimeout(()=>showRelinkModal(),400);
-  }catch(err){alert('Could not load: '+(err.message||err));}
+  try{const obj=JSON.parse(await f.text());if(obj.app!=='ProcessDx')throw new Error('Not a ProcessDx file');_applyLoadedStudy(obj);}
+  catch(err){alert('Could not load: '+(err.message||err));}
 });
+$('resumeMulti').addEventListener('change',async e=>{
+  const files=Array.from(e.target.files);e.target.value='';if(!files.length)return;
+  if(files.length===1){try{const obj=JSON.parse(await files[0].text());if(obj.app!=='ProcessDx')throw new Error('Not a ProcessDx file');_applyLoadedStudy(obj);}catch(err){alert('Could not load: '+(err.message||err));}return;}
+  _loadedStudies=[];
+  await Promise.all(files.map(async f=>{
+    try{const obj=JSON.parse(await f.text());if(obj.app!=='ProcessDx')return;
+      const base=f.name.replace(/\.json$/i,'');const parts=base.split('-');
+      obj._fn=base;obj._plant=parts[0]||'';obj._line=parts[1]||'';obj._station=parts.slice(2).join('-')||obj.setup?.process||base;
+      _loadedStudies.push(obj);}catch(e){}
+  }));
+  if(!_loadedStudies.length){alert('No valid ProcessDx files found.');return;}
+  _loadedStudies.sort((a,b)=>{const pa=(a._plant+a._line+a._station).toLowerCase();const pb=(b._plant+b._line+b._station).toLowerCase();return pa<pb?-1:pa>pb?1:0;});
+  _showStationSelector();
+});
+function _showStationSelector(){
+  const modal=$('stationModal'),list=$('stationModalList'),meta=$('stationModalMeta');if(!modal||!list)return;
+  const byLine={};
+  _loadedStudies.forEach(s=>{const k=(s._plant?s._plant+' · ':'')+( s._line||'No Line');if(!byLine[k])byLine[k]=[];byLine[k].push(s);});
+  meta.textContent=_loadedStudies.length+' studies loaded — tap to open';
+  list.innerHTML='';
+  Object.entries(byLine).forEach(([lineKey,studies])=>{
+    const hdr=document.createElement('div');hdr.style.cssText='font-family:var(--mono);font-size:9px;color:var(--green);text-transform:uppercase;letter-spacing:1.5px;padding:6px 0 3px;border-bottom:1px solid var(--br);margin-bottom:4px';hdr.textContent=lineKey;list.appendChild(hdr);
+    studies.forEach(s=>{
+      const btn=document.createElement('button');btn.style.cssText='width:100%;text-align:left;background:var(--s2);border:1px solid var(--br);border-radius:var(--r);padding:10px 12px;cursor:pointer;-webkit-appearance:none;display:flex;align-items:center;gap:10px;margin-bottom:4px';
+      const ct=s.varAvgCT?s.varAvgCT.toFixed(1)+'s':'—';const takt=s.setup?.takt||0;
+      const gap=s.varAvgCT&&takt?(s.varAvgCT-takt).toFixed(1):null;
+      const gc=gap!==null?(parseFloat(gap)>0?'var(--red)':'var(--green)'):'var(--muted)';
+      btn.innerHTML='<div style="flex:1"><div style="font-family:var(--head);font-size:15px;font-weight:800;color:var(--forest);text-transform:uppercase;letter-spacing:.3px">'+(s._station||s.setup?.process||s._fn)+'</div><div style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-top:2px">'+(s.setup?.date||'')+' · Analyst: '+(s.setup?.analyst||'—')+'</div></div><div style="text-align:right;flex-shrink:0"><div style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--forest)">'+ct+'</div>'+(gap!==null?'<div style="font-family:var(--mono);font-size:9px;color:'+gc+'">'+(parseFloat(gap)>0?'+':'')+gap+'s vs takt</div>':'')+'</div>';
+      btn.onclick=()=>{modal.style.display='none';_applyLoadedStudy(s);};
+      list.appendChild(btn);
+    });
+  });
+  modal.style.display='flex';
+}
 
 $('g1date').value=new Date().toLocaleDateString('en-US');
 checkResume();
@@ -3060,7 +3273,7 @@ window.renderOutput=function(){
   // Init FIRST so both savings block and canvas read the same yamStepStates
   initYamStates();
   _origRenderOutput();
-  renderYamazumi();renderYamSliders();renderTimeStudyTable();renderCycleLog();renderSavingsBlock();
+  renderYamazumi();renderYamSliders();renderTimeStudyTable();renderCycleLog();renderSavingsBlock();renderProductMixBlock();
 };
 function renderResStudyButtons(){
   const btn=$('afterStudyBtn');
@@ -3453,5 +3666,16 @@ if('serviceWorker' in navigator){
 
 </script>
 <div id="saveFlash" class="save-flash">✓ Saved</div>
+
+<!-- STATION SELECTOR MODAL -->
+<div id="stationModal" style="display:none;position:fixed;inset:0;background:rgba(27,67,50,.7);z-index:600;align-items:flex-end;backdrop-filter:blur(4px)">
+  <div style="background:var(--s1);border-top:3px solid var(--green);border-radius:14px 14px 0 0;padding:18px 18px calc(24px + var(--sb));width:100%;max-height:80vh;overflow-y:auto">
+    <div style="width:36px;height:4px;background:var(--br);border-radius:2px;margin:0 auto 14px"></div>
+    <div style="font-family:var(--head);font-size:18px;font-weight:800;color:var(--forest);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Select Study</div>
+    <div id="stationModalMeta" style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:14px"></div>
+    <div id="stationModalList" style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px"></div>
+    <button onclick="$('stationModal').style.display='none'" class="btn-secondary" style="width:100%">Cancel</button>
+  </div>
+</div>
 </body>
 </html>
