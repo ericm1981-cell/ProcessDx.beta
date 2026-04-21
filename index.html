@@ -2232,22 +2232,34 @@ function _applyLoadedStudy(obj){
   goGate(DX.gate||6);
   if(DX.vidLog&&DX.vidLog.length>0)setTimeout(()=>showRelinkModal(),400);
 }
-$('resumeInput').addEventListener('change',async e=>{
+$('resumeInput').addEventListener('change',e=>{
   const f=e.target.files[0];e.target.value='';if(!f)return;
-  try{const obj=JSON.parse(await f.text());if(obj.app!=='ProcessDx')throw new Error('Not a ProcessDx file');_applyLoadedStudy(obj);}
-  catch(err){alert('Could not load: '+(err.message||err));}
+  const r=new FileReader();
+  r.onload=ev=>{try{const obj=JSON.parse(ev.target.result);if(obj.app!=='ProcessDx')throw new Error('Not a ProcessDx file');_applyLoadedStudy(obj);}catch(err){alert('Could not load: '+(err.message||err));}};
+  r.onerror=()=>alert('Could not read file.');
+  r.readAsText(f);
 });
 $('resumeMulti').addEventListener('change',async e=>{
   const files=Array.from(e.target.files);e.target.value='';if(!files.length)return;
-  if(files.length===1){try{const obj=JSON.parse(await files[0].text());if(obj.app!=='ProcessDx')throw new Error('Not a ProcessDx file');_applyLoadedStudy(obj);}catch(err){alert('Could not load: '+(err.message||err));}return;}
+  // FileReader helper — works on all iOS/browser versions
+  const readFile=f=>new Promise((res,rej)=>{const r=new FileReader();r.onload=ev=>{try{res(JSON.parse(ev.target.result));}catch(err){rej(err);}};r.onerror=()=>rej(new Error('Read failed'));r.readAsText(f);});
+  if(files.length===1){
+    try{const obj=await readFile(files[0]);if(obj.app!=='ProcessDx')throw new Error('Not a ProcessDx file');_applyLoadedStudy(obj);}
+    catch(err){alert('Could not load: '+(err.message||err));}
+    return;
+  }
+  // Multiple files
   _loadedStudies=[];
-  await Promise.all(files.map(async f=>{
-    try{const obj=JSON.parse(await f.text());if(obj.app!=='ProcessDx')return;
-      const base=f.name.replace(/\.json$/i,'');const parts=base.split('-');
-      obj._fn=base;obj._plant=parts[0]||'';obj._line=parts[1]||'';obj._station=parts.slice(2).join('-')||obj.setup?.process||base;
-      _loadedStudies.push(obj);}catch(e){}
+  const results=await Promise.allSettled(files.map(async f=>{
+    const obj=await readFile(f);
+    if(obj.app!=='ProcessDx')return null;
+    const base=f.name.replace(/\.json$/i,'');const parts=base.split('-');
+    obj._fn=base;obj._plant=parts[0]||'';obj._line=parts[1]||'';
+    obj._station=parts.slice(2).join('-')||obj.setup?.process||base;
+    return obj;
   }));
-  if(!_loadedStudies.length){alert('No valid ProcessDx files found.');return;}
+  _loadedStudies=results.filter(r=>r.status==='fulfilled'&&r.value).map(r=>r.value);
+  if(!_loadedStudies.length){alert('No valid ProcessDx files found.\n\nMake sure files were saved from ProcessDx (app field must equal ProcessDx).');return;}
   _loadedStudies.sort((a,b)=>{const pa=(a._plant+a._line+a._station).toLowerCase();const pb=(b._plant+b._line+b._station).toLowerCase();return pa<pb?-1:pa>pb?1:0;});
   _showStationSelector();
 });
