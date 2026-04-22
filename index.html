@@ -411,6 +411,7 @@ body{overscroll-behavior:none}
     <div id="g2AfterRef" style="font-family:var(--mono);font-size:11px;color:var(--muted);line-height:2;background:rgba(255,255,255,.5);border-radius:var(--r);padding:8px 12px;margin-bottom:10px"></div>
     <button class="btn-primary btn-amber" style="width:100%;font-size:14px" onclick="goGate(3)">→ Skip to Capture</button>
   </div>
+  <div id="sbDebugPanel" style="display:none;position:fixed;top:60px;left:0;right:0;background:#1B4332;color:#fff;font-family:monospace;font-size:12px;padding:10px 14px;z-index:999;border-bottom:2px solid #D97706"></div>
   <div class="gate-hdr"><div class="gate-tag">Gate 2 of 7 — Muri Setup</div><div class="gate-title">Baseline + Gemba Log</div><div class="gate-desc">Record the before number. Observe before capturing. Confirm conditions are representative.</div></div>
   <div class="scroll">
     <div class="slbl">2A — Baseline Time</div>
@@ -465,7 +466,7 @@ body{overscroll-behavior:none}
       <button id="g2VidBtn" onclick="$('vidInput').click()" style="width:100%;font-family:var(--head);font-size:15px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:14px;background:var(--s2);border:2px dashed var(--br2);border-radius:var(--r);color:var(--muted);cursor:pointer;-webkit-appearance:none">🎬 Load Video File</button>
     </div>
   </div>
-  <div class="foot"><button class="btn-secondary" onclick="goGate(1)">← Back</button><button class="btn-primary" onclick="gate2Next()">Log &amp; Continue →</button></div>
+  <div class="foot"><button class="btn-secondary" onclick="goGate(1)">← Back</button><button class="btn-secondary" onclick="sbDebug()" style="background:rgba(217,119,6,.15);border-color:var(--amber);color:var(--amber);font-size:12px">☁ Test DB</button><button class="btn-primary" onclick="gate2Next()">Log &amp; Continue →</button></div>
 </div>
 
 <!-- GATE 3 — CAPTURE (split layout: video left, controls right) -->
@@ -2188,6 +2189,16 @@ function sbClient(){
   if(!_sbClient && window.supabase)
     _sbClient = window.supabase.createClient(SB_URL, SB_KEY);
   return _sbClient;
+}
+
+function sbDebug(){
+  const lines = [];
+  lines.push('supabase CDN: ' + (window.supabase ? '✓ loaded' : '✗ NOT loaded'));
+  lines.push('sbClient: ' + (sbClient() ? '✓ initialized' : '✗ null'));
+  lines.push('SB_URL: ' + SB_URL.slice(0,30) + '...');
+  const d = document.getElementById('sbDebugPanel');
+  if(d){ d.style.display='block'; d.innerHTML = lines.join('<br>'); }
+  alert('Supabase Status:\n' + lines.join('\n'));
 }
 
 // ── Resolve or create plant, return id ──
