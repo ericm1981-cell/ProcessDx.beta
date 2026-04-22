@@ -8,6 +8,7 @@
 <meta name="apple-mobile-web-app-title" content="ProcessDx">
 <meta name="theme-color" content="#1B4332">
 <link rel="manifest" href="manifest.json">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <link rel="apple-touch-icon" href="processdx-icon-180.png">
 <title>Process Dx</title>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -806,6 +807,7 @@ const DX={
   nonCyclicalSteps:{},  // {stepName: {n: frequency}}
   studyFilename:'',
   productMix:[],        // [{name,ctOverride,mixPct}] — mixed model variants     // custom save filename (set in Gate 1)
+  supabaseStudyId:null, // set at Gate 1 create, used for all subsequent updates
   kata:{targetCT:'',targetDate:'',conditions:[],successCriteria:'',obstacles:[],experiments:[],
         weeklyTracking:[]},
   afterStudies:[],afterStudyMode:false,afterStudyDraft:null,_asOrig:null,
@@ -906,7 +908,7 @@ function goGate(n){
   // After-state: when in re-study mode, Gate 7 shows commit/cancel
   if(n===7&&DX.afterStudyMode)renderResStudyButtons();
   if(n===6){renderOutput();renderAfterStateComparison();}
-  if(n===7){renderPDCAGate();}
+  if(n===7){renderPDCAGate();sbSave(7);}
   window.scrollTo(0,0);
 }
 
@@ -1290,7 +1292,7 @@ function gate1Next(){
   DX.setup.effectiveTakt=Math.round(takt*(effTarget/100)*10)/10;
   DX.setup.target=Math.floor((DX.setup.shiftMin*60)/DX.setup.takt);
   if(!DX.setup.variants)DX.setup.variants=[];
-  autosave();goGate(2);
+  autosave();sbSave(1);goGate(2);
 }
 
 // ═══ GATE 2 ═══
@@ -1327,7 +1329,7 @@ function gate2Next(){
   DX.gemba.abnormal=$('g2abnormal').value.trim();DX.gemba.baselineNote=$('g2baselineNote').value.trim();
   const now=new Date();DX.gemba.timestamp=now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
   $('gembaTS').textContent='Logged '+DX.gemba.timestamp;$('gembaTimestamp').style.display='block';
-  calcBaseline();autosave();goGate(3);
+  calcBaseline();autosave();sbSave(2);goGate(3);
 }
 
 // ═══ GATE 3 — ERGO (ITEMS 1 + 2) ═══
@@ -1586,7 +1588,7 @@ function capDiscard(){
   setTimeout(()=>{$('capStart').disabled=false;},350);
 }
 function capDoEndCycle(){if(DX.running){stopTimer();DX.running=false;}try{vid.pause();}catch(e){}if(DX.cycles[DX.curCycle].length>0){DX.cycles.push([]);capSwitchCycle(DX.cycles.length-1);}resetTimer();$('capStart').textContent='▶ Start';$('capStart').disabled=false;$('capStep').disabled=true;$('capEnd').disabled=true;renderCapTabs();checkCapReady();}
-function gate3Next(){checkCapReady();if($('capNextBtn').disabled){alert('Complete at least 2 valid cycles (cycles 2 and 3+) before proceeding.');return;}autosave();const f=$('saveFlash');if(f){f.textContent='📥 Capture saved — tap ⬇ Save Backup to download';f.style.color='var(--amber)';f.style.background='var(--adim)';f.style.borderColor='rgba(217,119,6,.3)';f.style.opacity='1';clearTimeout(f._t);f._t=setTimeout(()=>{f.style.opacity='0';},5000);}goGate(4);}
+function gate3Next(){checkCapReady();if($('capNextBtn').disabled){alert('Complete at least 2 valid cycles (cycles 2 and 3+) before proceeding.');return;}autosave();sbSave(3);const f=$('saveFlash');if(f){f.textContent='📥 Capture saved — tap ⬇ Save Backup to download';f.style.color='var(--amber)';f.style.background='var(--adim)';f.style.borderColor='rgba(217,119,6,.3)';f.style.opacity='1';clearTimeout(f._t);f._t=setTimeout(()=>{f.style.opacity='0';},5000);}goGate(4);}
 
 // ═══ GATE 5 — VARIATION ═══
 function renderVariation(){
@@ -1716,7 +1718,7 @@ function gate4Next(){
     return;
   }
   if($('g5notes')){$('g5notes').style.borderColor='';$('g5notes').style.background='';}
-  autosave();goGate(5);
+  autosave();sbSave(4);goGate(5);
 }
 
 // ═══ GATE 6 — WASTE ═══
@@ -1858,7 +1860,7 @@ function gate5Next(){
     const modal=$('gate6Checkpoint');if(modal)modal.style.display='flex';
     return;
   }
-  autosave();goGate(6);
+  autosave();sbSave(5);goGate(6);
 }
 
 // ═══ GATE 7 — OUTPUT ═══
@@ -2174,6 +2176,273 @@ function exportTimeStudyXLS(){
   }
   const a=document.createElement('a');a.href=URL.createObjectURL(xlsBlob);a.download=fn;document.body.appendChild(a);a.click();a.remove();
   _showSaveStatus('✓ CSV downloaded — open in Excel');
+}
+
+// ═══ SUPABASE ═══
+const SB_URL = 'https://crmfanzohigqflsfrddl.supabase.co';
+const SB_KEY = 'sb_publishable_fw-zV5Jp3UyE8mhr7AV0pw_G7GT7hN0';
+let _sbClient = null;
+function sbClient(){
+  if(!_sbClient && window.supabase)
+    _sbClient = window.supabase.createClient(SB_URL, SB_KEY);
+  return _sbClient;
+}
+
+// ── Resolve or create plant, return id ──
+async function sbEnsurePlant(name){
+  const sb=sbClient();if(!sb)return null;
+  const clean=(name||'Unknown').trim();
+  const{data}=await sb.from('plants').select('id').eq('name',clean).maybeSingle();
+  if(data)return data.id;
+  const{data:ins,error}=await sb.from('plants').insert({name:clean}).select('id').single();
+  if(error){console.error('sbEnsurePlant:',error);return null;}
+  return ins.id;
+}
+
+// ── Resolve or create station, return id ──
+async function sbEnsureStation(plantId,lineName,stationName){
+  const sb=sbClient();if(!sb||!plantId)return null;
+  const ln=(lineName||'').trim(),sn=(stationName||'').trim();
+  const{data}=await sb.from('stations').select('id').eq('plant_id',plantId).eq('line_name',ln).eq('station_name',sn).maybeSingle();
+  if(data)return data.id;
+  const{data:ins,error}=await sb.from('stations').insert({plant_id:plantId,line_name:ln,station_name:sn}).select('id').single();
+  if(error){console.error('sbEnsureStation:',error);return null;}
+  return ins.id;
+}
+
+// ── Get ordered step names from captured data ──
+function sbStepNames(){
+  const names=[];
+  (DX.cycles||[]).slice(1).filter(c=>c&&c.length>0).forEach(cyc=>
+    cyc.forEach(s=>{if(s.name&&!names.includes(s.name)&&!s._elimSkip)names.push(s.name);})
+  );
+  // Fill in any ergo steps not captured (named in Gate 2 but not timed)
+  (DX.ergoSteps||[]).forEach(s=>{if(!names.includes(s.name)&&DX.waste[s.name]!=='elim')names.push(s.name);});
+  return names;
+}
+
+// ── Main progressive save ──
+async function sbSave(gate){
+  const sb=sbClient();
+  if(!sb){console.warn('Supabase not loaded');return;}
+  try{
+    const s=DX.setup;
+    const parts=(DX.studyFilename||'').split('-');
+    const plantName=($('g1plant')&&$('g1plant').value.trim())||parts[0]||s.process||'Unknown';
+    const lineName=($('g1line')&&$('g1line').value.trim())||parts[1]||'';
+    const stationName=($('g1station')&&$('g1station').value.trim())||parts.slice(2).join('-')||s.process||'';
+
+    // ── GATE 1: Create study record ──
+    if(gate===1){
+      const plantId=await sbEnsurePlant(plantName);
+      const stationId=await sbEnsureStation(plantId,lineName,stationName);
+      if(!stationId){console.warn('sbSave G1: could not resolve station');return;}
+      const{data,error}=await sb.from('studies').insert({
+        station_id:   stationId,
+        study_date:   s.date||new Date().toLocaleDateString('en-US'),
+        operator_name:s.operator||s.analyst||'',
+        takt:         s.takt||null,
+        available_time:s.shiftMin||455,
+        gate_1_complete:true,
+        notes:JSON.stringify({filename:DX.studyFilename,analyst:s.analyst,dept:s.dept,
+          heads:s.heads,rate:s.rate,effTarget:s.effTarget,variants:s.variants||[]}),
+      }).select('id').single();
+      if(error){console.error('sbSave G1:',error);_showSaveStatus('⚠ Cloud create failed',true);return;}
+      DX.supabaseStudyId=data.id;
+      autosave();
+      _showSaveStatus('☁ Study created');
+      return;
+    }
+
+    const id=DX.supabaseStudyId;
+    if(!id){console.warn('sbSave: no study id — run Gate 1 first');return;}
+
+    // ── GATE 2: Baseline + gemba ──
+    if(gate===2){
+      await sb.from('studies').update({
+        gate_2_complete:true,
+        notes:JSON.stringify({filename:DX.studyFilename,analyst:s.analyst,dept:s.dept,
+          heads:s.heads,rate:s.rate,effTarget:s.effTarget,variants:s.variants||[],
+          baseline:DX.baseline,gemba:{timestamp:DX.gemba.timestamp,abnormal:DX.gemba.abnormal,baselineNote:DX.gemba.baselineNote}}),
+      }).eq('id',id);
+      _showSaveStatus('☁ Baseline saved');
+      return;
+    }
+
+    // ── GATE 3: Steps + raw observations ──
+    if(gate===3){
+      const names=sbStepNames();
+      const validCycles=(DX.cycles||[]).slice(1).filter(c=>c&&c.length>0);
+
+      // Wipe existing steps + observations for this study (clean slate on re-save)
+      await sb.from('observations').delete().eq('study_id',id);
+      await sb.from('steps').delete().eq('study_id',id);
+
+      // Insert steps — CT/CV not yet computed, will fill at Gate 4
+      const stepRows=names.map((name,i)=>{
+        const es=(DX.ergoSteps||[]).find(e=>e.name===name)||{flags:[],freq:{}};
+        const nc=isNonCyclical(name);
+        return{
+          study_id:id,
+          step_number:i+1,
+          description:name,
+          is_non_cyclical:nc,
+          frequency:nc?nonCyclicalN(name):null,
+          ergo_flag:(es.flags||[]).length>0?(es.flags||[]).join(', '):null,
+        };
+      });
+      const{data:insertedSteps,error:stepsErr}=await sb.from('steps').insert(stepRows).select('id,step_number');
+      if(stepsErr){console.error('sbSave G3 steps:',stepsErr);return;}
+
+      // Map step_number → step_id for observations
+      const stepIdMap={};
+      (insertedSteps||[]).forEach(row=>{ stepIdMap[row.step_number]=row.id; });
+
+      // Insert observations — one row per step per valid cycle
+      const obsRows=[];
+      const exclMap=DX.varOverrides||{};
+      validCycles.forEach((cyc,ci)=>{
+        const cycleNum=ci+2; // cycles[1]=cycle 2, etc.
+        const variant=cyc.variant||null;
+        cyc.forEach(step=>{
+          if(step._elimSkip)return;
+          const stepIdx=names.indexOf(step.name);
+          if(stepIdx<0)return;
+          const stepId=stepIdMap[stepIdx+1];
+          if(!stepId)return;
+          const exclArr=exclMap[step.name+'_excl']||[];
+          const isOutlier=exclArr.includes(ci);
+          obsRows.push({
+            step_id:    stepId,
+            study_id:   id,
+            cycle_number:cycleNum,
+            elapsed_time:parseFloat(step.dur.toFixed(4)),
+            is_outlier: isOutlier,
+            flagged:    false, // updated at Gate 4 when variation is computed
+            option_name:variant,
+          });
+        });
+      });
+      if(obsRows.length){
+        const{error:obsErr}=await sb.from('observations').insert(obsRows);
+        if(obsErr)console.error('sbSave G3 obs:',obsErr);
+      }
+
+      await sb.from('studies').update({gate_3_complete:true}).eq('id',id);
+      _showSaveStatus(`☁ ${names.length} steps · ${obsRows.length} obs saved`);
+      return;
+    }
+
+    // ── GATE 4: CT, CV, amortized CT — update steps + flag outlier obs ──
+    if(gate===4){
+      const names=sbStepNames();
+      // Fetch existing step ids in order
+      const{data:stepRows}=await sb.from('steps').select('id,step_number,description').eq('study_id',id).order('step_number');
+      const updates=[];
+      const obsUpdates=[];
+      (stepRows||[]).forEach(row=>{
+        const name=row.description;
+        const v=DX.variation[name]||{};
+        const nc=isNonCyclical(name);
+        const ncN=nonCyclicalN(name);
+        const avg=v.avg!=null?parseFloat(v.avg.toFixed(4)):null;
+        const amort=nc&&avg!=null?parseFloat((avg/ncN).toFixed(4)):avg;
+        updates.push(sb.from('steps').update({
+          avg_ct:       avg,
+          cv:           v.cv!=null?parseFloat(v.cv.toFixed(3)):null,
+          amortized_ct: amort,
+          is_non_cyclical:nc,
+          frequency:    nc?ncN:null,
+        }).eq('id',row.id));
+        // Flag outlier observations
+        const exclArr=(DX.varOverrides||{})[name+'_excl']||[];
+        if(exclArr.length){
+          obsUpdates.push(
+            sb.from('observations').update({is_outlier:true,flagged:true})
+              .eq('step_id',row.id).in('cycle_number',exclArr.map(i=>i+2))
+          );
+        }
+        // Flag high-variation obs
+        if(v.high){
+          obsUpdates.push(
+            sb.from('observations').update({flagged:true}).eq('step_id',row.id)
+          );
+        }
+      });
+      await Promise.all([...updates,...obsUpdates]);
+      await sb.from('studies').update({
+        gate_4_complete:true,
+        notes:JSON.stringify({filename:DX.studyFilename,analyst:s.analyst,dept:s.dept,
+          heads:s.heads,rate:s.rate,effTarget:s.effTarget,variants:s.variants||[],
+          baseline:DX.baseline,ctMethod:DX.ctMethod,varAvgCT:DX.varAvgCT,g5notes:DX.g5notes}),
+      }).eq('id',id);
+      _showSaveStatus('☁ Variation saved');
+      return;
+    }
+
+    // ── GATE 5: Waste classification → steps ──
+    if(gate===5){
+      const{data:stepRows}=await sb.from('steps').select('id,description').eq('study_id',id);
+      const CLEAR_FULL={C:'Cut it',L:'Link it',E:'Exchange it',A:'Add to it',R:'Reduce complexity'};
+      const WTLBL={T:'Transport',I:'Inventory',M:'Motion',W:'Waiting',O:'Overproduction',P:'Over-processing',D:'Defects',U:'Unused Skills'};
+      const updates=(stepRows||[]).map(row=>{
+        const name=row.description;
+        const cls=DX.waste[name];
+        const wt=DX.wasteType&&DX.wasteType[name]?WTLBL[DX.wasteType[name]]||DX.wasteType[name]:null;
+        const clr=DX.eracs&&DX.eracs[name]?CLEAR_FULL[DX.eracs[name]]||DX.eracs[name]:null;
+        return sb.from('steps').update({
+          waste_category:   cls==='wst'?('Waste'+(wt?' — '+wt:'')):null,
+          va_classification:cls==='va'?'Value Adding':cls==='inc'?'Incidental':null,
+          clear_recommendation:clr,
+        }).eq('id',row.id);
+      });
+      await Promise.all(updates);
+      await sb.from('studies').update({
+        gate_5_complete:true,
+        notes:JSON.stringify({filename:DX.studyFilename,analyst:s.analyst,dept:s.dept,
+          heads:s.heads,rate:s.rate,effTarget:s.effTarget,variants:s.variants||[],
+          baseline:DX.baseline,ctMethod:DX.ctMethod,varAvgCT:DX.varAvgCT,
+          waste:DX.waste,wasteType:DX.wasteType,eracs:DX.eracs,productMix:DX.productMix}),
+      }).eq('id',id);
+      _showSaveStatus('☁ Classification saved');
+      return;
+    }
+
+    // ── GATE 6: Output / after-state ──
+    if(gate===6){
+      // If there's an after-state study, link it
+      const afterId=DX.afterStudies&&DX.afterStudies.length?DX.afterStudies[DX.afterStudies.length-1]._supabaseId||null:null;
+      await sb.from('studies').update({
+        gate_6_complete:true,
+        after_state_study_id:afterId,
+        notes:JSON.stringify({filename:DX.studyFilename,analyst:s.analyst,dept:s.dept,
+          heads:s.heads,rate:s.rate,effTarget:s.effTarget,variants:s.variants||[],
+          baseline:DX.baseline,ctMethod:DX.ctMethod,varAvgCT:DX.varAvgCT,
+          waste:DX.waste,wasteType:DX.wasteType,eracs:DX.eracs,
+          productMix:DX.productMix,afterStudies:DX.afterStudies}),
+      }).eq('id',id);
+      _showSaveStatus('☁ Output saved');
+      return;
+    }
+
+    // ── GATE 7: Kata / scientific thinking ──
+    if(gate===7){
+      await sb.from('studies').update({
+        gate_7_complete:true,
+        notes:JSON.stringify({filename:DX.studyFilename,analyst:s.analyst,dept:s.dept,
+          heads:s.heads,rate:s.rate,effTarget:s.effTarget,variants:s.variants||[],
+          baseline:DX.baseline,ctMethod:DX.ctMethod,varAvgCT:DX.varAvgCT,
+          waste:DX.waste,wasteType:DX.wasteType,eracs:DX.eracs,
+          productMix:DX.productMix,afterStudies:DX.afterStudies,kata:DX.kata}),
+      }).eq('id',id);
+      _showSaveStatus('☁ Study complete');
+      return;
+    }
+
+  }catch(e){
+    console.error('sbSave error:',e);
+    _showSaveStatus('⚠ Cloud save failed',true);
+  }
 }
 
 // ═══ SAVE ═══
@@ -3171,7 +3440,7 @@ function goToKata(){
   if(simCT>0.5&&Math.abs(simCT-studyCT)>0.5&&!DX.kata.targetCT){
     DX.kata.targetCT=simCT.toFixed(1);
   }
-  autosave();
+  autosave();sbSave(6);
   goGate(7);
 }
 function yamUseAsTarget(){
