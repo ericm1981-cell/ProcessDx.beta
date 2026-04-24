@@ -2945,8 +2945,13 @@ function _showStationSelector(){
   modal.style.display='flex';
 }
 
-$('g1date').value=new Date().toLocaleDateString('en-US');
-checkResume();
+// Boot deferred — Site Level controls initialization
+window._pdxBoot=function(){
+  try{
+    const d=$('g1date');if(d)d.value=new Date().toLocaleDateString('en-US');
+    checkResume();
+  }catch(e){}
+};
 
 // ═══ STOPWATCH (Gate 2) ═══
 const SW={running:false,tStart:null,tAccum:0,raf:null,laps:[]};
@@ -4063,13 +4068,16 @@ window.addEventListener('load',function(){
 
 // ── Init — safe startup ──
 window.addEventListener('load',function(){
-  // Always show login first regardless of JS errors
+  // Always show login first — runs synchronously before anything else
   try{
     document.querySelectorAll('.scr').forEach(s=>s.classList.remove('on'));
     const sl=document.getElementById('SL');if(sl)sl.classList.add('on');
   }catch(e){}
-  // Try full init after delay
-  setTimeout(function(){try{slInit();}catch(e){console.log('slInit error:',e);}},300);
+  // Trigger ProcessDx boot after SL has control
+  setTimeout(function(){
+    try{if(typeof window._pdxBoot==='function')window._pdxBoot();}catch(e){}
+    try{slInit();}catch(e){console.log('slInit:',e);}
+  },200);
 });
 <\/script>
 
