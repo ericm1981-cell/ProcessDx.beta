@@ -1,0 +1,1166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>WorkSample</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+:root{
+  --bg:#F0F7F2;--bg2:#FFFFFF;--grouped:#E8F2EB;
+  --sep:rgba(27,67,50,.15);--sep2:rgba(27,67,50,.07);
+  --label:#1A2A1F;--label2:#5A7A66;--label3:#8AAD95;
+  --forest:#1B4332;--greenlt:#74C69D;--gdim:rgba(64,145,108,.10);
+  --navy-lt:rgba(27,67,50,.08);
+  --amber:#D97706;--amber-lt:rgba(217,119,6,.12);
+  --r:12px;--r2:16px;
+  --top:52px;--tab:56px;
+  --sb:env(safe-area-inset-bottom,0px);
+  --font:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;
+  --mono:'SF Mono','Fira Code',Consolas,monospace;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{background:var(--bg);color:var(--label);font-family:var(--font);height:100%;overflow:hidden;-webkit-font-smoothing:antialiased}
+.nav-bar{position:fixed;top:0;left:0;right:0;height:var(--top);background:var(--forest);border-bottom:3px solid var(--amber);display:flex;align-items:flex-end;padding:0 16px 10px;z-index:100;}
+.nav-title{font-size:17px;font-weight:700;letter-spacing:-.3px;color:#fff;}
+.nav-right{margin-left:auto;}
+.nav-save{background:var(--amber);color:#fff;border:none;border-radius:8px;padding:5px 12px;font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;}
+.nav-save:active{opacity:.8;}
+.tab-bar{position:fixed;bottom:0;left:0;right:0;height:calc(var(--tab) + var(--sb));padding-bottom:var(--sb);background:var(--forest);border-top:2px solid var(--amber);display:flex;z-index:100;}
+.tab-btn{flex:1;background:none;border:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;padding-top:6px;color:rgba(255,255,255,.38);transition:color .15s;}
+.tab-btn.active{color:var(--amber);}
+.tab-icon{font-size:22px;line-height:1;}
+.tab-lbl{font-size:10px;font-weight:600;letter-spacing:.2px;}
+.view{position:fixed;top:var(--top);bottom:calc(var(--tab) + var(--sb));left:0;right:0;display:none;flex-direction:column;overflow:hidden;background:var(--bg);}
+.view.active{display:flex;}
+#view-setup{position:fixed;top:var(--top);bottom:calc(var(--tab) + var(--sb));left:0;right:0;display:none;flex-direction:column;overflow:hidden;background:var(--bg);padding:10px 16px;gap:8px;}
+#view-setup.active{display:flex;}
+.su-block{display:flex;flex-direction:column;flex-shrink:0;}
+.su-grow{flex:1;min-height:0;}
+.su-lbl{font-size:12px;font-weight:600;color:var(--label2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px;padding-left:4px;display:flex;align-items:center;gap:6px;}
+#view-dash{overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:16px;}
+.section{margin:16px 16px 0;}
+.section-hdr{font-size:13px;font-weight:500;color:var(--label2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;padding-left:4px;display:flex;align-items:center;gap:6px;}
+.section-body{background:var(--bg2);border-radius:var(--r2);overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.05);}
+.cell{display:flex;align-items:center;gap:12px;padding:12px 16px;background:var(--bg2);border-bottom:.5px solid var(--sep2);}
+.cell:last-child{border-bottom:none;}
+.cell-input{display:flex;align-items:center;padding:12px 16px;background:var(--bg2);border-bottom:.5px solid var(--sep2);}
+.cell-input:last-child{border-bottom:none;}
+.cell-input-lbl{font-size:17px;color:var(--label);flex-shrink:0;width:80px;}
+.cell-input input,.cell-input select{flex:1;background:none;border:none;outline:none;font-family:var(--font);font-size:17px;color:var(--label);text-align:left;min-width:0;-webkit-appearance:none;}
+.cell-input input::placeholder{color:var(--label3);}
+.btn{display:flex;align-items:center;justify-content:center;gap:6px;border:none;border-radius:var(--r);cursor:pointer;font-family:var(--font);font-size:17px;font-weight:600;letter-spacing:-.2px;padding:15px 20px;transition:opacity .1s,transform .08s;-webkit-appearance:none;}
+.btn:active{opacity:.72;transform:scale(.97);}
+.btn:disabled{opacity:.3;pointer-events:none;}
+.btn-forest{background:var(--forest);color:#fff;}
+.btn-plain{background:var(--bg2);color:var(--forest);box-shadow:0 1px 3px rgba(0,0,0,.08);}
+.btn-tinted{background:var(--navy-lt);color:var(--forest);}
+.btn-danger{background:#C0392B;color:#fff;}
+.btn-full{width:100%;}
+.btn-row{display:flex;gap:10px;}
+.btn-row>.btn{flex:1;}
+.btn-sm{font-size:15px;padding:11px 16px;}
+.line-item{display:flex;align-items:center;gap:12px;padding:12px 16px;background:var(--bg2);border-bottom:.5px solid var(--sep2);}
+.line-item:last-child{border-bottom:none;}
+.line-pip{width:8px;height:8px;border-radius:50%;background:var(--forest);flex-shrink:0;}
+.line-name-txt{flex:1;font-size:17px;color:var(--label);}
+.del-btn{background:none;border:none;cursor:pointer;color:var(--label3);font-size:20px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:50%;}
+.del-btn:active{background:rgba(0,0,0,.06);}
+.empty-state{padding:24px;text-align:center;font-size:15px;color:var(--label3);}
+.data-row{display:flex;gap:10px;padding:12px 16px;}
+.hiw-card{margin:16px 16px 0;background:var(--forest);border-radius:var(--r2);padding:13px 15px;}
+.hiw-row{display:flex;align-items:baseline;gap:10px;padding:3px 0;}
+.hiw-step{font-size:11px;font-weight:700;color:var(--amber);width:16px;text-align:center;flex-shrink:0;}
+.hiw-text{font-size:13px;color:rgba(255,255,255,.72);line-height:1.4;}
+.hiw-text strong{color:var(--greenlt);font-weight:600;}
+.tw-chips{display:flex;flex-wrap:wrap;gap:8px;padding:10px 14px 12px;}
+.tw-chip{padding:7px 13px;border-radius:99px;background:var(--grouped);border:.5px solid var(--sep);font-size:13px;font-weight:500;color:var(--label2);cursor:pointer;user-select:none;-webkit-user-select:none;transition:all .15s;}
+.tw-chip.on{color:#fff;font-weight:600;border-color:transparent;}
+.tw-note{font-family:var(--mono);font-size:10px;color:var(--label3);padding:0 14px 10px;text-align:center;}
+.linkedin-footer{margin:16px 16px 0;text-align:center;padding-bottom:4px;}
+.linkedin-link{font-size:13px;font-weight:500;color:#40916C;text-decoration:none;padding:6px 0;display:inline-block;}
+.linkedin-link:active{opacity:.7;}
+#view-study{padding:10px 16px;gap:7px;overflow:hidden;}
+#pre-walk-card{background:var(--bg2);border-radius:var(--r2);overflow:hidden;flex-shrink:0;box-shadow:0 1px 3px rgba(0,0,0,.05);}
+.setup-footer{padding:7px 16px;background:var(--grouped);border-top:.5px solid var(--sep2);font-size:12px;color:var(--label2);text-align:center;display:flex;align-items:center;justify-content:center;gap:6px;}
+.setup-footer strong{color:var(--forest);}
+#running-bar{background:var(--forest);border-radius:var(--r2);padding:10px 14px;flex-shrink:0;display:none;}
+.running-study{font-size:15px;font-weight:700;color:#fff;letter-spacing:-.2px;}
+.running-line{font-size:12px;color:rgba(255,255,255,.5);margin-top:1px;}
+.stat-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;flex-shrink:0;}
+.stat-tile{background:var(--bg2);border-radius:var(--r);padding:9px 11px;box-shadow:0 1px 2px rgba(0,0,0,.05);}
+.st-lbl{font-size:11px;font-weight:500;color:var(--label3);margin-bottom:2px;}
+.st-val{font-size:22px;font-weight:700;color:var(--label);letter-spacing:-.5px;line-height:1;}
+.prog-inline{display:flex;align-items:center;gap:10px;flex-shrink:0;}
+.prog-track{flex:1;height:4px;background:var(--sep);border-radius:99px;overflow:hidden;}
+.prog-fill{height:100%;background:var(--amber);border-radius:99px;transition:width .3s;}
+.prog-fill.done{background:#1A7A40;}
+.prog-ct{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--label2);white-space:nowrap;}
+.stack-bar{display:flex;height:4px;border-radius:2px;overflow:hidden;background:var(--sep2);flex-shrink:0;}
+.stack-seg{transition:width .35s;}
+.study-off{opacity:.25;pointer-events:none;}
+.obs-area{flex:1;min-height:0;display:flex;flex-direction:column;gap:8px;}
+.obs-va-btn{border:none;border-radius:var(--r2);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:12px;padding:12px 20px;user-select:none;-webkit-user-select:none;transition:transform .08s,opacity .08s;flex-shrink:0;background:#1A7A40;}
+.obs-va-btn:active{transform:scale(.97);opacity:.82;}
+.obs-va-label{font-size:17px;font-weight:700;color:#fff;letter-spacing:-.2px;}
+.obs-va-count{font-family:var(--mono);font-size:14px;background:rgba(0,0,0,.15);color:rgba(255,255,255,.9);padding:3px 12px;border-radius:99px;}
+.obs-grid{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:8px;min-height:0;}
+.obs-btn{border:none;border-radius:var(--r2);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;user-select:none;-webkit-user-select:none;transition:transform .08s,opacity .08s;}
+.obs-btn:active{transform:scale(.93);opacity:.82;}
+.obs-btn:last-child:nth-child(odd){grid-column:1/-1;flex-direction:row;gap:12px;padding:12px 20px;}
+.obs-icon{font-size:1.7rem;line-height:1;}
+.obs-label{font-size:14px;font-weight:700;color:rgba(255,255,255,.95);letter-spacing:-.2px;}
+.obs-count{font-family:var(--mono);font-size:12px;background:rgba(0,0,0,.15);color:rgba(255,255,255,.9);padding:2px 9px;border-radius:99px;}
+.ctrl-row{display:flex;gap:8px;flex-shrink:0;}
+.ctrl-row>.btn{flex:2;padding:13px;}
+.undo-btn{background:var(--bg2);border:.5px solid var(--sep);border-radius:var(--r);padding:12px 14px;cursor:pointer;font-family:var(--font);font-size:15px;font-weight:500;color:var(--label2);display:flex;align-items:center;gap:4px;flex-shrink:0;}
+.undo-btn:active{background:var(--grouped);}
+.filter-row{display:flex;gap:8px;padding:12px 16px 0;overflow-x:auto;}
+.filter-row::-webkit-scrollbar{display:none;}
+.chip{padding:7px 15px;border-radius:99px;background:var(--bg2);border:.5px solid var(--sep);font-size:13px;font-weight:500;color:var(--label2);cursor:pointer;white-space:nowrap;transition:all .15s;box-shadow:0 1px 2px rgba(0,0,0,.04);}
+.chip.on{background:var(--forest);border-color:var(--forest);color:#fff;}
+.kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:12px 16px 0;}
+.kpi-tile{background:var(--bg2);border-radius:var(--r2);padding:14px;box-shadow:0 1px 2px rgba(0,0,0,.05);}
+.kpi-pct{font-size:30px;font-weight:700;letter-spacing:-1px;line-height:1;margin-bottom:2px;}
+.kpi-lbl{font-size:13px;font-weight:500;color:var(--label2);}
+.kpi-n{font-family:var(--mono);font-size:11px;color:var(--label3);margin-top:2px;}
+.chart-card{margin:12px 16px 0;background:var(--bg2);border-radius:var(--r2);padding:14px;box-shadow:0 1px 2px rgba(0,0,0,.05);}
+.chart-ttl{font-size:13px;font-weight:600;color:var(--label2);text-transform:uppercase;letter-spacing:.3px;margin-bottom:10px;}
+.chart-wrap{position:relative;height:200px;}
+.chart-wrap canvas{max-height:200px;}
+.insight-item{display:flex;gap:12px;align-items:flex-start;padding:12px 16px;border-bottom:.5px solid var(--sep2);}
+.insight-item:last-child{border-bottom:none;}
+.i-icon{font-size:20px;flex-shrink:0;margin-top:1px;}
+.i-head{font-size:15px;font-weight:600;color:var(--label);margin-bottom:2px;letter-spacing:-.2px;}
+.i-body{font-size:13px;color:var(--label2);line-height:1.5;}
+.i-tag{display:inline-block;margin-top:5px;padding:3px 9px;border-radius:6px;font-size:11px;font-weight:600;background:var(--navy-lt);color:var(--forest);}
+.hist-row{display:flex;align-items:center;gap:8px;padding:10px 16px;border-bottom:.5px solid var(--sep2);}
+.hist-row:last-child{border-bottom:none;}
+.hist-study{font-size:14px;font-weight:600;color:var(--label);flex:1;letter-spacing:-.2px;}
+.hist-iter{font-family:var(--mono);font-size:10px;font-weight:600;color:var(--forest);background:var(--navy-lt);padding:2px 6px;border-radius:5px;}
+.hist-date{font-family:var(--mono);font-size:11px;color:var(--label3);}
+.hist-va{font-size:16px;font-weight:700;color:#1A7A40;min-width:44px;text-align:right;}
+.hist-n{font-family:var(--mono);font-size:11px;color:var(--label3);min-width:44px;text-align:right;}
+.sheet-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.38);z-index:400;align-items:flex-end;justify-content:center;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);}
+.sheet-overlay.open{display:flex;}
+.sheet-box{background:var(--bg);border-radius:20px 20px 0 0;width:100%;max-width:600px;padding-bottom:calc(20px + var(--sb));max-height:88vh;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+.sheet-handle{width:36px;height:4px;background:var(--sep);border-radius:2px;margin:10px auto 4px;}
+.sheet-head{padding:10px 20px 14px;border-bottom:.5px solid var(--sep2);}
+.sheet-title{font-size:20px;font-weight:700;letter-spacing:-.4px;}
+.sheet-sub{font-family:var(--mono);font-size:11px;color:var(--label2);margin-top:3px;}
+.sheet-sec{padding:14px 20px;border-bottom:.5px solid var(--sep2);}
+.sheet-sec-lbl{font-size:13px;font-weight:600;color:var(--label2);text-transform:uppercase;letter-spacing:.3px;margin-bottom:10px;}
+.sheet-actions{padding:14px 20px 4px;display:flex;gap:10px;}
+.rb-row{display:flex;align-items:center;gap:10px;padding:3px 0;}
+.rb-lbl{font-size:13px;font-weight:600;width:120px;flex-shrink:0;}
+.rb-track{flex:1;background:var(--grouped);border-radius:4px;overflow:hidden;height:14px;}
+.rb-fill{height:100%;border-radius:4px;transition:width .5s ease;min-width:2px;}
+.rb-pct{font-family:var(--mono);font-size:12px;font-weight:600;width:32px;text-align:right;}
+.badge-row{display:flex;gap:6px;flex-wrap:wrap;}
+.badge{padding:4px 10px;border-radius:8px;font-size:12px;font-weight:600;}
+.cond-chips{display:flex;flex-wrap:wrap;gap:8px;}
+.cond-chip{padding:8px 14px;border-radius:99px;background:var(--bg2);border:.5px solid var(--sep);font-size:14px;font-weight:500;color:var(--label2);cursor:pointer;user-select:none;transition:all .15s;}
+.cond-chip.on{background:var(--amber-lt);border-color:var(--amber);color:var(--amber);font-weight:600;}
+.notes-area{width:100%;background:none;border:none;outline:none;font-family:var(--font);font-size:16px;color:var(--label);resize:none;min-height:72px;line-height:1.5;}
+.notes-area::placeholder{color:var(--label3);}
+.coach-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.38);z-index:500;align-items:flex-end;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);}
+.coach-overlay.open{display:flex;}
+.coach-box{background:var(--bg);border-radius:20px 20px 0 0;padding-bottom:calc(24px + var(--sb));width:100%;max-height:80vh;overflow-y:auto;}
+.coach-handle{width:36px;height:4px;background:var(--sep);border-radius:2px;margin:10px auto 14px;}
+.coach-inner{padding:0 20px;}
+.coach-eyebrow{font-size:12px;font-weight:600;color:var(--amber);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;}
+.coach-icon{font-size:32px;margin-bottom:8px;}
+.coach-title{font-size:24px;font-weight:700;letter-spacing:-.5px;color:var(--label);margin-bottom:12px;}
+.coach-body{font-size:16px;color:var(--label2);line-height:1.7;margin-bottom:14px;}
+.coach-body strong{color:var(--label);font-weight:600;}
+.coach-rule{background:var(--amber-lt);border-left:3px solid var(--amber);border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:14px;color:var(--label2);line-height:1.6;}
+.coach-rule strong{color:var(--amber);font-weight:600;}
+.toast{position:fixed;bottom:calc(var(--tab) + var(--sb) + 12px);left:50%;transform:translateX(-50%) translateY(8px);background:rgba(27,67,50,.92);color:#fff;padding:10px 18px;border-radius:99px;font-size:14px;font-weight:600;letter-spacing:-.2px;opacity:0;transition:opacity .25s,transform .25s;pointer-events:none;z-index:300;white-space:nowrap;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.coach-btn{width:18px;height:18px;border-radius:50%;background:var(--navy-lt);color:var(--forest);font-size:10px;font-weight:700;border:none;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;vertical-align:middle;}
+select option{text-align:left;}
+
+/* GUIDE TAB */
+#view-guide{overflow-y:auto;-webkit-overflow-scrolling:touch;}
+.guide-scroll{padding:0 0 24px;}
+.g-section{padding:20px 20px 0;}
+.g-tag{font-family:var(--mono);font-size:10px;font-weight:600;color:var(--amber);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:4px;}
+.g-title{font-size:22px;font-weight:700;color:var(--forest);letter-spacing:-.4px;margin-bottom:10px;line-height:1.15;}
+.g-body{font-size:15px;color:var(--label2);line-height:1.7;}
+.g-body strong{color:var(--label);font-weight:600;}
+.g-rule{background:var(--grouped);border-left:3px solid var(--amber);border-radius:8px;padding:10px 14px;margin-top:12px;font-size:14px;color:var(--label2);line-height:1.6;}
+.g-rule strong{color:var(--amber);font-weight:600;}
+.g-steps{margin-top:12px;display:flex;flex-direction:column;gap:10px;}
+.g-step{display:flex;gap:12px;align-items:flex-start;}
+.g-num{width:24px;height:24px;border-radius:50%;background:var(--forest);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;}
+.g-text{font-size:15px;color:var(--label2);line-height:1.6;}
+.g-text strong{color:var(--label);font-weight:600;}
+.g-text em{color:var(--label3);font-style:normal;font-family:var(--mono);font-size:13px;}
+.g-cat-item{background:var(--bg2);border-radius:var(--r);padding:12px 14px;margin-top:10px;box-shadow:0 1px 2px rgba(0,0,0,.05);}
+.g-cat-name{font-size:15px;font-weight:700;margin-bottom:4px;letter-spacing:-.2px;}
+.g-cat-body{font-size:14px;color:var(--label2);line-height:1.6;}
+.g-about{background:var(--forest);border-radius:var(--r2);margin:20px 16px 0;padding:20px;}
+.g-about .g-tag{color:var(--amber);}
+.g-about .g-title{color:#fff;}
+.g-about-body p{font-size:15px;color:rgba(255,255,255,.72);line-height:1.75;margin-bottom:12px;}
+.g-about-body p:last-child{margin-bottom:16px;}
+.g-cta-btn{display:block;background:var(--amber);color:#fff;text-decoration:none;text-align:center;padding:14px 20px;border-radius:var(--r);font-size:16px;font-weight:700;letter-spacing:-.2px;margin-bottom:10px;}
+.g-cta-btn:active{opacity:.85;}
+.g-cta-sub{font-size:13px;color:rgba(255,255,255,.5);text-align:center;line-height:1.5;}
+
+</style>
+<style id="sl-base">
+/* Hide body until SiteLevel nav is ready — prevents flash */
+body{visibility:hidden;}
+/* Override original nav elements */
+.nav-bar,.tab-bar,.prog-bar-wrap,.prog-wrap,#homeBtn,[class*="progress"],[id*="prog-bar"]{display:none!important;}
+/* Bottom padding for our nav */
+body{padding-bottom:calc(58px + env(safe-area-inset-bottom,0px))!important;}
+/* SiteLevel nav */
+#sl-nav{
+  position:fixed;bottom:0;left:0;right:0;
+  height:calc(58px + env(safe-area-inset-bottom,0px));
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  background:#1B4332;border-top:2px solid #D97706;
+  display:flex;z-index:99999;
+}
+#sl-nav button{
+  flex:1;background:none;border:none;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:2px;cursor:pointer;color:rgba(255,255,255,.3);
+  -webkit-appearance:none;padding:4px 2px;transition:color .1s;
+}
+#sl-nav button.on{color:#D97706;}
+#sl-nav svg{width:22px;height:22px;display:block;}
+#sl-nav .nl{
+  font-family:-apple-system,BlinkMacSystemFont,sans-serif;
+  font-size:9px;font-weight:700;letter-spacing:.5px;
+  text-transform:uppercase;display:block;
+}
+/* Save sheet */
+#sl-save{
+  position:fixed;inset:0;background:rgba(0,0,0,.55);
+  z-index:100000;display:none;align-items:flex-end;
+}
+#sl-save.open{display:flex;}
+.sl-sb{
+  background:#fff;border-radius:20px 20px 0 0;
+  padding:24px 20px calc(28px + env(safe-area-inset-bottom,0px));
+  width:100%;max-width:500px;margin:0 auto;
+}
+.sl-st{
+  font-family:-apple-system,BlinkMacSystemFont,sans-serif;
+  font-size:20px;font-weight:800;color:#1B4332;margin-bottom:6px;
+}
+.sl-ss{font-size:14px;color:#6B7280;margin-bottom:20px;line-height:1.5;}
+.sl-sy{
+  width:100%;padding:14px;background:#1B4332;color:#fff;
+  border:none;border-radius:12px;
+  font-family:-apple-system,BlinkMacSystemFont,sans-serif;
+  font-size:17px;font-weight:700;cursor:pointer;
+  margin-bottom:10px;-webkit-appearance:none;
+}
+.sl-sn{
+  width:100%;padding:14px;background:none;color:#9CA3AF;
+  border:1.5px solid #E5E7EB;border-radius:12px;
+  font-family:-apple-system,BlinkMacSystemFont,sans-serif;
+  font-size:17px;font-weight:600;cursor:pointer;-webkit-appearance:none;
+}
+</style>
+</head>
+<body>
+<div class="nav-bar">
+  <span class="nav-title">WorkSample</span>
+  <div class="nav-right"><button class="nav-save" onclick="saveDataFile()">&#8595; Save</button></div>
+</div>
+<div class="view" id="view-setup">
+
+  <div class="su-block">
+    <div class="su-lbl">Lines <button class="coach-btn" onclick="openCoach('lines')">?</button></div>
+    <div class="section-body">
+      <div class="cell-input">
+        <input id="new-line-input" type="text" placeholder="Line name..." maxlength="40" autocomplete="off" autocorrect="off" autocapitalize="words" spellcheck="false">
+        <button class="btn btn-tinted btn-sm" onclick="addLine()" style="width:auto;flex-shrink:0;">Add</button>
+      </div>
+      <div id="line-list" style="max-height:88px;overflow-y:auto;"><div class="empty-state">No lines yet.</div></div>
+    </div>
+  </div>
+
+  <div class="su-block">
+    <div class="su-lbl">Waste Categories <button class="coach-btn" onclick="openCoach('categories')">?</button></div>
+    <div class="section-body">
+      <div class="tw-chips" id="tw-chips"></div>
+      <div class="tw-note" id="tw-note">Select up to 6</div>
+    </div>
+  </div>
+
+  <div class="su-grow hiw-card" style="justify-content:center;overflow:hidden;">
+    <div class="hiw-row"><span class="hiw-step">1</span><span class="hiw-text">Add your lines and pick waste categories above</span></div>
+    <div class="hiw-row"><span class="hiw-step">2</span><span class="hiw-text">Go to <strong>Study</strong> &#8212; pick a line, name it, hit Start</span></div>
+    <div class="hiw-row"><span class="hiw-step">3</span><span class="hiw-text">Walk the line. Start at one end &#8212; tap what each operator is doing <strong>right now</strong>, cycle through every person, loop back and repeat</span></div>
+    <div class="hiw-row"><span class="hiw-step">4</span><span class="hiw-text">Hit <strong>Finish</strong> &#8212; log conditions, note what you saw, save</span></div>
+    <div class="hiw-row"><span class="hiw-step">5</span><span class="hiw-text">Come back later &#8212; same study name adds another iteration</span></div>
+  </div>
+
+  <div class="su-block">
+    <div class="data-row" style="padding:0;">
+      <button class="btn btn-forest btn-full" style="padding:12px;" onclick="saveDataFile()">&#8595; Save Data</button>
+      <button class="btn btn-plain btn-full" style="padding:12px;" onclick="document.getElementById('load-input').click()">&#8593; Load Data</button>
+    </div>
+    <input type="file" id="load-input" accept=".json" style="display:none" onchange="loadDataFile(event)">
+  </div>
+
+  <div style="text-align:center;padding:4px 0 2px;">
+    <a class="linkedin-link" href="https://www.linkedin.com/in/ericjohnmartin" target="_blank" rel="noopener">Questions or feedback? Connect on LinkedIn &#8594;</a>
+  </div>
+
+</div>
+<div class="view" id="view-study">
+  <div id="pre-walk-card">
+    <div class="cell-input">
+      <span class="cell-input-lbl">Line</span>
+      <select id="study-line-select" onchange="onLineSelect()"><option value="">Select...</option></select>
+    </div>
+    <div class="cell-input" style="border-bottom:none;">
+      <span class="cell-input-lbl">Study</span>
+      <input id="study-name-input" type="text" placeholder="Name this study..." maxlength="50" autocomplete="off" autocorrect="off" autocapitalize="words" spellcheck="false" list="study-name-list">
+      <datalist id="study-name-list"></datalist>
+    </div>
+    <div class="setup-footer"><strong>Aim for 97 observations</strong> &#8212; 95% confidence, &plusmn;10% precision. <button class="coach-btn" onclick="openCoach('samplesize')" style="margin-left:4px;">?</button></div>
+  </div>
+  <div id="running-bar">
+    <div class="running-study" id="running-study-name">-</div>
+    <div class="running-line" id="running-line-name">-</div>
+  </div>
+  <div class="stat-row">
+    <div class="stat-tile"><div class="st-lbl">Time</div><div class="st-val" id="timer-display" style="font-size:20px;">00:00</div></div>
+    <div class="stat-tile" style="text-align:center;"><div class="st-lbl">Obs</div><div class="st-val" id="obs-count">0</div></div>
+    <div class="stat-tile" style="text-align:right;"><div class="st-lbl">VA %</div><div class="st-val" id="live-va" style="color:#1A7A40;">-</div></div>
+  </div>
+  <div class="prog-inline">
+    <div class="prog-track"><div class="prog-fill" id="progress-fill" style="width:0%"></div></div>
+    <span class="prog-ct" id="progress-pct">0 / 97</span>
+  </div>
+  <div class="stack-bar" id="mini-stack"></div>
+  <div id="study-panel" class="obs-area study-off">
+    <button class="obs-va-btn" onclick="record('va')">
+      <span style="font-size:1.6rem;">&#9989;</span>
+      <span class="obs-va-label">Value Add</span>
+      <span class="obs-va-count" id="cnt-va">0</span>
+    </button>
+    <div class="obs-grid" id="obs-grid"></div>
+  </div>
+  <div class="ctrl-row">
+    <button class="undo-btn" onclick="undoLast()">&#8617;</button>
+    <button class="btn btn-forest" onclick="startStudy()" id="start-btn">&#9654; Start</button>
+    <button class="btn btn-danger" onclick="openSaveSheet(false)" id="finish-btn" style="display:none;">&#9632; Finish</button>
+  </div>
+</div>
+<div class="view" id="view-dash">
+  <div class="filter-row" id="filter-row"><div class="chip on" data-study="all" onclick="toggleFilter(this)">All Studies</div></div>
+  <div class="kpi-grid" id="kpi-grid"></div>
+  <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:8px;">
+    <div class="chart-card"><div class="chart-ttl">Breakdown</div><div class="chart-wrap"><canvas id="donut-chart"></canvas></div></div>
+    <div class="chart-card"><div class="chart-ttl">Trend by Iteration <button class="coach-btn" onclick="openCoach('trend')" style="margin-left:4px;">?</button></div><div class="chart-wrap"><canvas id="trend-chart"></canvas></div></div>
+    <div class="section" style="margin-top:12px;"><div class="section-hdr">Action Drivers <button class="coach-btn" onclick="openCoach('action')">?</button></div><div class="section-body" id="insights-panel"><div class="empty-state">Complete a study to see action drivers.</div></div></div>
+    <div class="section"><div class="section-hdr">Iteration History</div><div class="section-body" id="history-list"><div class="empty-state">No data yet.</div></div></div>
+    <div style="padding:12px 16px 0;"><button class="btn btn-forest btn-full" onclick="exportExcel()">&#8595; Export to Excel</button></div>
+  </div>
+</div>
+
+<!-- GUIDE -->
+<div class="view active" id="view-guide">
+  <div class="guide-scroll">
+
+    <!-- ABOUT -->
+    <div class="g-section g-about">
+      <div class="g-tag">About This Tool</div>
+      <div class="g-title">Built for the Floor</div>
+      <div class="g-about-body">
+        <p>WorkSample is a free work sampling tool for lean practitioners, operations managers, and anyone trying to understand where time actually goes on a production floor.</p>
+        <p>No login. No subscription. Your data stays on your device — download it as a JSON file, load it back next session, take it anywhere. The methodology is built in so you don't have to remember the statistics.</p>
+        <p>This is one of several tools I'm building to help improvement professionals get to answers faster. If it helps you see your floor differently — or if you have an idea for the next tool — I'd like to hear about it.</p>
+      </div>
+      <a class="g-cta-btn" href="https://www.linkedin.com/in/ericjohnmartin" target="_blank" rel="noopener">Connect with Eric on LinkedIn &#8594;</a>
+      <div class="g-cta-sub">What tools would make your next deployment faster? That's the question I'm building toward.</div>
+    </div>
+
+
+
+    <!-- HOW IT WORKS -->
+    <div class="g-section">
+      <div class="g-tag">Getting Started</div>
+      <div class="g-title">How It Works</div>
+      <div class="g-body">Work sampling is a statistical technique for understanding how operators actually spend their time on the floor. You observe at random moments, classify what you see, and build a picture from the data.</div>
+      <div class="g-steps">
+        <div class="g-step"><span class="g-num">1</span><span class="g-text">Add your production lines in Setup. Pick which TIMWOODS waste types you want to track for this study.</span></div>
+        <div class="g-step"><span class="g-num">2</span><span class="g-text">Go to Study. Name your study — name the investigation, not the date. <em>"Assembly Baseline"</em> is useful in six months. <em>"6/14"</em> is not.</span></div>
+        <div class="g-step"><span class="g-num">3</span><span class="g-text">Hit Start. Walk from one end of the line to the other. Glance at each operator in sequence and tap what they are doing <strong>at that exact moment</strong>. When you reach the last person, loop back and go again. Cycle through every person on every pass — 3 to 5 seconds each.</span></div>
+        <div class="g-step"><span class="g-num">4</span><span class="g-text">Hit Finish when you need to stop. Log conditions and what you saw. Your data is saved to this iteration.</span></div>
+        <div class="g-step"><span class="g-num">5</span><span class="g-text">Come back later. Same study name, same line — your new observations add to the existing total. One study can span multiple walks, shifts, or days.</span></div>
+      </div>
+    </div>
+
+    <!-- SAMPLE SIZE -->
+    <div class="g-section">
+      <div class="g-tag">Statistics</div>
+      <div class="g-title">Why 97 Observations?</div>
+      <div class="g-body">Work sampling uses a statistical formula to estimate time proportions. At 95% confidence with ±10% precision, you need <strong>97 observations</strong>. That number doesn't change based on how many operators you have — it's based on the precision you need.</div>
+      <div class="g-body" style="margin-top:8px;">You don't need 97 in one walk. Do 30 before a meeting, 40 after lunch, 27 the next morning. Each is its own iteration. The dashboard aggregates them all. The important thing is that your observations span real variation — different times of day, different conditions.</div>
+      <div class="g-rule">Below 50 observations is directional only. Don't make permanent changes from one 15-minute walk.</div>
+    </div>
+
+    <!-- HOW TO OBSERVE -->
+    <div class="g-section">
+      <div class="g-tag">Technique</div>
+      <div class="g-title">How to Observe</div>
+      <div class="g-body"><strong>Don't announce what you're doing.</strong> You want to see natural behavior, not performed behavior. Walk at the pace you normally would on a Gemba walk.</div>
+      <div class="g-body" style="margin-top:8px;">Start at one end of the line. Glance at the first operator — tap what they are doing right now, not what they just did or what they're about to do. Move to the next person. Tap. Work your way through <strong>every operator on the line</strong> in sequence. When you reach the last person, loop back to the start and go again. One glance, one tap per person per pass. You should be through 10 operators in under a minute.</div>
+      <div class="g-rule"><strong>The hardest part:</strong> resisting the urge to watch one person through a full cycle. That's a time study, not work sampling. One snapshot per operator per pass, cycling through every person. The randomness across cycles is what makes the data statistically valid.</div>
+    </div>
+
+    <!-- CATEGORIES -->
+    <div class="g-section">
+      <div class="g-tag">Classification</div>
+      <div class="g-title">The Categories</div>
+      <div class="g-body">Value Add is always tracked. For waste, you choose which TIMWOODS types matter for the question you're asking. Don't track all eight — pick two or three that are relevant to what you're investigating.</div>
+
+      <div class="g-cat-item" style="border-left:4px solid #1A7A40;">
+        <div class="g-cat-name" style="color:#1A7A40;">✅ Value Add</div>
+        <div class="g-cat-body">The operator's hands are on the product in a way the customer pays for. Welding, assembling, cutting, fitting, forming. The test: would the customer pay specifically for this action? If yes — VA. If no or maybe — it isn't.</div>
+      </div>
+      <div class="g-cat-item" style="border-left:4px solid #1565C0;">
+        <div class="g-cat-name" style="color:#1565C0;">🚶 Motion</div>
+        <div class="g-cat-body">The operator is moving — walking between stations, reaching, repositioning. Not processing, not waiting. Moving. High motion points directly to workstation layout and material placement issues. Root cause is almost always fixable with 5S.</div>
+      </div>
+      <div class="g-cat-item" style="border-left:4px solid #B45309;">
+        <div class="g-cat-name" style="color:#B45309;">⏳ Waiting</div>
+        <div class="g-cat-body">The operator is stopped and idle — feet planted, nothing happening. But <strong>don't assume you know why.</strong> There are two completely different root causes that look identical from the outside:<br><br><strong>Starved</strong> — upstream isn't feeding fast enough. The operator is waiting for the next unit to arrive. Fix is upstream: flow, pitch interval, feeder rate.<br><br><strong>Blocked</strong> — downstream can't accept output. The operator is waiting because there's nowhere for the finished unit to go. Fix is downstream: clear the constraint, reduce WIP.<br><br>Work sampling shows you <em>where</em> the waiting is happening. You have to go stand there and watch to know which one it is.<br><br><strong>Important:</strong> Rising Waiting is often a sign of progress. When you eliminate Motion, operators get more free time — it shows up as Waiting. When you stop Overproduction, operators aren't building ahead anymore — it shows up as Waiting. High Waiting in a system that used to run hot means you've made waste visible. Now you can line balance to takt and convert that Waiting into capacity.</div>
+      </div>
+      <div class="g-cat-item" style="border-left:4px solid #C0392B;">
+        <div class="g-cat-name" style="color:#C0392B;">⚠️ Defects</div>
+        <div class="g-cat-body">The operator is reworking, inspecting for defects, correcting an error, or scrapping. This is not value-adding — the customer doesn't pay for fixing your own mistakes. If you see high defect time, the root cause is upstream, not at this station.</div>
+      </div>
+      <div class="g-cat-item" style="border-left:4px solid #9A3412;">
+        <div class="g-cat-name" style="color:#9A3412;">📈 Overproduction</div>
+        <div class="g-cat-body">The operator is building more than demand requires, or more than SWIP standards allow. In a pull system, building ahead of the signal is waste. This is the worst TIMWOODS category because it creates inventory, hides other problems, and consumes capacity you need elsewhere.</div>
+      </div>
+      <div class="g-cat-item" style="border-left:4px solid #6B21A8;">
+        <div class="g-cat-name" style="color:#6B21A8;">🚚 Transportation</div>
+        <div class="g-cat-body">Materials, parts, or products are being moved — by the operator or by someone else. Moving things doesn't transform them. Every foot of conveyance is waste. Map the material flow and ask why it needs to move that far.</div>
+      </div>
+      <div class="g-cat-item" style="border-left:4px solid #0E7490;">
+        <div class="g-cat-name" style="color:#0E7490;">📦 Inventory</div>
+        <div class="g-cat-body">The operator is managing excess WIP, searching through stock, or working around pile-up. Inventory between operations signals a flow problem — either pitch is off, a feeder is running ahead of demand, or pull signals aren't working.</div>
+      </div>
+      <div class="g-cat-item" style="border-left:4px solid #78350F;">
+        <div class="g-cat-name" style="color:#78350F;">⚙️ Over-processing</div>
+        <div class="g-cat-body">More work than the product requires — extra finishes, re-checking already-checked work, unnecessary adjustments. Often invisible because it looks like work. Ask: does the standard require this step? If not, it's waste.</div>
+      </div>
+      <div class="g-cat-item" style="border-left:4px solid #374151;">
+        <div class="g-cat-name" style="color:#374151;">👤 Skills</div>
+        <div class="g-cat-body">A skilled operator is doing work below their capability — administrative tasks, cleanup, running to get materials. The waste is the gap between what they can do and what they're actually doing. Also captures time spent waiting for instructions or decisions that should be pre-determined.</div>
+      </div>
+    </div>
+
+    <!-- READING DATA -->
+    <div class="g-section">
+      <div class="g-tag">Analysis</div>
+      <div class="g-title">Reading the Data</div>
+      <div class="g-body"><strong>VA% is your headline number.</strong> World-class assembly operations run 70–85% VA. Most lines I've observed run 35–55%. Every percentage point below your target is recoverable capacity — you don't need more people, you need less waste in the time you have.</div>
+      <div class="g-body" style="margin-top:8px;"><strong>Rising Waiting is often a sign of progress.</strong> Here's the sequence that works: eliminate Motion first — operators stop walking and get more free time, which shows up as Waiting. Stop Overproduction — operators aren't building ahead anymore, which also shows up as Waiting. Now Waiting is your dominant waste. That's not a failure — that's waste becoming visible. You've consolidated it into one category. Now line balance to takt and convert Waiting into capacity. VA goes up without adding a single person.</div>
+      <div class="g-body" style="margin-top:8px;"><strong>Don't act on a single iteration.</strong> One walk tells you the direction. Three walks across different conditions start to tell you the truth. Run before and after a change to measure impact.</div>
+      <div class="g-body" style="margin-top:8px;"><strong>Conditions matter.</strong> Tag every iteration. A short-staffed day with 40% VA and a normal day with 40% VA are two different problems. The data only makes sense in context.</div>
+      <div class="g-rule"><strong>The sequence that works:</strong> Eliminate Motion → stop Overproduction → Waiting rises and becomes visible → line balance to takt → VA improves. Never skip to the solution. The data earns the countermeasure.</div>
+    </div>
+
+  </div>
+</div>
+
+<nav class="tab-bar">
+  <button class="tab-btn" id="nav-setup" onclick="navTo('setup')"><span class="tab-icon">&#9881;&#65039;</span><span class="tab-lbl">Setup</span></button>
+  <button class="tab-btn" id="nav-study" onclick="navTo('study')"><span class="tab-icon">&#128203;</span><span class="tab-lbl">Study</span></button>
+  <button class="tab-btn" id="nav-dash" onclick="navTo('dash')"><span class="tab-icon">&#128202;</span><span class="tab-lbl">Dashboard</span></button>
+  <button class="tab-btn active" id="nav-guide" onclick="navTo('guide')"><span class="tab-icon">&#128218;</span><span class="tab-lbl">Guide</span></button>
+</nav>
+<div class="toast" id="toast"></div>
+<div class="sheet-overlay" id="save-sheet">
+  <div class="sheet-box">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head"><div class="sheet-title" id="sheet-title">Wrap Up</div><div class="sheet-sub" id="sheet-sub"></div></div>
+    <div class="sheet-sec"><div id="sheet-bars" style="margin-bottom:10px;"></div><div class="badge-row" id="sheet-badges"></div></div>
+    <div class="sheet-sec"><div class="sheet-sec-lbl">Conditions</div>
+      <div class="cond-chips">
+        <div class="cond-chip" onclick="this.classList.toggle('on')" data-val="Normal conditions">Normal conditions</div>
+        <div class="cond-chip" onclick="this.classList.toggle('on')" data-val="Short-staffed">Short-staffed</div>
+        <div class="cond-chip" onclick="this.classList.toggle('on')" data-val="Equipment issue">Equipment issue</div>
+        <div class="cond-chip" onclick="this.classList.toggle('on')" data-val="Post-changeover">Post-changeover</div>
+        <div class="cond-chip" onclick="this.classList.toggle('on')" data-val="End of shift">End of shift</div>
+        <div class="cond-chip" onclick="this.classList.toggle('on')" data-val="New operator">New operator</div>
+        <div class="cond-chip" onclick="this.classList.toggle('on')" data-val="Material shortage">Material shortage</div>
+      </div>
+    </div>
+    <div class="sheet-sec"><div class="sheet-sec-lbl">What Did You See?</div><textarea class="notes-area" id="obs-notes" placeholder="Patterns, anomalies, follow-ups..." rows="3"></textarea></div>
+    <div class="sheet-actions"><button class="btn btn-plain" style="flex:1;" onclick="discardIteration()">Discard</button><button class="btn btn-forest" style="flex:2;" onclick="saveIteration()">Save Iteration</button></div>
+  </div>
+</div>
+<div class="coach-overlay" id="coach-overlay">
+  <div class="coach-box">
+    <div class="coach-handle"></div>
+    <div class="coach-inner">
+      <div class="coach-eyebrow">Coach's Note</div>
+      <div class="coach-icon" id="coach-icon">&#127891;</div>
+      <div class="coach-title" id="coach-title">-</div>
+      <div class="coach-body" id="coach-body"></div>
+      <div class="coach-rule" id="coach-rule" style="display:none;"></div>
+      <button class="btn btn-forest btn-full" onclick="closeCoach()">Got It</button>
+    </div>
+  </div>
+</div>
+<script>
+'use strict';
+const LINKEDIN_URL = 'https://www.linkedin.com/in/ericjohnmartin';
+
+// ═══ TIMWOODS DEFINITIONS ════════════════════════════
+const VA_CAT = {key:'va', label:'Value Add', color:'#1A7A40', icon:'✅'};
+const TIMWOODS_ALL = [
+  {key:'M',  label:'Motion',          color:'#1565C0', icon:'🚶', desc:'Walking, reaching, searching'},
+  {key:'W',  label:'Waiting',         color:'#B45309', icon:'⏳', desc:'Idle time, blocked'},
+  {key:'D',  label:'Defects',         color:'#C0392B', icon:'⚠️', desc:'Rework, correction, scrap'},
+  {key:'T',  label:'Transportation',  color:'#6B21A8', icon:'🚚', desc:'Moving materials'},
+  {key:'I',  label:'Inventory',       color:'#0E7490', icon:'📦', desc:'Excess WIP or stock'},
+  {key:'O',  label:'Overproduction',  color:'#9A3412', icon:'📈', desc:'More than needed / above SWIP'},
+  {key:'OP', label:'Over-processing', color:'#78350F', icon:'⚙️', desc:'More work than required'},
+  {key:'S',  label:'Skills',          color:'#374151', icon:'👤', desc:'Underutilized talent'}
+];
+const MAX_WASTE = 6;
+
+// ═══ STATE ═══════════════════════════════════════════
+let lines   = JSON.parse(localStorage.getItem('ws_lines_v2')   || '[]');
+let studies = JSON.parse(localStorage.getItem('ws_studies_v2') || '[]');
+function persist(){
+  localStorage.setItem('ws_lines_v2',   JSON.stringify(lines));
+  localStorage.setItem('ws_studies_v2', JSON.stringify(studies));
+}
+let activeWasteKeys = ['M','W','D']; // default selection
+let active={lineId:'',lineName:'',studyName:'',startTime:null,observations:[],timerHandle:null,running:false,priorTotal:0,priorCounts:{va:0}};
+let pendingCounts=null;
+let donutChart=null, trendChart=null, selectedStudies=['all'];
+const studyTarget=97;
+let pendingNav=null;
+
+// ═══ HELPERS ═════════════════════════════════════════
+function getActiveWasteCats(){
+  return TIMWOODS_ALL.filter(function(t){return activeWasteKeys.includes(t.key);});
+}
+function getCatByKey(key){
+  if(key==='va') return VA_CAT;
+  return TIMWOODS_ALL.find(function(t){return t.key===key;})||{key:key,label:key,color:'#666',icon:'?'};
+}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function fmtDate(ts){var d=new Date(ts);return(d.getMonth()+1)+'/'+d.getDate()+'/'+String(d.getFullYear()).slice(2);}
+function showToast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2400);}
+
+// ═══ NAV ═════════════════════════════════════════════
+function navTo(n){
+  if(active.running&&n!=='study'){pendingNav=n;openSaveSheet(true);return;}
+  switchView(n);
+}
+function switchView(n){
+  document.querySelectorAll('.view').forEach(function(v){v.classList.remove('active');});
+  document.querySelectorAll('.tab-btn').forEach(function(b){b.classList.remove('active');});
+  document.getElementById('view-'+n).classList.add('active');
+  document.getElementById('nav-'+n).classList.add('active');
+  if(n==='dash') renderDashboard();
+  if(n==='study'){populateStudySelect();populateStudyNameSuggestions();}
+}
+
+// ═══ SETUP — LINES ═══════════════════════════════════
+function addLine(){
+  var inp=document.getElementById('new-line-input');
+  var name=inp.value.trim(); if(!name) return;
+  if(lines.find(function(l){return l.name.toLowerCase()===name.toLowerCase();})){showToast('Line already exists');return;}
+  lines.push({id:Date.now().toString(),name:name});
+  inp.value=''; persist(); renderLineList(); populateStudySelect(); renderFilterChips();
+}
+function deleteLine(id){
+  if(!confirm('Delete this line?')) return;
+  lines=lines.filter(function(l){return l.id!==id;});
+  studies=studies.filter(function(s){return s.lineId!==id;});
+  persist(); renderLineList(); populateStudySelect(); renderFilterChips();
+}
+function renderLineList(){
+  var el=document.getElementById('line-list');
+  if(!lines.length){el.innerHTML='<div class="empty-state">No lines yet.</div>';return;}
+  el.innerHTML=lines.map(function(l){
+    return '<div class="line-item"><div class="line-pip"></div><div class="line-name-txt">'+esc(l.name)+'</div><button class="del-btn" onclick="deleteLine(\''+l.id+'\')">&#x2715;</button></div>';
+  }).join('');
+}
+document.getElementById('new-line-input').addEventListener('keydown',function(e){if(e.key==='Enter')addLine();});
+
+// ═══ SETUP — TIMWOODS CHIPS ══════════════════════════
+function renderTWChips(){
+  var container=document.getElementById('tw-chips');
+  container.innerHTML=TIMWOODS_ALL.map(function(t){
+    var on=activeWasteKeys.includes(t.key);
+    var col=on?'background:'+t.color+';':'';
+    return '<div class="tw-chip'+(on?' on':'')+'" style="'+col+'" data-key="'+t.key+'" onclick="toggleTW(this)" title="'+esc(t.desc)+'">'+t.icon+' '+esc(t.label)+'</div>';
+  }).join('');
+  document.getElementById('tw-note').textContent=activeWasteKeys.length+' of '+MAX_WASTE+' selected';
+  renderObsButtons();
+}
+function toggleTW(chip){
+  var key=chip.dataset.key;
+  if(activeWasteKeys.includes(key)){
+    activeWasteKeys=activeWasteKeys.filter(function(k){return k!==key;});
+  } else {
+    if(activeWasteKeys.length>=MAX_WASTE){showToast('Maximum '+MAX_WASTE+' categories');return;}
+    activeWasteKeys.push(key);
+  }
+  renderTWChips();
+}
+
+// ═══ STUDY — OBS BUTTONS ═════════════════════════════
+function renderObsButtons(){
+  var grid=document.getElementById('obs-grid');
+  var stackBar=document.getElementById('mini-stack');
+  var waste=getActiveWasteCats();
+  // obs buttons
+  grid.innerHTML=waste.map(function(cat){
+    return '<button class="obs-btn" style="background:'+cat.color+';" onclick="record(\''+cat.key+'\')" id="btn-'+cat.key+'">'+
+      '<span class="obs-icon">'+cat.icon+'</span>'+
+      '<span class="obs-label">'+esc(cat.label)+'</span>'+
+      '<span class="obs-count" id="cnt-'+cat.key+'">0</span>'+
+    '</button>';
+  }).join('');
+  // stack bar segments: VA + waste
+  var allCats=[VA_CAT].concat(waste);
+  stackBar.innerHTML=allCats.map(function(cat){
+    return '<div class="stack-seg" style="width:0%;background:'+cat.color+'"></div>';
+  }).join('');
+}
+
+// ═══ STUDY — SELECT ══════════════════════════════════
+function populateStudySelect(){
+  var sel=document.getElementById('study-line-select');
+  var cur=active.lineId||sel.value;
+  sel.innerHTML='<option value="">Select...</option>'+
+    lines.map(function(l){return'<option value="'+l.id+'"'+(l.id===cur?' selected':'')+'>'+esc(l.name)+'</option>';}).join('');
+  onLineSelect();
+}
+function populateStudyNameSuggestions(){
+  var inp=document.getElementById('study-name-input');
+  // restore preserved study name if field is empty or matches what we had
+  if(active.studyName&&(!inp.value||inp.value===active.studyName)) inp.value=active.studyName;
+  var dl=document.getElementById('study-name-list');
+  var unique=[...new Set(studies.map(function(s){return s.name;}))];
+  dl.innerHTML=unique.map(function(n){return'<option value="'+esc(n)+'">';}).join('');
+}
+function onLineSelect(){
+  var id=document.getElementById('study-line-select').value;
+  var panel=document.getElementById('study-panel');
+  if(id&&!active.running){
+    panel.classList.remove('study-off');
+    active.lineId=id;
+    active.lineName=(lines.find(function(l){return l.id===id;})||{}).name||'';
+  } else if(!id){
+    panel.classList.add('study-off');
+  }
+}
+
+// ═══ STUDY — COLLECT ═════════════════════════════════
+function startStudy(){
+  var lineId=document.getElementById('study-line-select').value;
+  if(!lineId){showToast('Select a line first');return;}
+  var studyName=document.getElementById('study-name-input').value.trim();
+  if(!studyName){showToast('Name this study first');return;}
+  if(activeWasteKeys.length===0){showToast('Select at least one waste category');return;}
+  if(active.running) return;
+  active.lineId=lineId;
+  active.lineName=(lines.find(function(l){return l.id===lineId;})||{}).name||'';
+  active.studyName=studyName;
+  active.startTime=Date.now();
+  active.observations=[];
+  active.running=true;
+  // capture prior iteration totals so display is cumulative
+  var existStudy=studies.find(function(s){return s.name===studyName&&s.lineId===lineId;});
+  active.priorTotal=0;
+  active.priorCounts={va:0};
+  activeWasteKeys.forEach(function(k){active.priorCounts[k]=0;});
+  if(existStudy){
+    existStudy.iterations.forEach(function(it){
+      active.priorTotal+=it.total;
+      Object.keys(active.priorCounts).forEach(function(k){
+        active.priorCounts[k]+=(it.counts[k]||0);
+      });
+    });
+  }
+  document.getElementById('pre-walk-card').style.display='none';
+  document.getElementById('running-bar').style.display='block';
+  document.getElementById('running-study-name').textContent=studyName.toUpperCase();
+  document.getElementById('running-line-name').textContent=active.lineName.toUpperCase();
+  document.getElementById('start-btn').style.display='none';
+  document.getElementById('finish-btn').style.display='block';
+  document.getElementById('study-line-select').disabled=true;
+  document.getElementById('study-name-input').disabled=true;
+  active.timerHandle=setInterval(updateTimer,1000);
+  updateCounts();
+  showToast('Started');
+}
+function record(type){
+  if(!active.running) return;
+  active.observations.push({type:type,ts:Date.now()});
+  updateCounts();
+}
+function undoLast(){
+  if(!active.running||!active.observations.length) return;
+  active.observations.pop(); updateCounts(); showToast('Undone');
+}
+function updateTimer(){
+  var s=Math.floor((Date.now()-active.startTime)/1000);
+  document.getElementById('timer-display').textContent=String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
+}
+function updateCounts(){
+  var obs=active.observations, sessionTotal=obs.length;
+  var prior=active.priorCounts||{va:0};
+  var priorTotal=active.priorTotal||0;
+  // session counts (what you're adding this walk — shown on buttons)
+  var session={va:0};
+  activeWasteKeys.forEach(function(k){session[k]=0;});
+  obs.forEach(function(o){if(session[o.type]!==undefined)session[o.type]++;});
+  // cumulative counts (prior + session — shown in stats/bars)
+  var cumTotal=priorTotal+sessionTotal;
+  var cum={};
+  var allCats=[VA_CAT].concat(getActiveWasteCats());
+  allCats.forEach(function(cat){cum[cat.key]=(prior[cat.key]||0)+(session[cat.key]||0);});
+  // button counters — show this walk only
+  document.getElementById('cnt-va').textContent=session.va;
+  activeWasteKeys.forEach(function(k){
+    var el=document.getElementById('cnt-'+k);
+    if(el) el.textContent=session[k]||0;
+  });
+  // stats — cumulative
+  document.getElementById('obs-count').textContent=cumTotal;
+  var vp=cumTotal?Math.round(cum.va/cumTotal*100):null;
+  document.getElementById('live-va').textContent=vp!==null?vp+'%':'-';
+  var pct=Math.min(100,Math.round(cumTotal/studyTarget*100));
+  var fill=document.getElementById('progress-fill');
+  fill.style.width=pct+'%';
+  fill.className='prog-fill'+(pct>=100?' done':'');
+  document.getElementById('progress-pct').textContent=cumTotal+' / '+studyTarget;
+  // stack bar — cumulative proportions
+  var segs=document.querySelectorAll('#mini-stack .stack-seg');
+  allCats.forEach(function(cat,i){
+    if(segs[i]) segs[i].style.width=cumTotal?((cum[cat.key]||0)/cumTotal*100)+'%':'0%';
+  });
+  pendingCounts=session; // save sheet records this session only
+}
+
+// ═══ SAVE SHEET ══════════════════════════════════════
+function openSaveSheet(isInterrupt){
+  if(!active.running||!active.observations.length){
+    if(isInterrupt&&pendingNav){switchView(pendingNav);pendingNav=null;}
+    return;
+  }
+  clearInterval(active.timerHandle);
+  var obs=active.observations, sessionTotal=obs.length;
+  var session={va:0};
+  activeWasteKeys.forEach(function(k){session[k]=0;});
+  obs.forEach(function(o){if(session[o.type]!==undefined)session[o.type]++;});
+  var dur=Math.round((Date.now()-active.startTime)/1000);
+  var mm=Math.floor(dur/60), ss=dur%60;
+  // cumulative = prior iterations + this session
+  var priorTotal=active.priorTotal||0;
+  var prior=active.priorCounts||{};
+  var cumTotal=priorTotal+sessionTotal;
+  var cum={};
+  var allCats=[VA_CAT].concat(getActiveWasteCats());
+  allCats.forEach(function(cat){cum[cat.key]=(prior[cat.key]||0)+(session[cat.key]||0);});
+  pendingCounts={counts:session,total:sessionTotal,dur:dur,wasteKeys:activeWasteKeys.slice()};
+  var existStudy=studies.find(function(s){return s.name===active.studyName&&s.lineId===active.lineId;});
+  var iterNum=existStudy?existStudy.iterations.length+1:1;
+  document.getElementById('sheet-title').textContent='Wrap Up \u2014 Iteration '+iterNum;
+  document.getElementById('sheet-sub').textContent=active.studyName+' \u00b7 '+active.lineName+' \u00b7 '+mm+'m '+ss+'s \u00b7 '+sessionTotal+' obs this walk';
+  // bars — cumulative proportions, all hex colors
+  document.getElementById('sheet-bars').innerHTML=allCats.map(function(cat){
+    var p=cumTotal?Math.round((cum[cat.key]||0)/cumTotal*100):0;
+    return '<div class="rb-row">'+
+      '<div class="rb-lbl" style="color:'+cat.color+'">'+esc(cat.label)+'</div>'+
+      '<div class="rb-track"><div class="rb-fill" style="width:'+p+'%;background:'+cat.color+'"></div></div>'+
+      '<div class="rb-pct" style="color:'+cat.color+'">'+p+'%</div>'+
+    '</div>';
+  }).join('');
+  // badges — cumulative VA%, cumulative total vs target
+  var vp=cumTotal?Math.round(cum.va/cumTotal*100):0;
+  var b='';
+  if(vp>=70) b+='<span class="badge" style="background:#dcfce7;color:#1A7A40;border:1px solid rgba(26,122,64,.3);">\u2713 Strong VA '+vp+'%</span>';
+  if(vp<50)  b+='<span class="badge" style="background:#fee2e2;color:#C0392B;border:1px solid rgba(192,57,43,.25);">\u26a0 Low VA '+vp+'%</span>';
+  if(cumTotal>=studyTarget) b+='<span class="badge" style="background:#dcfce7;color:#1A7A40;border:1px solid rgba(26,122,64,.3);">\u2713 Target met \u2014 '+cumTotal+' total obs</span>';
+  else b+='<span class="badge" style="background:#fef3c7;color:#D97706;border:1px solid rgba(217,119,6,.3);">'+cumTotal+' total \u00b7 '+(studyTarget-cumTotal)+' more to target</span>';
+  document.getElementById('sheet-badges').innerHTML=b;
+  document.getElementById('obs-notes').value='';
+  document.querySelectorAll('.cond-chip.on').forEach(function(c){c.classList.remove('on');});
+  document.getElementById('save-sheet').classList.add('open');
+}
+function saveIteration(){
+  if(!pendingCounts) return;
+  var conditions=[...document.querySelectorAll('.cond-chip.on')].map(function(el){return el.dataset.val;});
+  var notes=document.getElementById('obs-notes').value.trim();
+  var existStudy=studies.find(function(s){return s.name===active.studyName&&s.lineId===active.lineId;});
+  var iterNum=existStudy?existStudy.iterations.length+1:1;
+  var cats=[VA_CAT].concat(getActiveWasteCats()).map(function(c){return{key:c.key,label:c.label,color:c.color};});
+  var iter={
+    id:Date.now().toString(),num:iterNum,
+    startTime:active.startTime,endTime:Date.now(),
+    duration:pendingCounts.dur,
+    counts:pendingCounts.counts,total:pendingCounts.total,
+    categories:cats,conditions:conditions,notes:notes
+  };
+  if(existStudy){existStudy.iterations.push(iter);}
+  else{studies.push({id:Date.now().toString()+Math.random().toString(36).slice(2),name:active.studyName,lineId:active.lineId,lineName:active.lineName,created:Date.now(),iterations:[iter]});}
+  persist();
+  document.getElementById('save-sheet').classList.remove('open');
+  resetStudyUI(); renderFilterChips();
+  showToast('Saved \u2014 hit Save Data before closing');
+  if(pendingNav){switchView(pendingNav);pendingNav=null;}
+}
+function discardIteration(){
+  document.getElementById('save-sheet').classList.remove('open');
+  pendingCounts=null; active.running=false; resetStudyUI();
+  if(pendingNav){switchView(pendingNav);pendingNav=null;}
+}
+function resetStudyUI(){
+  clearInterval(active.timerHandle);
+  var keepLineId=active.lineId, keepLineName=active.lineName, keepStudyName=active.studyName;
+  active={lineId:keepLineId,lineName:keepLineName,studyName:keepStudyName,startTime:null,observations:[],timerHandle:null,running:false};
+  pendingCounts=null;
+  document.getElementById('pre-walk-card').style.display='block';
+  document.getElementById('running-bar').style.display='none';
+  document.getElementById('start-btn').style.display='block';
+  document.getElementById('finish-btn').style.display='none';
+  document.getElementById('obs-count').textContent='0';
+  document.getElementById('timer-display').textContent='00:00';
+  document.getElementById('live-va').textContent='-';
+  document.getElementById('progress-fill').style.width='0%';
+  document.getElementById('progress-fill').className='prog-fill';
+  document.getElementById('progress-pct').textContent='0 / '+studyTarget;
+  document.getElementById('cnt-va').textContent='0';
+  document.querySelectorAll('#obs-grid .obs-count').forEach(function(el){el.textContent='0';});
+  document.querySelectorAll('#mini-stack .stack-seg').forEach(function(s){s.style.width='0%';});
+  document.getElementById('study-line-select').disabled=false;
+  document.getElementById('study-name-input').disabled=false;
+  // keep panel active if line still selected
+  if(keepLineId) document.getElementById('study-panel').classList.remove('study-off');
+  else document.getElementById('study-panel').classList.add('study-off');
+  populateStudySelect(); populateStudyNameSuggestions();
+}
+
+// ═══ DASHBOARD ═══════════════════════════════════════
+function allIters(fs){
+  var out=[];
+  fs.forEach(function(s){s.iterations.forEach(function(it){out.push(Object.assign({},it,{studyId:s.id,studyName:s.name,lineName:s.lineName}));});});
+  return out;
+}
+function toggleFilter(chip){
+  var sid=chip.dataset.study;
+  if(sid==='all'){selectedStudies=['all'];document.querySelectorAll('.chip').forEach(function(c){c.classList.remove('on');});chip.classList.add('on');}
+  else{
+    document.querySelector('.chip[data-study="all"]').classList.remove('on');
+    selectedStudies=selectedStudies.filter(function(l){return l!=='all';});
+    if(chip.classList.contains('on')){chip.classList.remove('on');selectedStudies=selectedStudies.filter(function(l){return l!==sid;});if(!selectedStudies.length){selectedStudies=['all'];document.querySelector('.chip[data-study="all"]').classList.add('on');}}
+    else{chip.classList.add('on');selectedStudies.push(sid);}
+  }
+  renderDashboard();
+}
+function filteredStudies(){return selectedStudies.includes('all')?studies:studies.filter(function(s){return selectedStudies.includes(s.id);});}
+function renderFilterChips(){
+  var row=document.getElementById('filter-row');
+  row.innerHTML='<div class="chip '+(selectedStudies.includes('all')?'on':'')+'" data-study="all" onclick="toggleFilter(this)">All Studies</div>'+
+    studies.map(function(s){return'<div class="chip '+(selectedStudies.includes(s.id)?'on':'')+'" data-study="'+s.id+'" onclick="toggleFilter(this)">'+esc(s.name)+'</div>';}).join('');
+}
+function aggregateIters(iters){
+  // collect all category keys used across iterations
+  var catMap={};
+  iters.forEach(function(it){
+    (it.categories||[{key:'va',label:'Value Add',color:'#1A7A40'}]).forEach(function(c){
+      if(!catMap[c.key]) catMap[c.key]={key:c.key,label:c.label,color:c.color,total:0};
+      catMap[c.key].total+=(it.counts[c.key]||0);
+    });
+  });
+  var grand=iters.reduce(function(a,it){return a+it.total;},0);
+  return{catMap:catMap,grand:grand};
+}
+function renderDashboard(){
+  renderFilterChips();
+  var fs=filteredStudies();
+  var iters=allIters(fs);
+  var kpiGrid=document.getElementById('kpi-grid');
+  if(!iters.length){
+    kpiGrid.innerHTML='';
+    renderDonut(null,null);renderTrend([]);renderInsights({},0);renderHistory([]);return;
+  }
+  var agg=aggregateIters(iters);
+  var grand=agg.grand;
+  // KPI tiles — VA first then sorted by volume
+  var cats=Object.values(agg.catMap).sort(function(a,b){
+    if(a.key==='va') return -1; if(b.key==='va') return 1;
+    return b.total-a.total;
+  });
+  kpiGrid.innerHTML=cats.map(function(cat){
+    var pct=grand?Math.round(cat.total/grand*100):0;
+    return'<div class="kpi-tile"><div class="kpi-pct" style="color:'+cat.color+'">'+pct+'%</div><div class="kpi-lbl">'+esc(cat.label)+'</div><div class="kpi-n">'+cat.total+' obs</div></div>';
+  }).join('');
+  renderDonut(agg.catMap,grand);
+  renderTrend(iters);
+  renderInsights(agg.catMap,grand);
+  renderHistory(iters);
+}
+function renderDonut(catMap,grand){
+  var ctx=document.getElementById('donut-chart').getContext('2d');
+  if(donutChart){donutChart.destroy();donutChart=null;} if(!catMap) return;
+  var cats=Object.values(catMap).sort(function(a,b){if(a.key==='va')return -1;if(b.key==='va')return 1;return b.total-a.total;});
+  donutChart=new Chart(ctx,{type:'doughnut',
+    data:{labels:cats.map(function(c){return c.label;}),datasets:[{data:cats.map(function(c){return c.total;}),backgroundColor:cats.map(function(c){return c.color;}),borderWidth:3,borderColor:'#fff'}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'60%',
+      plugins:{legend:{position:'bottom',labels:{font:{family:'SF Mono,Consolas,monospace',size:10,weight:'600'},color:'#5A7A66',padding:12,usePointStyle:true,pointStyleWidth:8}},
+      tooltip:{callbacks:{label:function(ctx){var tot=ctx.dataset.data.reduce(function(a,b){return a+b;},0);var p=tot?Math.round(ctx.parsed/tot*100):0;return' '+ctx.label+': '+ctx.parsed+' ('+p+'%)';}}}}}});
+}
+function renderTrend(iters){
+  var ctx=document.getElementById('trend-chart').getContext('2d');
+  if(trendChart){trendChart.destroy();trendChart=null;} if(!iters||!iters.length) return;
+  // group iterations by studyId — one bar per study
+  var studyOrder=[], studyMap={};
+  iters.forEach(function(it){
+    if(!studyMap[it.studyId]){
+      studyOrder.push(it.studyId);
+      studyMap[it.studyId]={name:it.studyName,total:0,counts:{},cats:{}};
+    }
+    var s=studyMap[it.studyId];
+    s.total+=it.total;
+    (it.categories||[]).forEach(function(c){
+      if(!s.cats[c.key]) s.cats[c.key]=c;
+      s.counts[c.key]=(s.counts[c.key]||0)+(it.counts[c.key]||0);
+    });
+  });
+  // collect all category keys, VA first
+  var catByKey={};
+  studyOrder.forEach(function(sid){Object.assign(catByKey,studyMap[sid].cats);});
+  var catKeys=Object.keys(catByKey).sort(function(a,b){if(a==='va')return -1;if(b==='va')return 1;return 0;});
+  if(!catKeys.length) return;
+  var labels=studyOrder.map(function(sid){return studyMap[sid].name;});
+  var datasets=catKeys.map(function(key){
+    var cat=catByKey[key];
+    return{label:cat.label,backgroundColor:cat.color,stack:'s',
+      data:studyOrder.map(function(sid){
+        var s=studyMap[sid];
+        return s.total?Math.round((s.counts[key]||0)/s.total*100):0;
+      })
+    };
+  });
+  trendChart=new Chart(ctx,{type:'bar',data:{labels:labels,datasets:datasets},
+    options:{responsive:true,maintainAspectRatio:false,
+      scales:{
+        y:{min:0,max:100,stacked:true,ticks:{callback:function(v){return v+'%';},font:{family:'monospace',size:10},color:'#5A7A66'},grid:{color:'rgba(0,0,0,.05)'}},
+        x:{stacked:true,ticks:{font:{family:'monospace',size:9},color:'#1B4332',maxRotation:0},grid:{display:false}}
+      },
+      plugins:{
+        legend:{labels:{font:{family:'monospace',size:10,weight:'600'},color:'#3D5247',padding:10,usePointStyle:true,pointStyleWidth:8,boxHeight:8}},
+        tooltip:{callbacks:{label:function(c){return' '+c.dataset.label+': '+c.parsed.y+'%';}}}
+      }
+    }
+  });
+}
+function renderInsights(catMap,grand){
+  var panel=document.getElementById('insights-panel');
+  if(!grand){panel.innerHTML='<div class="empty-state">Complete a study to see action drivers.</div>';return;}
+  function pct(key){var c=catMap[key];return c&&grand?Math.round(c.total/grand*100):0;}
+  var vp=pct('va');
+  var items=[];
+  if(vp<60) items.push({icon:'📉',head:'Low VA \u2014 '+vp+'%',body:'Under 60% value-adding. Map the current state first. Identify the highest-volume waste category before picking a countermeasure.',tag:'A3 \u2192 Current State'});
+  var mp=pct('M');
+  if(mp>=15) items.push({icon:'🚶',head:'Motion at '+mp+'%',body:"Run a spaghetti diagram. Trace one operator's exact path for one full cycle. Root cause is almost always workstation layout or material placement. Target: cut walking in half.",tag:'5S \u2192 Spaghetti Diagram'});
+  else if(mp>=5) items.push({icon:'🚶',head:'Motion at '+mp+'% \u2014 monitor',body:'Moderate. Review workstation layout vs. standard. Run 3 more iterations before acting.',tag:'5S \u2014 Monitor'});
+  var wp=pct('W');
+  if(wp>=15) items.push({icon:'⏳',head:'Waiting at '+wp+'%',body:'Go stand at the station and watch. You need to determine which type of Waiting this is before you act:\n\n\u25b6 Starved \u2014 operator is waiting for the next unit to arrive. Root cause is upstream: feeder rate, pitch interval, or flow gap.\n\n\u25b6 Blocked \u2014 operator has finished but has nowhere to send it. Root cause is downstream: constraint, WIP buildup, or batch sizing.\n\nThey look identical in the data. Opposite fixes. Don\u2019t guess \u2014 go see.\n\nNote: if you recently reduced Motion or Overproduction and Waiting is rising \u2014 that\u2019s progress. Waste is becoming visible. Line balance to takt next.',tag:'Go See \u2192 Starved or Blocked?'});
+  else if(wp>=5) items.push({icon:'⏳',head:'Waiting at '+wp+'% \u2014 watch the trend',body:'Moderate Waiting. If Motion or Overproduction was higher in prior iterations and Waiting is rising \u2014 that\u2019s the right direction. Waste is becoming visible. If it\u2019s been consistently elevated, go stand at the station and determine: starved (upstream not feeding) or blocked (downstream not pulling).',tag:'Waiting \u2014 Track Direction'});
+  var dp=pct('D');
+  if(dp>=10) items.push({icon:'⚠️',head:'Defects at '+dp+'%',body:'Rework and correction is not value-adding \u2014 the customer does not pay for fixing your own errors. Find the root cause upstream. Heinrich triangle: defects observed are the tip.',tag:'Quality \u2192 Root Cause'});
+  var op=pct('O');
+  if(op>=10) items.push({icon:'📈',head:'Overproduction at '+op+'%',body:'Building beyond demand or above SWIP standards creates inventory waste and masks other problems. Check pull signals and SWIP level targets.',tag:'Flow \u2192 SWIP / Pull'});
+  if(vp>=70) items.push({icon:'✅',head:'Strong \u2014 VA at '+vp+'%',body:'Model area. Document the standard and expand the study to the next bottleneck.',tag:'Model Area \u2192 Expand'});
+  if(!items.length) items.push({icon:'🔍',head:'Build your baseline',body:'Run 3+ iterations across different shifts before drawing conclusions.',tag:'Min 3 Iterations'});
+  panel.innerHTML=items.map(function(i){return'<div class="insight-item"><div class="i-icon">'+i.icon+'</div><div><div class="i-head">'+i.head+'</div><div class="i-body">'+i.body+'</div><span class="i-tag">'+i.tag+'</span></div></div>';}).join('');
+}
+function renderHistory(iters){
+  var el=document.getElementById('history-list');
+  if(!iters.length){el.innerHTML='<div class="empty-state">No data yet.</div>';return;}
+  el.innerHTML=[...iters].sort(function(a,b){return b.startTime-a.startTime;}).map(function(it){
+    var vp=it.total?Math.round((it.counts.va||0)/it.total*100):0;
+    return'<div class="hist-row"><div class="hist-study">'+esc(it.studyName)+'</div><span class="hist-iter">IT'+it.num+'</span><div class="hist-date">'+fmtDate(it.startTime)+'</div><div class="hist-va">'+vp+'%</div><div class="hist-n">'+it.total+' obs</div></div>';
+  }).join('');
+}
+
+// ═══ DATA FILE ═══════════════════════════════════════
+function saveDataFile(){
+  var blob=new Blob([JSON.stringify({version:4,exportedAt:new Date().toISOString(),lines:lines,studies:studies,activeWasteKeys:activeWasteKeys},null,2)],{type:'application/json'});
+  var url=URL.createObjectURL(blob),a=document.createElement('a');
+  var now=new Date();
+  a.href=url; a.download='WorkSample_'+(now.getMonth()+1)+'-'+now.getDate()+'-'+now.getFullYear()+'.json';
+  a.click(); URL.revokeObjectURL(url); showToast('Data saved');
+}
+function loadDataFile(event){
+  var file=event.target.files[0]; if(!file) return;
+  var reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      var p=JSON.parse(e.target.result);
+      if(!p.lines||!p.studies) throw new Error();
+      if((lines.length||studies.length)&&!confirm('Load replaces current data. Continue?')){event.target.value='';return;}
+      lines=p.lines||[]; studies=p.studies||[];
+      if(p.activeWasteKeys) activeWasteKeys=p.activeWasteKeys;
+      persist();
+      renderLineList(); renderTWChips(); populateStudySelect(); populateStudyNameSuggestions(); renderFilterChips();
+      showToast('Loaded: '+lines.length+' lines, '+studies.length+' studies');
+    }catch(err){alert('Could not read file.');}
+    event.target.value='';
+  };
+  reader.readAsText(file);
+}
+
+// ═══ EXCEL EXPORT ════════════════════════════════════
+function exportExcel(){
+  var fs=filteredStudies();
+  var iters=allIters(fs);
+  if(!iters.length){showToast('No data to export');return;}
+  var wb=XLSX.utils.book_new();
+  // Build dynamic headers based on categories used
+  var allCatKeys=[]; var allCatLabels={};
+  iters.forEach(function(it){(it.categories||[]).forEach(function(c){if(!allCatLabels[c.key]){allCatKeys.push(c.key);allCatLabels[c.key]=c.label;}});});
+  allCatKeys.sort(function(a,b){if(a==='va')return -1;if(b==='va')return 1;return 0;});
+  var baseHdr=['Study','Line','Iteration','Date','Duration (min)','Total Obs'];
+  var countHdrs=allCatKeys.map(function(k){return allCatLabels[k]+' #';});
+  var pctHdrs=allCatKeys.map(function(k){return allCatLabels[k]+' %';});
+  var sh1=[baseHdr.concat(countHdrs).concat(pctHdrs).concat(['Conditions','Notes'])];
+  [...iters].sort(function(a,b){return a.startTime-b.startTime;}).forEach(function(it){
+    var d=new Date(it.startTime),t=it.total||1;
+    var base=[it.studyName,it.lineName,'IT'+it.num,(d.getMonth()+1)+'/'+d.getDate()+'/'+d.getFullYear(),+(it.duration/60).toFixed(1),it.total];
+    var counts=allCatKeys.map(function(k){return it.counts[k]||0;});
+    var pcts=allCatKeys.map(function(k){return +((it.counts[k]||0)/t*100).toFixed(1);});
+    sh1.push(base.concat(counts).concat(pcts).concat([(it.conditions||[]).join(', '),it.notes||'']));
+  });
+  var ws1=XLSX.utils.aoa_to_sheet(sh1);
+  XLSX.utils.book_append_sheet(wb,ws1,'Iteration Summary');
+  // Study Rollup
+  var sh2=[['Study','Line','Iterations','Total Obs','VA %','Primary Action Driver']];
+  fs.forEach(function(s){
+    var tot=0; var vc=0;
+    s.iterations.forEach(function(it){tot+=it.total;vc+=(it.counts.va||0);});
+    var vp=tot?+(vc/tot*100).toFixed(1):0;
+    var driver='Review baseline';
+    if(vp>=70) driver='Strong VA \u2014 model area';
+    else if(vp<60) driver='Low VA \u2014 map current state';
+    sh2.push([s.name,s.lineName,s.iterations.length,tot,vp,driver]);
+  });
+  var ws2=XLSX.utils.aoa_to_sheet(sh2);
+  XLSX.utils.book_append_sheet(wb,ws2,'Study Rollup');
+  var now=new Date(),stamp=(now.getMonth()+1)+'-'+now.getDate()+'-'+now.getFullYear();
+  XLSX.writeFile(wb,'WorkSample_'+stamp+'.xlsx');
+  showToast('Excel downloaded');
+}
+
+// ═══ COACH ═══════════════════════════════════════════
+var COACH={
+  lines:{icon:'🏭',title:'What Is a Line?',
+    body:'Any production area you want to study — a full assembly line, a work cell, a department, one machine area. Keep names short. You\'ll be selecting from a dropdown while standing on the floor.',
+    rule:'<strong>Rule:</strong> One line per distinct production area. Different flow, different people, or different product = different line.'},
+  categories:{icon:'🎯',title:'Waste Categories',
+    body:'<strong>Value Add is always tracked.</strong> Choose which TIMWOODS waste types you want to observe for this study.<br><br>Pick the ones that matter for the question you\'re asking. Studying a line with known walking issues? Select Motion. Running a quality audit? Add Defects. Checking for overproduction above SWIP? Add Overproduction.<br><br>You can change your selection before starting any new study. The categories you used are saved with each iteration so your historical data is always accurate.',
+    rule:'<strong>Rule:</strong> Start with 2-3 categories. More than 4 slows your observation pace. You can always run another study targeting different waste types.'},
+  datafile:{icon:'💾',title:'Your Data File',
+    body:'WorkSample automatically saves your lines and studies to this browser. If you close the tab and reopen the tool in the same browser, your data will be here.<br><br><strong>Save Data</strong> downloads a JSON backup file. Use it to move data to another device, share it with a coworker, or keep a dated archive.<br><br><strong>Load Data</strong> restores from a previously saved file.',
+    rule:'<strong>Rule:</strong> Auto-save handles day-to-day use. Export a backup file before clearing your browser or switching devices.'},
+  before:{icon:'🎯',title:'Why Name a Study?',
+    body:'A study name is how you build a picture over time.<br><br><strong>Add to it later.</strong> Do 30 observations before a meeting, 40 after lunch, 27 the next morning. Same study name = same study. The dashboard aggregates all iterations and your sample spans a real range of conditions.<br><br><strong>Before and after.</strong> "Fab Motion \u2014 Before" then "Fab Motion \u2014 After" your kaizen. Filter to compare. The trend chart tells the story.<br><br><strong>Trend over time.</strong> "Line 2 Monthly" in January, February, March. Each month is a new iteration. You\'ll see whether improvement is holding or slipping.',
+    rule:'<strong>Rule:</strong> Name the investigation, not the date. "Assembly Baseline" is useful in six months. "6/14" is not.'},
+  samplesize:{icon:'📐',title:'How Many Observations?',
+    body:'The formula is n = Z\u00b2 \u00d7 p \u00d7 (1-p) / e\u00b2. At 95% confidence and \u00b110% precision: <strong>n = 97</strong>.<br><br>You don\'t need 97 in one walk. Do 30, come back, do 40, finish the next morning. Each is its own iteration. The dashboard aggregates them.',
+    rule:'<strong>Rule:</strong> 97 total gives you a statistically defensible number. Below 50 is directional only.'},
+  observe:{icon:'👁️',title:'How to Observe',
+    body:'Walk your line at a natural pace. Start at one end. Glance at the first operator — tap what they are doing <strong>at that exact moment</strong>. Not what they just did. Not what they\'re about to do. Right now.<br><br>Move to the next operator. Tap. Move on. One glance, one tap per person. Work your way through every person on the line — that\'s one cycle. When you hit the last operator, loop back to the start and go again. Every person gets an observation on every pass.<br><br>Your pace should feel like a normal Gemba walk — 3 to 5 seconds per person. Don\'t linger. Don\'t announce what you\'re doing.',
+    rule:'<strong>Rule:</strong> Cycle through every operator each pass. Don\'t watch one person through a full cycle — that\'s a time study, not work sampling. One snapshot per person per pass. The randomness across cycles is what makes the data valid.'},
+  trend:{icon:'📊',title:'Reading the Trend',
+    body:'Each bar is one iteration. Categories stack from bottom. VA growth over iterations = improvement. A category staying high = your next kaizen target.',
+    rule:'<strong>Rule:</strong> One bar is a snapshot. Three bars on the same study start to tell a story.'},
+  action:{icon:'⚡',title:'Action Drivers',
+    body:'Generated from your data.<br><br>\u2022 High motion \u2192 Spaghetti diagram<br>\u2022 High waiting \u2192 Flow analysis, upstream constraint<br>\u2022 High defects \u2192 Root cause upstream<br>\u2022 Overproduction \u2192 Check SWIP standards and pull signals<br>\u2022 Low VA overall \u2192 Current state map first',
+    rule:'<strong>Rule:</strong> Fix the biggest category first. Re-run the study. Confirm before moving on.'}
+};
+function openCoach(key){
+  var c=COACH[key]; if(!c) return;
+  document.getElementById('coach-icon').textContent=c.icon;
+  document.getElementById('coach-title').textContent=c.title;
+  document.getElementById('coach-body').innerHTML=c.body;
+  var ruleEl=document.getElementById('coach-rule');
+  if(c.rule){ruleEl.innerHTML=c.rule;ruleEl.style.display='block';}
+  else{ruleEl.style.display='none';}
+  document.getElementById('coach-overlay').classList.add('open');
+}
+function closeCoach(){document.getElementById('coach-overlay').classList.remove('open');}
+
+// ═══ INIT ════════════════════════════════════════════
+renderLineList();
+renderTWChips();
+renderObsButtons();
+populateStudySelect();
+renderFilterChips();
+
+</script>
+<div id="sl-save"><div class="sl-sb">
+  <div class="sl-st">Save before leaving?</div>
+  <div class="sl-ss">You have unsaved work on this screen.</div>
+  <button class="sl-sy" id="sl-yes">Save and go home</button>
+  <button class="sl-sn" onclick="window.location.href='sitelevel.html'">Discard and go home</button>
+</div></div>
+<div id="sl-nav">
+  <button id="sln-home" onclick="slHome()"><span><svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg></span><span class="nl">Home</span></button>
+  <button id="sln-res" class="on" onclick="slRes()"><span><svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14H7v-2h5v2zm5-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg></span><span class="nl">Results</span></button>
+  <button id="sln-learn" onclick="slLearn()"><span><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3L1 9l11 6 9-4.91V17h2V9L12 3zm-7 9.5v4L12 21l7-4.5v-4l-7 4-7-4z"/></svg></span><span class="nl">Learn</span></button>
+</div>
+<script id="sl-js">
+(function(){
+var _ch=false;
+function ready(){
+  // Show body now that nav is set up
+  document.body.style.visibility='visible';
+  // Start on Study tab
+  if(typeof navTo==='function'){navTo('study');}
+  _setNav('sln-res');
+}
+function _setNav(id){
+  ['sln-home','sln-res','sln-learn'].forEach(function(n){
+    var e=document.getElementById(n);if(e)e.classList.remove('on');
+  });
+  var e=document.getElementById(id);if(e)e.classList.add('on');
+}
+window.slHome=function(){
+  if(_ch){document.getElementById('sl-save').classList.add('open');}
+  else{window.location.href='sitelevel.html';}
+};
+window.slRes=function(){if(typeof navTo==='function')navTo('study');_setNav('sln-res');};
+window.slLearn=function(){if(typeof navTo==='function')navTo('guide');_setNav('sln-learn');};
+document.getElementById('sl-yes').addEventListener('click',function(){
+  if(typeof openSaveSheet==='function')openSaveSheet(false);
+  setTimeout(function(){window.location.href='sitelevel.html';},400);
+});
+document.addEventListener('click',function(e){
+  if(e.target&&e.target.id==='btn-start')_ch=true;
+});
+if(document.readyState==='loading'){
+  document.addEventListener('DOMContentLoaded',ready);
+}else{ready();}
+})();
+</script>
+</body>
+</html>
