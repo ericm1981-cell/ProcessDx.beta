@@ -8,6 +8,7 @@
 <meta name="apple-mobile-web-app-title" content="ProcessDx">
 <meta name="theme-color" content="#1B4332">
 <link rel="manifest" href="manifest.json">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <link rel="apple-touch-icon" href="processdx-icon-180.png">
 <title>Process Dx</title>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -238,7 +239,6 @@ body{overscroll-behavior:none}
 .wt-table tr:nth-child(even) td{background:var(--s2)}
 .wt-input{font-family:var(--mono);font-size:11px;width:100%;border:none;background:transparent;color:var(--txt);padding:2px 4px}
 .wt-input:focus{outline:1px solid var(--green);border-radius:2px}
-
 /* ═══ SITE LEVEL NAV ═══ */
 .sl-nb{flex:1;background:none;border:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;color:rgba(255,255,255,.3);-webkit-appearance:none;padding:4px 2px;transition:color .15s;}
 .sl-nb.on{color:var(--amber);}
@@ -252,9 +252,29 @@ body{overscroll-behavior:none}
 /* Hide original ProcessDx progress bar when on gates */
 .prog-wrap{display:none;}
 
+
+</style>
+
+<style id="sl-debug">
+#sl-err{position:fixed;top:0;left:0;right:0;background:#dc2626;color:#fff;font-family:monospace;font-size:11px;padding:8px 12px;z-index:99999;display:none;max-height:40vh;overflow-y:auto;word-break:break-all;}
 </style>
 </head>
 <body>
+<div id="sl-err"></div><script id="sl-debug-js">
+(function(){
+  var errs = [];
+  window.addEventListener('error', function(e){
+    errs.push((e.message||'?') + ' @ ' + (e.filename||'').split('/').pop() + ':' + e.lineno);
+    var el = document.getElementById('sl-err');
+    if(el){ el.style.display='block'; el.innerHTML = errs.map(function(e){return '<div>⚠ '+e+'</div>';}).join(''); }
+  });
+  window.addEventListener('unhandledrejection', function(e){
+    errs.push('Promise: ' + (e.reason&&e.reason.message||String(e.reason)));
+    var el = document.getElementById('sl-err');
+    if(el){ el.style.display='block'; el.innerHTML = errs.map(function(e){return '<div>⚠ '+e+'</div>';}).join(''); }
+  });
+})();
+</script>
 
 <!-- WELCOME -->
 <!-- ═══ SITE LEVEL LOGIN ═══ -->
@@ -526,6 +546,7 @@ body{overscroll-behavior:none}
     </button>
   </div>
 </div>
+
 
 <div class="scr" id="S0" style="align-items:center;justify-content:flex-start;overflow-y:auto;padding:32px 24px;padding-top:calc(32px + var(--st));background-image:repeating-linear-gradient(0deg,transparent,transparent 23px,rgba(27,67,50,.04) 23px,rgba(27,67,50,.04) 24px)">
   <div style="width:100%;max-width:360px">
@@ -1077,8 +1098,6 @@ body{overscroll-behavior:none}
 
 <div id="saveFlash" class="save-flash">✓ Saved</div>
 <script>
-'use strict';
-
 'use strict';
 const perf=()=>{try{return performance.now();}catch(e){return Date.now();}};
 
@@ -2945,13 +2964,7 @@ function _showStationSelector(){
   modal.style.display='flex';
 }
 
-// Boot deferred — Site Level controls initialization
-window._pdxBoot=function(){
-  try{
-    const d=$('g1date');if(d)d.value=new Date().toLocaleDateString('en-US');
-    checkResume();
-  }catch(e){}
-};
+window._pdxBoot=function(){try{const d=$('g1date');if(d)d.value=new Date().toLocaleDateString('en-US');checkResume();}catch(e){}};
 
 // ═══ STOPWATCH (Gate 2) ═══
 const SW={running:false,tStart:null,tAccum:0,raf:null,laps:[]};
@@ -3615,473 +3628,7 @@ function exportPDCAObstacles(){
     <thead>${t1Hdr}${t1.length?colHdr:''}${t1.length?'':''}${t2Hdr}${colHdr}</thead>
     <tbody>${t1Rows}${t2Rows}${blankRows}</tbody>
   </table>
-  
-
-</script>
-
-<div id="pdx-gate-nav" style="display:none;">
-  <button class="sl-nb" onclick="slShowDash()"><svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg><span style="font-size:8px;font-family:var(--head);font-weight:700;">Home</span></button>
-  <button id="pgn-1" class="on" onclick="goGate(1)"><span class="gn">①</span><span class="gl">Setup</span></button>
-  <button id="pgn-2" onclick="goGate(2)"><span class="gn">②</span><span class="gl">Base</span></button>
-  <button id="pgn-3" onclick="goGate(3)"><span class="gn">③</span><span class="gl">Cap</span></button>
-  <button id="pgn-4" onclick="goGate(4)"><span class="gn">④</span><span class="gl">Var</span></button>
-  <button id="pgn-5" onclick="goGate(5)"><span class="gn">⑤</span><span class="gl">Waste</span></button>
-  <button id="pgn-6" onclick="goGate(6)"><span class="gn">⑥</span><span class="gl">Out</span></button>
-  <button id="pgn-7" onclick="goGate(7)"><span class="gn">⑦</span><span class="gl">Act</span></button>
-</div>
-
-<script id="sl-core">
-
-// ═══ SITE LEVEL CORE ════════════════════════════════════
-const SL_SB_URL='https://crmfanzohigqflsfrddl.supabase.co';
-const SL_SB_KEY='sb_publishable_fw-zV5Jp3UyE8mhr7AV0pw_G7GT7hN0';
-let _slSb=null,_slSess=null,_slDemo=false;
-let _slPid=localStorage.getItem('sl_pid');
-let _slPname=localStorage.getItem('sl_pname')||'';
-let _slLines=JSON.parse(localStorage.getItem('sl_lines')||'[]');
-let _slSetupLines=[];
-
-function slLoadSupabase(cb){
-  if(window.supabase){cb();return;}
-  const s=document.createElement('script');
-  s.src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js';
-  s.onload=function(){cb();};
-  s.onerror=function(){console.log('Supabase CDN failed');};
-  document.head.appendChild(s);
-}
-function slGetSb(){if(!_slSb&&window.supabase)_slSb=window.supabase.createClient(SL_SB_URL,SL_SB_KEY);return _slSb;}
-
-// ── Screen system ──
-function slShow(id){
-  document.querySelectorAll('.scr').forEach(s=>s.classList.remove('on'));
-  const el=document.getElementById(id);if(el)el.classList.add('on');
-}
-
-function slShowDash(){
-  slShow('SD');
-  document.getElementById('pdx-gate-nav').style.display='none';
-  slNavSet('sln-dash');
-}
-
-function slGoWalk(){
-  slShow('SW');
-  document.getElementById('pdx-gate-nav').style.display='none';
-  slNavSet('sln-walk');
-  wsPopulateLines();
-}
-
-function slGoStudy(){
-  // Go to Gate 1 of ProcessDx
-  if(typeof goGate==='function'){
-    slShow('S1');
-    const nav=document.getElementById('pdx-gate-nav');
-    if(nav)nav.style.display='flex';
-    for(let i=1;i<=7;i++){const e=document.getElementById('pgn-'+i);if(e)e.classList.remove('on');}
-    const e=document.getElementById('pgn-1');if(e)e.classList.add('on');
-  } else {
-    slShow('S1');
-  }
-  slNavSet('sln-study');
-}
-
-function slGoBalance(){
-  slShow('S0');
-  slNavSet('sln-balance');
-  // For now goes to ProcessDx home — will be Line Rx when built
-}
-
-function slNavSet(id){
-  ['sln-dash','sln-walk','sln-study','sln-balance'].forEach(function(n){
-    const e=document.getElementById(n);if(e)e.classList.remove('on');
-  });
-  const e=document.getElementById(id);if(e)e.classList.add('on');
-}
-
-// ── Override goGate to show gate nav — deferred until goGate exists ──
-function slWireGateNav(){
-  try{
-    const _origGoGate=window.goGate;
-    if(typeof _origGoGate!=='function')return;
-    window.goGate=function(n){
-      try{_origGoGate(n);}catch(e){}
-      const nav=document.getElementById('pdx-gate-nav');
-      if(nav){nav.style.display='flex';}
-      for(let i=1;i<=7;i++){const e=document.getElementById('pgn-'+i);if(e)e.classList.remove('on');}
-      const e=document.getElementById('pgn-'+n);if(e)e.classList.add('on');
-    };
-    window.goHome=function(){slShowDash();};
-  }catch(e){}
-}
-setTimeout(slWireGateNav,500);
-
-// ── Auth ──
-async function slLogin(){
-  const email=(document.getElementById('sl-email').value||'').trim();
-  const msg=document.getElementById('sl-msg');
-  if(!email||!email.includes('@')){msg.textContent='Enter a valid email.';return;}
-  msg.textContent='Connecting...';
-  slLoadSupabase(async function(){
-  const sb=slGetSb();
-  if(!sb){msg.textContent='Connection error. Try again.';return;}
-  msg.textContent='Sending link...';
-  const{error}=await sb.auth.signInWithOtp({email,options:{emailRedirectTo:window.location.href}});
-  if(error){msg.textContent=error.message;}
-  else{document.getElementById('sl-to').textContent=email;slShow('SE');}
-  });
-}
-
-function slDemo(){
-  try{
-  _slDemo=true;_slPname='Demo Plant';
-  _slLines=[{id:'d1',name:'Assembly Line A'},{id:'d2',name:'Line B'}];
-  const db=document.getElementById('sl-demo-bar');if(db)db.style.display='block';
-  const dt=document.getElementById('sl-demo-tag');if(dt)dt.style.display='inline-block';
-  slEnterDash();
-  // Demo KPI data
-  const kpis=[['kpi-va','41%','kpi-va-s','2 lines studied'],['kpi-st','4',null,null],['kpi-wt','Motion','kpi-wt-s','28% of obs']];
-  kpis.forEach(([vid,val,sid,sub])=>{
-    const ve=document.getElementById(vid);if(ve){ve.textContent=val;ve.style.color='var(--forest)';}
-    if(sid){const se=document.getElementById(sid);if(se)se.textContent=sub;}
-  });
-  slRenderLines([{name:'Assembly Line A',va:41,waste:'Motion',studies:2},{name:'Line B',va:0,waste:null,studies:0}]);
-  // Pre-populate Walk line selector
-  wsPopulateLines();
-  // Pre-populate ProcessDx Gate 1 fields
-  setTimeout(function(){
-    const pl=document.getElementById('g1plant');if(pl)pl.value='Demo Plant';
-    const li=document.getElementById('g1line');if(li)li.value='Assembly Line A';
-    const st=document.getElementById('g1station');if(st)st.value='Frame Assembly';
-    const pr=document.getElementById('g1proc');if(pr)pr.value='Frame Assembly';
-    if(typeof updateStudyFilename==='function')updateStudyFilename();
-  },400);
-  // Preload demo walk observations so result screen works immediately
-  _wsLine='Assembly Line A';
-  var dObs=['va','va','motion','va','waiting','va','va','motion','motion','va','va','defects','va','motion','va','va','waiting','motion','va','va','va','motion','va','waiting','va','va','motion','va','va','motion','va','va','va','waiting','motion','va','va','motion','va','va','va','motion','va','va','waiting','va','motion','va','va','motion','va','va','va','motion','waiting','va','va','motion','va','va','va','motion','va','va','waiting','va','motion','va','va','va','motion','va','va','motion','va','va','va','waiting','motion','va','va','motion','va','va','va','motion','va','va','waiting','va','motion','va','va','va','motion','va','va'];
-  _wsObs=dObs;_wsTotal=97;
-  }catch(e){console.log('demo error:',e);}
-}
-
-async function slSignOut(){
-  const sb=slGetSb();if(sb&&!_slDemo)await sb.auth.signOut();
-  _slSess=null;_slDemo=false;
-  localStorage.removeItem('sl_pid');localStorage.removeItem('sl_pname');localStorage.removeItem('sl_lines');
-  document.getElementById('sl-demo-bar').style.display='none';
-  document.getElementById('sl-demo-tag').style.display='none';
-  slShow('SL');
-}
-
-// ── Setup ──
-function slAddLine(){
-  const inp=document.getElementById('sp-line');
-  const name=(inp.value||'').trim();if(!name)return;
-  if(_slSetupLines.find(l=>l.toLowerCase()===name.toLowerCase()))return;
-  _slSetupLines.push(name);inp.value='';slRenderSetupLines();slCheckSetup();
-}
-function slRenderSetupLines(){
-  const el=document.getElementById('sp-lines');if(!el)return;
-  el.innerHTML=_slSetupLines.map((l,i)=>`
-    <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-top:1px solid var(--br);">
-      <div style="width:8px;height:8px;border-radius:50%;background:var(--forest);flex-shrink:0;"></div>
-      <div style="flex:1;font-size:14px;">${l}</div>
-      <button onclick="_slSetupLines.splice(${i},1);slRenderSetupLines();slCheckSetup()" style="background:none;border:none;color:var(--muted2);font-size:18px;cursor:pointer;-webkit-appearance:none;">×</button>
-    </div>`).join('');
-}
-function slCheckSetup(){
-  const plant=(document.getElementById('sp-plant').value||'').trim();
-  const btn=document.getElementById('sp-save');
-  const ready=plant.length>0&&_slSetupLines.length>0;
-  btn.disabled=!ready;btn.style.opacity=ready?'1':'.3';btn.style.pointerEvents=ready?'auto':'none';
-}
-async function slSaveSetup(){
-  const plantName=(document.getElementById('sp-plant').value||'').trim();
-  if(!plantName||!_slSetupLines.length)return;
-  const btn=document.getElementById('sp-save');btn.textContent='Setting up...';btn.disabled=true;
-  const sb=slGetSb();
-  try{
-    let plantId=null;
-    if(sb&&_slSess){
-      const{data:ex}=await sb.from('plants').select('id').eq('name',plantName).maybeSingle();
-      if(ex){plantId=ex.id;}
-      else{const{data:ins,error}=await sb.from('plants').insert({name:plantName}).select('id').single();if(error)throw error;plantId=ins.id;}
-      for(const ln of _slSetupLines){
-        const{data:exl}=await sb.from('lines').select('id').eq('plant_id',plantId).eq('line_name',ln).maybeSingle();
-        if(!exl)await sb.from('lines').insert({plant_id:plantId,line_name:ln});
-      }
-    }
-    _slPid=plantId?String(plantId):'local_'+Date.now();
-    _slPname=plantName;
-    _slLines=_slSetupLines.map((n,i)=>({id:'line_'+i,name:n}));
-    localStorage.setItem('sl_pid',_slPid);localStorage.setItem('sl_pname',_slPname);localStorage.setItem('sl_lines',JSON.stringify(_slLines));
-    slEnterDash();
-  }catch(e){document.getElementById('sp-msg').textContent='Error: '+e.message;btn.textContent='Launch My Workspace →';btn.disabled=false;}
-}
-
-// ── Dashboard ──
-function slEnterDash(){
-  const pe=document.getElementById('sl-plant-name');
-  if(pe)pe.childNodes[0].textContent=_slPname||'Site Level';
-  if(_slSess&&_slSess.user){const ee=document.getElementById('sl-user-email');if(ee)ee.textContent=_slSess.user.email;}
-  slRenderLines(_slLines.map(l=>({name:l.name,va:0,waste:null,studies:0})));
-  slShowDash();
-}
-
-function slRenderLines(lines){
-  const el=document.getElementById('sl-line-cards');if(!el)return;
-  el.innerHTML=lines.map(l=>`
-    <div onclick="slGoWalkLine('${l.name}')" style="background:var(--s1);border-radius:var(--r2);overflow:hidden;box-shadow:var(--shadow);${l.studies>0?'border-left:4px solid var(--amber);':'border-left:4px solid var(--br);'}cursor:pointer;active:opacity:.9;">
-      <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--br);">
-        <div style="width:10px;height:10px;border-radius:50%;background:${l.studies>0?'var(--amber)':'var(--br)'};flex-shrink:0;"></div>
-        <div style="font-family:var(--head);font-size:16px;font-weight:700;color:var(--txt);flex:1;">${l.name}</div>
-        <div style="font-family:var(--mono);font-size:10px;color:var(--muted2);background:var(--s2);padding:2px 8px;border-radius:10px;">${l.studies>0?l.studies+' stud'+(l.studies===1?'y':'ies'):'No data'}</div>
-        <div style="font-size:16px;color:var(--muted2);">›</div>
-      </div>
-      <div style="padding:10px 14px;">
-        ${l.studies>0?
-          `<div style="font-family:var(--mono);font-size:10px;color:var(--muted2);margin-bottom:4px;">VA% <span style="color:var(--forest);font-weight:700;">${l.va}%</span></div><div style="height:6px;background:var(--s2);border-radius:3px;overflow:hidden;margin-bottom:4px;"><div style="height:100%;background:var(--forest);border-radius:3px;width:${l.va}%;"></div></div><div style="font-family:var(--mono);font-size:10px;color:var(--muted2);">Top waste: ${l.waste} · Tap to walk again</div>`:
-          `<div style="font-family:var(--mono);font-size:11px;color:var(--muted2);">No data yet · <span style="color:var(--amber);font-weight:700;">Tap to walk this line →</span></div>`}
-      </div>
-    </div>`).join('');
-}
-
-function slGoWalkLine(lineName){
-  slGoWalk();
-  setTimeout(function(){
-    const sel=document.getElementById('ws-line-sel');
-    if(sel)sel.value=lineName;
-  },100);
-}
-
-// ── Auth init ──
-async function slInit(){
-  const sb=slGetSb();
-  if(!sb){slShow('SL');return;}
-  const hash=window.location.hash;
-  if(hash.includes('access_token')){
-    const{data:{session}}=await sb.auth.getSession();
-    if(session){_slSess=session;window.history.replaceState({},'',window.location.pathname);await slAfterAuth();return;}
-  }
-  const{data:{session}}=await sb.auth.getSession();
-  if(session){_slSess=session;await slAfterAuth();return;}
-  sb.auth.onAuthStateChange(async(evt,sess)=>{
-    if(evt==='SIGNED_IN'&&sess){_slSess=sess;await slAfterAuth();}
-    else if(evt==='SIGNED_OUT')slShow('SL');
-  });
-  slShow('SL');
-}
-async function slAfterAuth(){
-  if(_slPid&&_slPname){slEnterDash();}else{_slSetupLines=[];slShow('SP');}
-}
-
-// ════════════════════════════════════════════════════════
-// WALK SCREEN (WorkSample engine)
-// ════════════════════════════════════════════════════════
-const WS_COACH=[
-  {step:'1 of 5',head:'Pick one person on the line.',body:'Just one. Any person. Start at one end and work your way down.',btn:'Got it →'},
-  {step:'2 of 5',head:'Glance at them. One second.',body:'A quick glance — what are they doing right now at this exact moment? Not a minute. One second.',btn:'Ready →'},
-  {step:'3 of 5',head:'What are they doing right now?',body:'Tap the button that matches what you just saw. Value Add means hands on the product. Everything else is a form of waste.',btn:'Got it →'},
-  {step:'4 of 5',head:'Move to the next person.',body:'Glance, tap, move on. Work through every person on the line, then loop back to the start.',btn:'Got it →'},
-  {step:'5 of 5',head:'Keep cycling. That is the method.',body:'Start to end, loop back, repeat. Every person gets an observation on every pass. The randomness makes the data valid.',btn:"Let's go →"}
-];
-let _wsCoachIdx=0,_wsObs=[],_wsTotal=0,_wsLine='';
-
-function wsPopulateLines(){
-  const sel=document.getElementById('ws-line-sel');if(!sel)return;
-  sel.innerHTML='<option value="">Select a line...</option>';
-  const lines=_slLines.length?_slLines:JSON.parse(localStorage.getItem('sl_lines')||'[]');
-  lines.forEach(l=>{const o=document.createElement('option');o.value=l.name;o.textContent=l.name;sel.appendChild(o);});
-  // Auto-select first line if only one
-  if(lines.length===1)sel.value=lines[0].name;
-}
-
-function wsStartStudy(){
-  const lineSel=document.getElementById('ws-line-sel');
-  const line=lineSel?lineSel.value:'';
-  if(!line){alert('Select a line first.');return;}
-  _wsLine=line;_wsObs=[];_wsTotal=0;
-  // Build waste buttons from checked categories
-  const btns=document.getElementById('ws-waste-btns');if(!btns)return;
-  const cats={motion:{label:'🚶 Motion',color:'#B45309'},waiting:{label:'⏳ Waiting',color:'#1D4ED8'},defects:{label:'⚠️ Defects',color:'#DC2626'},overprocess:{label:'🔄 Over-processing',color:'#7C3AED'},transport:{label:'🚛 Transport',color:'#065F46'},inventory:{label:'📦 Inventory',color:'#92400E'}};
-  const checked=Array.from(document.querySelectorAll('#ws-cats input:checked')).map(i=>i.value);
-  btns.innerHTML=checked.map(c=>`<button onclick="wsObs('${c}')" style="padding:18px 12px;background:#fff;color:${cats[c]?cats[c].color:'#333'};border:2px solid ${cats[c]?cats[c].color:'#ccc'};border-radius:var(--r2);font-family:var(--head);font-size:16px;font-weight:800;cursor:pointer;-webkit-appearance:none;">${cats[c]?cats[c].label:c}</button>`).join('');
-  // Set line label
-  const lbl=document.getElementById('ws-obs-line');if(lbl)lbl.textContent=line;
-  // Show observation screen
-  const obs=document.getElementById('ws-obs');if(obs){obs.style.display='flex';obs.style.pointerEvents='auto';}
-  // Start coaching
-  _wsCoachIdx=0;wsShowCoach(0);
-}
-
-function wsShowCoach(idx){
-  const card=WS_COACH[idx];if(!card)return;
-  const overlay=document.getElementById('ws-coach');
-  const inner=document.getElementById('ws-coach-inner');
-  if(!overlay||!inner)return;
-  overlay.style.display='flex';
-  inner.innerHTML=`
-    <div style="font-family:var(--mono);font-size:10px;color:var(--amber);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px;">Step ${card.step}</div>
-    <div style="font-family:var(--head);font-size:28px;font-weight:800;color:var(--forest);line-height:1.2;margin-bottom:10px;">${card.head}</div>
-    <div style="font-size:15px;color:var(--txt);line-height:1.6;margin-bottom:20px;">${card.body}</div>
-    <button onclick="wsNextCoach()" style="width:100%;padding:14px;background:var(--forest);color:#fff;border:none;border-radius:var(--r2);font-family:var(--head);font-size:18px;font-weight:800;cursor:pointer;-webkit-appearance:none;">${card.btn}</button>`;
-}
-function wsNextCoach(){
-  _wsCoachIdx++;
-  if(_wsCoachIdx>=WS_COACH.length){
-    const overlay=document.getElementById('ws-coach');if(overlay)overlay.style.display='none';
-    // Training wheels off toast
-    const t=document.createElement('div');
-    t.textContent='Training wheels are off. 92 more observations — go get them.';
-    t.style.cssText='position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--forest);color:#fff;padding:18px 22px;border-radius:14px;font-family:var(--head);font-size:18px;font-weight:800;text-align:center;z-index:9999;border:2px solid var(--amber);max-width:280px;width:90%;';
-    document.body.appendChild(t);
-    setTimeout(()=>t.remove(),4000);
-  }else{wsShowCoach(_wsCoachIdx);}
-}
-
-function wsObs(cat){
-  _wsObs.push(cat);_wsTotal++;
-  const vaCount=_wsObs.filter(o=>o==='va').length;
-  const vaPct=Math.round((vaCount/_wsTotal)*100);
-  const pctEl=document.getElementById('ws-va-pct');if(pctEl)pctEl.textContent=vaPct+'%';
-  const bar=document.getElementById('ws-prog-bar');if(bar)bar.style.width=Math.min(100,(_wsTotal/97)*100)+'%';
-  const cnt=document.getElementById('ws-obs-count');if(cnt)cnt.textContent=_wsTotal+' observation'+(  _wsTotal===1?'':'s');
-  const fin=document.getElementById('ws-finish-btn');
-  if(fin&&_wsTotal>=20){fin.disabled=false;fin.style.opacity='1';fin.style.pointerEvents='auto';}
-}
-
-function wsUndo(){
-  if(!_wsObs.length)return;
-  _wsObs.pop();_wsTotal=Math.max(0,_wsTotal-1);
-  const vaCount=_wsObs.filter(o=>o==='va').length;
-  const vaPct=_wsTotal>0?Math.round((vaCount/_wsTotal)*100):0;
-  const pctEl=document.getElementById('ws-va-pct');if(pctEl)pctEl.textContent=_wsTotal>0?vaPct+'%':'—%';
-  const bar=document.getElementById('ws-prog-bar');if(bar)bar.style.width=Math.min(100,(_wsTotal/97)*100)+'%';
-  const cnt=document.getElementById('ws-obs-count');if(cnt)cnt.textContent=_wsTotal+' observation'+(_wsTotal===1?'':'s');
-}
-
-function wsFinish(){
-  const vaCount=_wsObs.filter(o=>o==='va').length;
-  const vaPct=_wsTotal>0?Math.round((vaCount/_wsTotal)*100):0;
-  const wasted=100-vaPct;
-  // Build breakdown
-  const cats={};_wsObs.forEach(o=>{if(o!=='va')cats[o]=(cats[o]||0)+1;});
-  const topWaste=Object.keys(cats).sort((a,b)=>cats[b]-cats[a])[0]||'—';
-  // Show result screen
-  const obs=document.getElementById('ws-obs');if(obs){obs.style.display='none';obs.style.pointerEvents='none';}
-  const res=document.getElementById('ws-result');if(res){res.style.display='flex';res.style.pointerEvents='auto';}
-  // Populate
-  const rl=document.getElementById('res-line-label');if(rl)rl.textContent=_wsLine;
-  const rv=document.getElementById('res-va');if(rv)rv.textContent=vaPct+'%';
-  // Bars
-  const bars=document.getElementById('res-bars');
-  if(bars){
-    const allCats={va:'Value Add',...Object.fromEntries(Object.keys(cats).map(k=>[k,k.charAt(0).toUpperCase()+k.slice(1)]))};
-    bars.innerHTML=Object.entries(allCats).map(([k,label])=>{
-      const count=k==='va'?vaCount:(cats[k]||0);
-      const pct=_wsTotal>0?Math.round((count/_wsTotal)*100):0;
-      return`<div style="margin-bottom:10px;"><div style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;color:var(--muted);margin-bottom:3px;"><span>${label}</span><span>${pct}%</span></div><div style="height:8px;background:var(--s2);border-radius:4px;overflow:hidden;"><div style="height:100%;background:${k==='va'?'var(--forest)':'var(--amber)'};border-radius:4px;width:${pct}%;"></div></div></div>`;
-    }).join('');
-  }
-  // Eric's copy
-  const copy=document.getElementById('res-copy');
-  if(copy){
-    const recover=Math.max(1,Math.round(wasted*0.1));
-    copy.innerHTML=`You just ran a study and found that <strong style="color:var(--amber)">${wasted}% of operator time</strong> is spent on work your customers don't want to pay for — but you and your company are.<br><br>What could you do with <strong style="color:var(--amber)">${recover}%</strong> of that back? How many more units? How many fewer overtime hours?<br><br>The next step is finding out exactly where it's going and how to get it back. You owe it to yourself. You owe it to your customers. And you owe it to the people on that floor — because we all know how precious their time is. Wasting it isn't fair to anybody.`;
-  }
-  // Save to Supabase
-  wsSaveToCloud(vaPct,cats,topWaste);
-}
-
-async function wsSaveToCloud(vaPct,cats,topWaste){
-  if(typeof sbClient!=="function")return;
-  const sb=sbClient();if(!sb)return;
-  const plantId=_slPid&&!_slPid.startsWith('local')?parseInt(_slPid):null;
-  if(!plantId)return;
-  try{
-    await sb.from('work_samples').insert({
-      plant_id:plantId,
-      study_date:new Date().toISOString().slice(0,10),
-      study_name:_wsLine,
-      total_obs:_wsTotal,
-      va_count:_wsObs.filter(o=>o==='va').length,
-      waste_breakdown:JSON.stringify(cats),
-      conditions:'[]',notes:null,
-      duration_ms:0,categories:JSON.stringify(Object.keys(cats))
-    });
-  }catch(e){console.log('WS save:',e.message);}
-}
-
-function wsNewStudy(){
-  const res=document.getElementById('ws-result');if(res)res.style.display='none';
-  const obs=document.getElementById('ws-obs');if(obs){obs.style.display='none';obs.style.pointerEvents='none';}
-  slGoWalk();
-}
-
-
-// ── FAQ / Learn ──
-const SL_FAQ = [
-  {q:'What is work sampling?', a:'Work sampling is a statistical method for measuring how operators spend their time. You observe each person briefly — one glance — and record what they are doing at that exact moment. Repeat this across the full line over 20 minutes. The result is a statistically valid breakdown of value-added vs. non-value-added time.'},
-  {q:'Why 97 observations?', a:'At 95% confidence with ±10% precision, the formula requires 97 observations (n = Z² × p × (1-p) / e²). 100 is a round number. 97 is the number you can defend to a Black Belt.'},
-  {q:'What is Value Add (VA)?', a:'An operator is doing value-added work when their hands are on the product and it is being transformed in a way the customer would pay for. Building, assembling, welding, painting — these are VA. Walking, waiting, inspecting for defects — these are not.'},
-  {q:'What is Motion?', a:'Motion is an operator moving to get what they need — walking to get parts, tools, or information. The product is not moving. The person is. Root cause is almost always workstation layout or material placement. Fix: move the material closer to the work.'},
-  {q:'What is Waiting?', a:'An operator standing idle — waiting for a machine, a part, an instruction, or the person upstream to finish. Note: rising Waiting after reducing Motion is a sign of progress — not a new problem. The waste became visible.'},
-  {q:'What is Over-processing?', a:'Doing more to a product than the customer requires. Extra inspection steps, unnecessary adjustments, repackaging. Often invisible because it looks like work.'},
-  {q:'How do I observe correctly?', a:'Start at one end of the line. Glance at the first operator — one second. Tap what they are doing right now. Move to the next person. Repeat. Loop back. Every person gets an observation on every pass. Random timing across cycles is what makes the data valid.'},
-  {q:'What does the VA% tell me?', a:'If VA% is 40%, operators are spending 60% of their time on work the customer is not paying for — but your company is. A 10-point improvement on a 20-person line at $20/hr recovers roughly $166,000/year.'},
-  {q:'What do I do with the results?', a:'High Motion → run a spaghetti diagram. Trace one operator's exact path for one full cycle. Root cause is almost always workstation layout or material placement. Then go to Study → ProcessDx to diagnose the specific station.'},
-  {q:'What is ProcessDx?', a:'ProcessDx is a 7-gate diagnostic tool for a specific station. Where work sampling shows you where the waste is across the line, ProcessDx tells you exactly what is causing it at one station — cycle time, variation, waste steps — and helps you set an experiment to fix it.'},
-];
-
-function slRenderFAQ(){
-  const el=document.getElementById('sl-faq-list');if(!el)return;
-  el.innerHTML=SL_FAQ.map((item,i)=>`
-    <div onclick="slToggleFAQ(${i})" style="background:var(--s1);border-radius:var(--r);margin-bottom:8px;overflow:hidden;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.06);">
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;">
-        <div style="font-family:var(--head);font-size:15px;font-weight:700;color:var(--forest);flex:1;padding-right:10px;">${item.q}</div>
-        <div id="sl-faq-arr-${i}" style="font-size:18px;color:var(--amber);font-weight:700;flex-shrink:0;">›</div>
-      </div>
-      <div id="sl-faq-ans-${i}" style="display:none;padding:0 14px 14px;font-size:13px;color:var(--muted);line-height:1.6;border-top:1px solid var(--br);padding-top:10px;">${item.a}</div>
-    </div>`).join('');
-}
-
-function slToggleFAQ(i){
-  const ans=document.getElementById('sl-faq-ans-'+i);
-  const arr=document.getElementById('sl-faq-arr-'+i);
-  if(!ans)return;
-  const open=ans.style.display==='block';
-  // Close all
-  SL_FAQ.forEach((_,j)=>{
-    const a=document.getElementById('sl-faq-ans-'+j);
-    const r=document.getElementById('sl-faq-arr-'+j);
-    if(a)a.style.display='none';
-    if(r)r.textContent='›';
-  });
-  // Open clicked if it was closed
-  if(!open){
-    ans.style.display='block';
-    if(arr)arr.textContent='⌄';
-  }
-}
-
-// Render FAQ on load
-window.addEventListener('load',function(){
-  setTimeout(slRenderFAQ, 500);
-});
-
-// ── Init — safe startup ──
-window.addEventListener('load',function(){
-  // Always show login first — runs synchronously before anything else
-  try{
-    document.querySelectorAll('.scr').forEach(s=>s.classList.remove('on'));
-    const sl=document.getElementById('SL');if(sl)sl.classList.add('on');
-  }catch(e){}
-  // Trigger ProcessDx boot after SL has control
-  setTimeout(function(){
-    try{if(typeof window._pdxBoot==='function')window._pdxBoot();}catch(e){}
-    try{slInit();}catch(e){console.log('slInit:',e);}
-  },200);
-});
-<\/script>
-
-</body></html>`;
+  </body></html>`;
   _downloadHTML(html,`Whats_Stopping_You_${(setup.process||'ProcessDx').replace(/\s+/g,'_')}.html`);
 }
 
@@ -4808,8 +4355,482 @@ if('serviceWorker' in navigator){
   });
 }
 
-
 </script>
+
+<div id="pdx-gate-nav" style="display:none;">
+  <button class="sl-nb" onclick="slShowDash()"><svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg><span style="font-size:8px;font-family:var(--head);font-weight:700;">Home</span></button>
+  <button id="pgn-1" class="on" onclick="goGate(1)"><span class="gn">①</span><span class="gl">Setup</span></button>
+  <button id="pgn-2" onclick="goGate(2)"><span class="gn">②</span><span class="gl">Base</span></button>
+  <button id="pgn-3" onclick="goGate(3)"><span class="gn">③</span><span class="gl">Cap</span></button>
+  <button id="pgn-4" onclick="goGate(4)"><span class="gn">④</span><span class="gl">Var</span></button>
+  <button id="pgn-5" onclick="goGate(5)"><span class="gn">⑤</span><span class="gl">Waste</span></button>
+  <button id="pgn-6" onclick="goGate(6)"><span class="gn">⑥</span><span class="gl">Out</span></button>
+  <button id="pgn-7" onclick="goGate(7)"><span class="gn">⑦</span><span class="gl">Act</span></button>
+</div>
+
+
+
+<script id="sl-core">
+
+
+
+// ═══ SITE LEVEL CORE ════════════════════════════════════
+const SL_SB_URL='https://crmfanzohigqflsfrddl.supabase.co';
+const SL_SB_KEY='sb_publishable_fw-zV5Jp3UyE8mhr7AV0pw_G7GT7hN0';
+let _slSb=null,_slSess=null,_slDemo=false;
+let _slPid=localStorage.getItem('sl_pid');
+let _slPname=localStorage.getItem('sl_pname')||'';
+let _slLines=JSON.parse(localStorage.getItem('sl_lines')||'[]');
+let _slSetupLines=[];
+
+function slLoadSupabase(cb){
+  if(window.supabase){cb();return;}
+  const s=document.createElement('script');
+  s.src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js';
+  s.onload=function(){cb();};
+  s.onerror=function(){console.log('Supabase CDN failed');};
+  document.head.appendChild(s);
+}
+function slGetSb(){if(!_slSb&&window.supabase)_slSb=window.supabase.createClient(SL_SB_URL,SL_SB_KEY);return _slSb;}
+
+// ── Screen system ──
+function slShow(id){
+  document.querySelectorAll('.scr').forEach(s=>s.classList.remove('on'));
+  const el=document.getElementById(id);if(el)el.classList.add('on');
+}
+
+function slShowDash(){
+  slShow('SD');
+  document.getElementById('pdx-gate-nav').style.display='none';
+  slNavSet('sln-dash');
+}
+
+function slGoWalk(){
+  slShow('SW');
+  document.getElementById('pdx-gate-nav').style.display='none';
+  slNavSet('sln-walk');
+  wsPopulateLines();
+}
+
+function slGoStudy(){
+  // Go to Gate 1 of ProcessDx
+  if(typeof goGate==='function'){
+    slShow('S1');
+    const nav=document.getElementById('pdx-gate-nav');
+    if(nav)nav.style.display='flex';
+    for(let i=1;i<=7;i++){const e=document.getElementById('pgn-'+i);if(e)e.classList.remove('on');}
+    const e=document.getElementById('pgn-1');if(e)e.classList.add('on');
+  } else {
+    slShow('S1');
+  }
+  slNavSet('sln-study');
+}
+
+function slGoBalance(){
+  slShow('S0');
+  slNavSet('sln-balance');
+  // For now goes to ProcessDx home — will be Line Rx when built
+}
+
+function slNavSet(id){
+  ['sln-dash','sln-walk','sln-study','sln-balance'].forEach(function(n){
+    const e=document.getElementById(n);if(e)e.classList.remove('on');
+  });
+  const e=document.getElementById(id);if(e)e.classList.add('on');
+}
+
+// ── Override goGate to show gate nav — deferred until goGate exists ──
+function slWireGateNav(){
+  try{
+    const _origGoGate=window.goGate;
+    if(typeof _origGoGate!=='function')return;
+    window.goGate=function(n){
+      try{_origGoGate(n);}catch(e){}
+      const nav=document.getElementById('pdx-gate-nav');
+      if(nav){nav.style.display='flex';}
+      for(let i=1;i<=7;i++){const e=document.getElementById('pgn-'+i);if(e)e.classList.remove('on');}
+      const e=document.getElementById('pgn-'+n);if(e)e.classList.add('on');
+    };
+    window.goHome=function(){slShowDash();};
+  }catch(e){}
+}
+setTimeout(slWireGateNav,500);
+
+// ── Auth ──
+async function slLogin(){
+  const email=(document.getElementById('sl-email').value||'').trim();
+  const msg=document.getElementById('sl-msg');
+  if(!email||!email.includes('@')){msg.textContent='Enter a valid email.';return;}
+  msg.textContent='Connecting...';
+  slLoadSupabase(async function(){
+  const sb=slGetSb();
+  if(!sb){msg.textContent='Connection error. Try again.';return;}
+  msg.textContent='Sending link...';
+  const{error}=await sb.auth.signInWithOtp({email,options:{emailRedirectTo:window.location.href}});
+  if(error){msg.textContent=error.message;}
+  else{document.getElementById('sl-to').textContent=email;slShow('SE');}
+  });
+}
+
+function slDemo(){
+  try{
+  _slDemo=true;_slPname='Demo Plant';
+  _slLines=[{id:'d1',name:'Assembly Line A'},{id:'d2',name:'Line B'}];
+  const db=document.getElementById('sl-demo-bar');if(db)db.style.display='block';
+  const dt=document.getElementById('sl-demo-tag');if(dt)dt.style.display='inline-block';
+  slEnterDash();
+  // Demo KPI data
+  const kpis=[['kpi-va','41%','kpi-va-s','2 lines studied'],['kpi-st','4',null,null],['kpi-wt','Motion','kpi-wt-s','28% of obs']];
+  kpis.forEach(([vid,val,sid,sub])=>{
+    const ve=document.getElementById(vid);if(ve){ve.textContent=val;ve.style.color='var(--forest)';}
+    if(sid){const se=document.getElementById(sid);if(se)se.textContent=sub;}
+  });
+  slRenderLines([{name:'Assembly Line A',va:41,waste:'Motion',studies:2},{name:'Line B',va:0,waste:null,studies:0}]);
+  // Pre-populate Walk line selector
+  wsPopulateLines();
+  // Pre-populate ProcessDx Gate 1 fields
+  setTimeout(function(){
+    const pl=document.getElementById('g1plant');if(pl)pl.value='Demo Plant';
+    const li=document.getElementById('g1line');if(li)li.value='Assembly Line A';
+    const st=document.getElementById('g1station');if(st)st.value='Frame Assembly';
+    const pr=document.getElementById('g1proc');if(pr)pr.value='Frame Assembly';
+    if(typeof updateStudyFilename==='function')updateStudyFilename();
+  },400);
+  // Preload demo walk observations so result screen works immediately
+  _wsLine='Assembly Line A';
+  var dObs=['va','va','motion','va','waiting','va','va','motion','motion','va','va','defects','va','motion','va','va','waiting','motion','va','va','va','motion','va','waiting','va','va','motion','va','va','motion','va','va','va','waiting','motion','va','va','motion','va','va','va','motion','va','va','waiting','va','motion','va','va','motion','va','va','va','motion','waiting','va','va','motion','va','va','va','motion','va','va','waiting','va','motion','va','va','va','motion','va','va','motion','va','va','va','waiting','motion','va','va','motion','va','va','va','motion','va','va','waiting','va','motion','va','va','va','motion','va','va'];
+  _wsObs=dObs;_wsTotal=97;
+  }catch(e){console.log('demo error:',e);}
+}
+
+async function slSignOut(){
+  const sb=slGetSb();if(sb&&!_slDemo)await sb.auth.signOut();
+  _slSess=null;_slDemo=false;
+  localStorage.removeItem('sl_pid');localStorage.removeItem('sl_pname');localStorage.removeItem('sl_lines');
+  document.getElementById('sl-demo-bar').style.display='none';
+  document.getElementById('sl-demo-tag').style.display='none';
+  slShow('SL');
+}
+
+// ── Setup ──
+function slAddLine(){
+  const inp=document.getElementById('sp-line');
+  const name=(inp.value||'').trim();if(!name)return;
+  if(_slSetupLines.find(l=>l.toLowerCase()===name.toLowerCase()))return;
+  _slSetupLines.push(name);inp.value='';slRenderSetupLines();slCheckSetup();
+}
+function slRenderSetupLines(){
+  const el=document.getElementById('sp-lines');if(!el)return;
+  el.innerHTML=_slSetupLines.map((l,i)=>`
+    <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-top:1px solid var(--br);">
+      <div style="width:8px;height:8px;border-radius:50%;background:var(--forest);flex-shrink:0;"></div>
+      <div style="flex:1;font-size:14px;">${l}</div>
+      <button onclick="_slSetupLines.splice(${i},1);slRenderSetupLines();slCheckSetup()" style="background:none;border:none;color:var(--muted2);font-size:18px;cursor:pointer;-webkit-appearance:none;">×</button>
+    </div>`).join('');
+}
+function slCheckSetup(){
+  const plant=(document.getElementById('sp-plant').value||'').trim();
+  const btn=document.getElementById('sp-save');
+  const ready=plant.length>0&&_slSetupLines.length>0;
+  btn.disabled=!ready;btn.style.opacity=ready?'1':'.3';btn.style.pointerEvents=ready?'auto':'none';
+}
+async function slSaveSetup(){
+  const plantName=(document.getElementById('sp-plant').value||'').trim();
+  if(!plantName||!_slSetupLines.length)return;
+  const btn=document.getElementById('sp-save');btn.textContent='Setting up...';btn.disabled=true;
+  const sb=slGetSb();
+  try{
+    let plantId=null;
+    if(sb&&_slSess){
+      const{data:ex}=await sb.from('plants').select('id').eq('name',plantName).maybeSingle();
+      if(ex){plantId=ex.id;}
+      else{const{data:ins,error}=await sb.from('plants').insert({name:plantName}).select('id').single();if(error)throw error;plantId=ins.id;}
+      for(const ln of _slSetupLines){
+        const{data:exl}=await sb.from('lines').select('id').eq('plant_id',plantId).eq('line_name',ln).maybeSingle();
+        if(!exl)await sb.from('lines').insert({plant_id:plantId,line_name:ln});
+      }
+    }
+    _slPid=plantId?String(plantId):'local_'+Date.now();
+    _slPname=plantName;
+    _slLines=_slSetupLines.map((n,i)=>({id:'line_'+i,name:n}));
+    localStorage.setItem('sl_pid',_slPid);localStorage.setItem('sl_pname',_slPname);localStorage.setItem('sl_lines',JSON.stringify(_slLines));
+    slEnterDash();
+  }catch(e){document.getElementById('sp-msg').textContent='Error: '+e.message;btn.textContent='Launch My Workspace →';btn.disabled=false;}
+}
+
+// ── Dashboard ──
+function slEnterDash(){
+  const pe=document.getElementById('sl-plant-name');
+  if(pe)pe.childNodes[0].textContent=_slPname||'Site Level';
+  if(_slSess&&_slSess.user){const ee=document.getElementById('sl-user-email');if(ee)ee.textContent=_slSess.user.email;}
+  slRenderLines(_slLines.map(l=>({name:l.name,va:0,waste:null,studies:0})));
+  slShowDash();
+}
+
+function slRenderLines(lines){
+  const el=document.getElementById('sl-line-cards');if(!el)return;
+  el.innerHTML=lines.map(l=>`
+    <div onclick="slGoWalkLine('${l.name}')" style="background:var(--s1);border-radius:var(--r2);overflow:hidden;box-shadow:var(--shadow);${l.studies>0?'border-left:4px solid var(--amber);':'border-left:4px solid var(--br);'}cursor:pointer;active:opacity:.9;">
+      <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--br);">
+        <div style="width:10px;height:10px;border-radius:50%;background:${l.studies>0?'var(--amber)':'var(--br)'};flex-shrink:0;"></div>
+        <div style="font-family:var(--head);font-size:16px;font-weight:700;color:var(--txt);flex:1;">${l.name}</div>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--muted2);background:var(--s2);padding:2px 8px;border-radius:10px;">${l.studies>0?l.studies+' stud'+(l.studies===1?'y':'ies'):'No data'}</div>
+        <div style="font-size:16px;color:var(--muted2);">›</div>
+      </div>
+      <div style="padding:10px 14px;">
+        ${l.studies>0?
+          `<div style="font-family:var(--mono);font-size:10px;color:var(--muted2);margin-bottom:4px;">VA% <span style="color:var(--forest);font-weight:700;">${l.va}%</span></div><div style="height:6px;background:var(--s2);border-radius:3px;overflow:hidden;margin-bottom:4px;"><div style="height:100%;background:var(--forest);border-radius:3px;width:${l.va}%;"></div></div><div style="font-family:var(--mono);font-size:10px;color:var(--muted2);">Top waste: ${l.waste} · Tap to walk again</div>`:
+          `<div style="font-family:var(--mono);font-size:11px;color:var(--muted2);">No data yet · <span style="color:var(--amber);font-weight:700;">Tap to walk this line →</span></div>`}
+      </div>
+    </div>`).join('');
+}
+
+function slGoWalkLine(lineName){
+  slGoWalk();
+  setTimeout(function(){
+    const sel=document.getElementById('ws-line-sel');
+    if(sel)sel.value=lineName;
+  },100);
+}
+
+// ── Auth init ──
+async function slInit(){
+  const sb=slGetSb();
+  if(!sb){slShow('SL');return;}
+  const hash=window.location.hash;
+  if(hash.includes('access_token')){
+    const{data:{session}}=await sb.auth.getSession();
+    if(session){_slSess=session;window.history.replaceState({},'',window.location.pathname);await slAfterAuth();return;}
+  }
+  const{data:{session}}=await sb.auth.getSession();
+  if(session){_slSess=session;await slAfterAuth();return;}
+  sb.auth.onAuthStateChange(async(evt,sess)=>{
+    if(evt==='SIGNED_IN'&&sess){_slSess=sess;await slAfterAuth();}
+    else if(evt==='SIGNED_OUT')slShow('SL');
+  });
+  slShow('SL');
+}
+async function slAfterAuth(){
+  if(_slPid&&_slPname){slEnterDash();}else{_slSetupLines=[];slShow('SP');}
+}
+
+// ════════════════════════════════════════════════════════
+// WALK SCREEN (WorkSample engine)
+// ════════════════════════════════════════════════════════
+const WS_COACH=[
+  {step:'1 of 5',head:'Pick one person on the line.',body:'Just one. Any person. Start at one end and work your way down.',btn:'Got it →'},
+  {step:'2 of 5',head:'Glance at them. One second.',body:'A quick glance — what are they doing right now at this exact moment? Not a minute. One second.',btn:'Ready →'},
+  {step:'3 of 5',head:'What are they doing right now?',body:'Tap the button that matches what you just saw. Value Add means hands on the product. Everything else is a form of waste.',btn:'Got it →'},
+  {step:'4 of 5',head:'Move to the next person.',body:'Glance, tap, move on. Work through every person on the line, then loop back to the start.',btn:'Got it →'},
+  {step:'5 of 5',head:'Keep cycling. That is the method.',body:'Start to end, loop back, repeat. Every person gets an observation on every pass. The randomness makes the data valid.',btn:"Let's go →"}
+];
+let _wsCoachIdx=0,_wsObs=[],_wsTotal=0,_wsLine='';
+
+function wsPopulateLines(){
+  const sel=document.getElementById('ws-line-sel');if(!sel)return;
+  sel.innerHTML='<option value="">Select a line...</option>';
+  const lines=_slLines.length?_slLines:JSON.parse(localStorage.getItem('sl_lines')||'[]');
+  lines.forEach(l=>{const o=document.createElement('option');o.value=l.name;o.textContent=l.name;sel.appendChild(o);});
+  // Auto-select first line if only one
+  if(lines.length===1)sel.value=lines[0].name;
+}
+
+function wsStartStudy(){
+  const lineSel=document.getElementById('ws-line-sel');
+  const line=lineSel?lineSel.value:'';
+  if(!line){alert('Select a line first.');return;}
+  _wsLine=line;_wsObs=[];_wsTotal=0;
+  // Build waste buttons from checked categories
+  const btns=document.getElementById('ws-waste-btns');if(!btns)return;
+  const cats={motion:{label:'🚶 Motion',color:'#B45309'},waiting:{label:'⏳ Waiting',color:'#1D4ED8'},defects:{label:'⚠️ Defects',color:'#DC2626'},overprocess:{label:'🔄 Over-processing',color:'#7C3AED'},transport:{label:'🚛 Transport',color:'#065F46'},inventory:{label:'📦 Inventory',color:'#92400E'}};
+  const checked=Array.from(document.querySelectorAll('#ws-cats input:checked')).map(i=>i.value);
+  btns.innerHTML=checked.map(c=>`<button onclick="wsObs('${c}')" style="padding:18px 12px;background:#fff;color:${cats[c]?cats[c].color:'#333'};border:2px solid ${cats[c]?cats[c].color:'#ccc'};border-radius:var(--r2);font-family:var(--head);font-size:16px;font-weight:800;cursor:pointer;-webkit-appearance:none;">${cats[c]?cats[c].label:c}</button>`).join('');
+  // Set line label
+  const lbl=document.getElementById('ws-obs-line');if(lbl)lbl.textContent=line;
+  // Show observation screen
+  const obs=document.getElementById('ws-obs');if(obs){obs.style.display='flex';obs.style.pointerEvents='auto';}
+  // Start coaching
+  _wsCoachIdx=0;wsShowCoach(0);
+}
+
+function wsShowCoach(idx){
+  const card=WS_COACH[idx];if(!card)return;
+  const overlay=document.getElementById('ws-coach');
+  const inner=document.getElementById('ws-coach-inner');
+  if(!overlay||!inner)return;
+  overlay.style.display='flex';
+  inner.innerHTML=`
+    <div style="font-family:var(--mono);font-size:10px;color:var(--amber);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px;">Step ${card.step}</div>
+    <div style="font-family:var(--head);font-size:28px;font-weight:800;color:var(--forest);line-height:1.2;margin-bottom:10px;">${card.head}</div>
+    <div style="font-size:15px;color:var(--txt);line-height:1.6;margin-bottom:20px;">${card.body}</div>
+    <button onclick="wsNextCoach()" style="width:100%;padding:14px;background:var(--forest);color:#fff;border:none;border-radius:var(--r2);font-family:var(--head);font-size:18px;font-weight:800;cursor:pointer;-webkit-appearance:none;">${card.btn}</button>`;
+}
+function wsNextCoach(){
+  _wsCoachIdx++;
+  if(_wsCoachIdx>=WS_COACH.length){
+    const overlay=document.getElementById('ws-coach');if(overlay)overlay.style.display='none';
+    // Training wheels off toast
+    const t=document.createElement('div');
+    t.textContent='Training wheels are off. 92 more observations — go get them.';
+    t.style.cssText='position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--forest);color:#fff;padding:18px 22px;border-radius:14px;font-family:var(--head);font-size:18px;font-weight:800;text-align:center;z-index:9999;border:2px solid var(--amber);max-width:280px;width:90%;';
+    document.body.appendChild(t);
+    setTimeout(()=>t.remove(),4000);
+  }else{wsShowCoach(_wsCoachIdx);}
+}
+
+function wsObs(cat){
+  _wsObs.push(cat);_wsTotal++;
+  const vaCount=_wsObs.filter(o=>o==='va').length;
+  const vaPct=Math.round((vaCount/_wsTotal)*100);
+  const pctEl=document.getElementById('ws-va-pct');if(pctEl)pctEl.textContent=vaPct+'%';
+  const bar=document.getElementById('ws-prog-bar');if(bar)bar.style.width=Math.min(100,(_wsTotal/97)*100)+'%';
+  const cnt=document.getElementById('ws-obs-count');if(cnt)cnt.textContent=_wsTotal+' observation'+(  _wsTotal===1?'':'s');
+  const fin=document.getElementById('ws-finish-btn');
+  if(fin&&_wsTotal>=20){fin.disabled=false;fin.style.opacity='1';fin.style.pointerEvents='auto';}
+}
+
+function wsUndo(){
+  if(!_wsObs.length)return;
+  _wsObs.pop();_wsTotal=Math.max(0,_wsTotal-1);
+  const vaCount=_wsObs.filter(o=>o==='va').length;
+  const vaPct=_wsTotal>0?Math.round((vaCount/_wsTotal)*100):0;
+  const pctEl=document.getElementById('ws-va-pct');if(pctEl)pctEl.textContent=_wsTotal>0?vaPct+'%':'—%';
+  const bar=document.getElementById('ws-prog-bar');if(bar)bar.style.width=Math.min(100,(_wsTotal/97)*100)+'%';
+  const cnt=document.getElementById('ws-obs-count');if(cnt)cnt.textContent=_wsTotal+' observation'+(_wsTotal===1?'':'s');
+}
+
+function wsFinish(){
+  const vaCount=_wsObs.filter(o=>o==='va').length;
+  const vaPct=_wsTotal>0?Math.round((vaCount/_wsTotal)*100):0;
+  const wasted=100-vaPct;
+  // Build breakdown
+  const cats={};_wsObs.forEach(o=>{if(o!=='va')cats[o]=(cats[o]||0)+1;});
+  const topWaste=Object.keys(cats).sort((a,b)=>cats[b]-cats[a])[0]||'—';
+  // Show result screen
+  const obs=document.getElementById('ws-obs');if(obs){obs.style.display='none';obs.style.pointerEvents='none';}
+  const res=document.getElementById('ws-result');if(res){res.style.display='flex';res.style.pointerEvents='auto';}
+  // Populate
+  const rl=document.getElementById('res-line-label');if(rl)rl.textContent=_wsLine;
+  const rv=document.getElementById('res-va');if(rv)rv.textContent=vaPct+'%';
+  // Bars
+  const bars=document.getElementById('res-bars');
+  if(bars){
+    const allCats={va:'Value Add',...Object.fromEntries(Object.keys(cats).map(k=>[k,k.charAt(0).toUpperCase()+k.slice(1)]))};
+    bars.innerHTML=Object.entries(allCats).map(([k,label])=>{
+      const count=k==='va'?vaCount:(cats[k]||0);
+      const pct=_wsTotal>0?Math.round((count/_wsTotal)*100):0;
+      return`<div style="margin-bottom:10px;"><div style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;color:var(--muted);margin-bottom:3px;"><span>${label}</span><span>${pct}%</span></div><div style="height:8px;background:var(--s2);border-radius:4px;overflow:hidden;"><div style="height:100%;background:${k==='va'?'var(--forest)':'var(--amber)'};border-radius:4px;width:${pct}%;"></div></div></div>`;
+    }).join('');
+  }
+  // Eric's copy
+  const copy=document.getElementById('res-copy');
+  if(copy){
+    const recover=Math.max(1,Math.round(wasted*0.1));
+    copy.innerHTML=`You just ran a study and found that <strong style="color:var(--amber)">${wasted}% of operator time</strong> is spent on work your customers don't want to pay for — but you and your company are.<br><br>What could you do with <strong style="color:var(--amber)">${recover}%</strong> of that back? How many more units? How many fewer overtime hours?<br><br>The next step is finding out exactly where it's going and how to get it back. You owe it to yourself. You owe it to your customers. And you owe it to the people on that floor — because we all know how precious their time is. Wasting it isn't fair to anybody.`;
+  }
+  // Save to Supabase
+  wsSaveToCloud(vaPct,cats,topWaste);
+}
+
+async function wsSaveToCloud(vaPct,cats,topWaste){
+  if(typeof sbClient!=="function")return;
+  const sb=sbClient();if(!sb)return;
+  const plantId=_slPid&&!_slPid.startsWith('local')?parseInt(_slPid):null;
+  if(!plantId)return;
+  try{
+    await sb.from('work_samples').insert({
+      plant_id:plantId,
+      study_date:new Date().toISOString().slice(0,10),
+      study_name:_wsLine,
+      total_obs:_wsTotal,
+      va_count:_wsObs.filter(o=>o==='va').length,
+      waste_breakdown:JSON.stringify(cats),
+      conditions:'[]',notes:null,
+      duration_ms:0,categories:JSON.stringify(Object.keys(cats))
+    });
+  }catch(e){console.log('WS save:',e.message);}
+}
+
+function wsNewStudy(){
+  const res=document.getElementById('ws-result');if(res)res.style.display='none';
+  const obs=document.getElementById('ws-obs');if(obs){obs.style.display='none';obs.style.pointerEvents='none';}
+  slGoWalk();
+}
+
+
+// ── FAQ / Learn ──
+const SL_FAQ = [
+  {q:'What is work sampling?', a:'Work sampling is a statistical method for measuring how operators spend their time. You observe each person briefly — one glance — and record what they are doing at that exact moment. Repeat this across the full line over 20 minutes. The result is a statistically valid breakdown of value-added vs. non-value-added time.'},
+  {q:'Why 97 observations?', a:'At 95% confidence with ±10% precision, the formula requires 97 observations (n = Z² × p × (1-p) / e²). 100 is a round number. 97 is the number you can defend to a Black Belt.'},
+  {q:'What is Value Add (VA)?', a:'An operator is doing value-added work when their hands are on the product and it is being transformed in a way the customer would pay for. Building, assembling, welding, painting — these are VA. Walking, waiting, inspecting for defects — these are not.'},
+  {q:'What is Motion?', a:'Motion is an operator moving to get what they need — walking to get parts, tools, or information. The product is not moving. The person is. Root cause is almost always workstation layout or material placement. Fix: move the material closer to the work.'},
+  {q:'What is Waiting?', a:'An operator standing idle — waiting for a machine, a part, an instruction, or the person upstream to finish. Note: rising Waiting after reducing Motion is a sign of progress — not a new problem. The waste became visible.'},
+  {q:'What is Over-processing?', a:'Doing more to a product than the customer requires. Extra inspection steps, unnecessary adjustments, repackaging. Often invisible because it looks like work.'},
+  {q:'How do I observe correctly?', a:'Start at one end of the line. Glance at the first operator — one second. Tap what they are doing right now. Move to the next person. Repeat. Loop back. Every person gets an observation on every pass. Random timing across cycles is what makes the data valid.'},
+  {q:'What does the VA% tell me?', a:'If VA% is 40%, operators are spending 60% of their time on work the customer is not paying for — but your company is. A 10-point improvement on a 20-person line at $20/hr recovers roughly $166,000/year.'},
+  {q:'What do I do with the results?', a:'High Motion — run a spaghetti diagram. Trace one operator\'s exact path for one full cycle. Root cause is almost always workstation layout or material placement. Then go to Study — ProcessDx to diagnose the specific station.'},
+  {q:'What is ProcessDx?', a:'ProcessDx is a 7-gate diagnostic tool for a specific station. Where work sampling shows you where the waste is across the line, ProcessDx tells you exactly what is causing it at one station — cycle time, variation, waste steps — and helps you set an experiment to fix it.'},
+];
+
+function slRenderFAQ(){
+  const el=document.getElementById('sl-faq-list');if(!el)return;
+  el.innerHTML=SL_FAQ.map((item,i)=>`
+    <div onclick="slToggleFAQ(${i})" style="background:var(--s1);border-radius:var(--r);margin-bottom:8px;overflow:hidden;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.06);">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;">
+        <div style="font-family:var(--head);font-size:15px;font-weight:700;color:var(--forest);flex:1;padding-right:10px;">${item.q}</div>
+        <div id="sl-faq-arr-${i}" style="font-size:18px;color:var(--amber);font-weight:700;flex-shrink:0;">›</div>
+      </div>
+      <div id="sl-faq-ans-${i}" style="display:none;padding:0 14px 14px;font-size:13px;color:var(--muted);line-height:1.6;border-top:1px solid var(--br);padding-top:10px;">${item.a}</div>
+    </div>`).join('');
+}
+
+function slToggleFAQ(i){
+  const ans=document.getElementById('sl-faq-ans-'+i);
+  const arr=document.getElementById('sl-faq-arr-'+i);
+  if(!ans)return;
+  const open=ans.style.display==='block';
+  // Close all
+  SL_FAQ.forEach((_,j)=>{
+    const a=document.getElementById('sl-faq-ans-'+j);
+    const r=document.getElementById('sl-faq-arr-'+j);
+    if(a)a.style.display='none';
+    if(r)r.textContent='›';
+  });
+  // Open clicked if it was closed
+  if(!open){
+    ans.style.display='block';
+    if(arr)arr.textContent='⌄';
+  }
+}
+
+// Render FAQ on load
+window.addEventListener('load',function(){
+  setTimeout(slRenderFAQ, 500);
+});
+
+// ── Init — safe startup ──
+window.addEventListener('load',function(){
+  // Always show login first — runs synchronously before anything else
+  try{
+    document.querySelectorAll('.scr').forEach(s=>s.classList.remove('on'));
+    const sl=document.getElementById('SL');if(sl)sl.classList.add('on');
+  }catch(e){}
+  // Trigger ProcessDx boot after SL has control
+  setTimeout(function(){
+    try{if(typeof window._pdxBoot==='function')window._pdxBoot();}catch(e){}
+    try{slInit();}catch(e){console.log('slInit:',e);}
+  },200);
+});
+</script>
+
+<!-- LEARN FAQ MODAL -->
+<div id="sl-learn-modal" style="display:none;position:fixed;inset:0;background:rgba(27,67,50,.92);z-index:10000;flex-direction:column;overflow:hidden;">
+  <div style="background:var(--forest);padding:12px 16px;padding-top:calc(12px + var(--st));border-bottom:3px solid var(--amber);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
+    <div style="font-family:var(--head);font-size:18px;font-weight:800;color:#fff;letter-spacing:.3px;">Learn</div>
+    <button onclick="document.getElementById('sl-learn-modal').style.display='none';slNavSet('sln-results');" style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;padding:6px 12px;border-radius:6px;font-family:var(--head);font-size:13px;font-weight:700;cursor:pointer;-webkit-appearance:none;">✕ Close</button>
+  </div>
+  <div style="flex:1;overflow-y:auto;padding:14px;" id="sl-faq-list"></div>
+</div>
 
 <div id="saveFlash" class="save-flash">✓ Saved</div>
 
@@ -4833,15 +4854,6 @@ if('serviceWorker' in navigator){
     <div id="stationModalList" style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px"></div>
     <button onclick="$('stationModal').style.display='none'" class="btn-secondary" style="width:100%">Cancel</button>
   </div>
-</div>
-
-<!-- LEARN FAQ MODAL -->
-<div id="sl-learn-modal" style="display:none;position:fixed;inset:0;background:rgba(27,67,50,.92);z-index:10000;flex-direction:column;overflow:hidden;">
-  <div style="background:var(--forest);padding:12px 16px;padding-top:calc(12px + var(--st));border-bottom:3px solid var(--amber);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
-    <div style="font-family:var(--head);font-size:18px;font-weight:800;color:#fff;letter-spacing:.3px;">Learn</div>
-    <button onclick="document.getElementById('sl-learn-modal').style.display='none';slNavSet('sln-results');" style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;padding:6px 12px;border-radius:6px;font-family:var(--head);font-size:13px;font-weight:700;cursor:pointer;-webkit-appearance:none;">✕ Close</button>
-  </div>
-  <div style="flex:1;overflow-y:auto;padding:14px;" id="sl-faq-list"></div>
 </div>
 </body>
 </html>
