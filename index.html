@@ -5270,14 +5270,14 @@ async function slgSubmit(){
     }
     if(result.data&&result.data.user)slgOnLogin(result.data.user);
   } catch(err){
-    slgSetLoading(false);
     var msg=err.message||'Something went wrong.';
     if(/invalid.*(login|credentials)/i.test(msg))msg='Email or password is incorrect.';
     if(/already.*(registered|been registered)/i.test(msg))msg='Account exists — sign in instead.';
     if(/email not confirmed/i.test(msg))msg='Check your email to confirm your account first.';
     slgMsg(msg,true);
+  } finally {
+    slgSetLoading(false);
   }
-  slgSetLoading(false);
 }
 
 function slgShowForgot(){
@@ -5321,7 +5321,14 @@ function slgDemo(){
   renderDash();slShow('SLD');
 }
 
+function slgResetButton(){
+  var btn=slId('btn-slg-submit');
+  if(btn){btn.disabled=false;btn.style.opacity='1';btn.textContent='Sign In →';}
+  slgMsg('');
+}
+
 function slgCheckSession(){
+  setTimeout(slgResetButton,300);
   var sb=slgGetSB();
   if(!sb){slShow('SLG');return;}
   sb.auth.onAuthStateChange(function(event,session){
