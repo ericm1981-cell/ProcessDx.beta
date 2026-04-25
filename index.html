@@ -241,6 +241,24 @@ body{overscroll-behavior:none;overflow:hidden}
 .wt-input:focus{outline:1px solid var(--green);border-radius:2px}
 
 /* ══════════════ SITE LEVEL CSS ══════════════ */
+
+/* ── Setup Wizard ─────────────────────────────── */
+.slx-field{margin-bottom:10px;}
+.slx-lbl{font-family:var(--mono);font-size:9px;color:var(--muted2);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:4px;}
+.slx-input{width:100%;padding:11px 12px;border:1px solid var(--br);border-radius:6px;background:var(--s1);color:var(--txt);font-size:15px;font-family:var(--body);outline:none;-webkit-appearance:none;transition:border-color .15s;}
+.slx-input:focus{border-color:var(--forest);}
+.slx-hint{font-family:var(--mono);font-size:8px;color:var(--muted2);margin-top:3px;}
+.slx-msg{font-family:var(--mono);font-size:10px;min-height:16px;margin:6px 0;color:var(--red);}
+.slx-btn-primary{width:100%;padding:14px;background:var(--navy);color:#fff;border:none;border-radius:6px;font-family:var(--head);font-size:17px;font-weight:800;cursor:pointer;-webkit-appearance:none;touch-action:manipulation;}
+.slx-btn-primary:disabled{opacity:.35;}
+.slx-btn-secondary{padding:10px 14px;background:var(--s2);color:var(--forest);border:1.5px solid var(--forest);border-radius:6px;font-family:var(--head);font-size:14px;font-weight:700;cursor:pointer;-webkit-appearance:none;touch-action:manipulation;}
+.slx-btn-ghost{padding:14px 16px;background:none;color:var(--muted);border:1px solid var(--br);border-radius:6px;font-family:var(--head);font-size:14px;font-weight:700;cursor:pointer;-webkit-appearance:none;touch-action:manipulation;}
+.slx-line-card{background:var(--s1);border:1px solid var(--br);border-radius:6px;padding:10px 12px;display:flex;align-items:center;gap:8px;}
+.slx-line-card-body{flex:1;}
+.slx-line-card-name{font-family:var(--head);font-size:15px;font-weight:700;color:var(--txt);}
+.slx-line-card-meta{font-family:var(--mono);font-size:9px;color:var(--muted2);margin-top:2px;}
+.slx-rm{background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;padding:4px;-webkit-appearance:none;touch-action:manipulation;flex-shrink:0;}
+
 /* Color additions for Site Level */
 :root {
   --navy:#1E3A5F;--bg2:#fff;--bg3:#F1F5F9;
@@ -368,7 +386,192 @@ body{overscroll-behavior:none;overflow:hidden}
     </div>
 
   </div>
+</div><!-- SLX: Setup Wizard -->
+<div id="SLX" class="scr">
+  <div class="sl-hdr">
+    <div>
+      <div class="sl-ht" id="slx-title">Plant Setup</div>
+      <div class="sl-hs" id="slx-sub">Step 1 of 2</div>
+    </div>
+    <div id="slx-skip" style="display:none;">
+      <button onclick="slxSkip()" style="background:none;border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.45);padding:5px 10px;border-radius:4px;font-family:var(--mono);font-size:10px;cursor:pointer;-webkit-appearance:none;touch-action:manipulation;">Skip →</button>
+    </div>
+  </div>
+
+  <!-- Progress bar -->
+  <div style="display:flex;gap:4px;padding:10px 14px 0;flex-shrink:0;background:var(--navy);">
+    <div id="slx-p1" style="flex:1;height:3px;border-radius:2px;background:#FCD34D;transition:background .3s;"></div>
+    <div id="slx-p2" style="flex:1;height:3px;border-radius:2px;background:rgba(255,255,255,.15);transition:background .3s;"></div>
+    <div id="slx-p3" style="flex:1;height:3px;border-radius:2px;background:rgba(255,255,255,.15);transition:background .3s;display:none;"></div>
+  </div>
+
+  <div class="scroll" style="padding-bottom:80px;">
+
+    <!-- STEP 1: Plant -->
+    <div id="slx-step-1" style="padding:16px 14px;">
+      <div style="font-family:var(--mono);font-size:10px;color:var(--muted2);line-height:1.8;margin-bottom:20px;">Tell us about your facility. This drives all cost calculations across every tool.</div>
+
+      <div class="slx-field">
+        <label class="slx-lbl">Plant Name</label>
+        <input id="slx-plant-name" type="text" placeholder="e.g. Northside Assembly" autocapitalize="words"
+          class="slx-input">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div class="slx-field">
+          <label class="slx-lbl">Labor Rate ($/hr)</label>
+          <input id="slx-labor-rate" type="number" placeholder="20.25" inputmode="decimal" class="slx-input">
+        </div>
+        <div class="slx-field">
+          <label class="slx-lbl">Work Days / Year</label>
+          <input id="slx-work-days" type="number" placeholder="250" inputmode="numeric" class="slx-input">
+          <div class="slx-hint">M–F = 260, minus holidays</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div class="slx-field">
+          <label class="slx-lbl">Currency</label>
+          <select id="slx-currency" class="slx-input">
+            <option value="USD">USD $</option>
+            <option value="CAD">CAD $</option>
+            <option value="EUR">EUR €</option>
+            <option value="GBP">GBP £</option>
+            <option value="MXN">MXN $</option>
+          </select>
+        </div>
+        <div class="slx-field">
+          <label class="slx-lbl">Timezone</label>
+          <select id="slx-timezone" class="slx-input">
+            <option value="America/New_York">Eastern</option>
+            <option value="America/Chicago">Central</option>
+            <option value="America/Denver">Mountain</option>
+            <option value="America/Los_Angeles">Pacific</option>
+            <option value="America/Toronto">Toronto</option>
+            <option value="Europe/London">London</option>
+            <option value="Europe/Berlin">Berlin</option>
+          </select>
+        </div>
+      </div>
+      <div id="slx-msg-1" class="slx-msg"></div>
+      <button onclick="slxStep1Next()" class="slx-btn-primary">Next: Add Lines →</button>
+    </div>
+
+    <!-- STEP 2: Lines -->
+    <div id="slx-step-2" style="display:none;padding:16px 14px;">
+      <div style="font-family:var(--mono);font-size:10px;color:var(--muted2);line-height:1.8;margin-bottom:16px;">Add each production line. These names lock in across WorkSample, ProcessDx, and Site Level — they won't need to be typed again.</div>
+
+      <!-- Lines list -->
+      <div id="slx-lines-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px;"></div>
+
+      <!-- Add line card -->
+      <div style="background:var(--s1);border:1.5px dashed var(--br);border-radius:8px;padding:12px 14px;margin-bottom:14px;">
+        <div style="font-family:var(--mono);font-size:9px;color:var(--forest);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Add Line</div>
+        <div class="slx-field">
+          <label class="slx-lbl">Line Name</label>
+          <input id="slx-ln-name" type="text" placeholder="e.g. Assembly Line A" autocapitalize="words" class="slx-input">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <div class="slx-field">
+            <label class="slx-lbl">Takt (seconds)</label>
+            <input id="slx-ln-takt" type="number" placeholder="75" inputmode="decimal" class="slx-input">
+          </div>
+          <div class="slx-field">
+            <label class="slx-lbl">Headcount</label>
+            <input id="slx-ln-hc" type="number" placeholder="8" inputmode="numeric" class="slx-input">
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <div class="slx-field">
+            <label class="slx-lbl">Shifts / Day</label>
+            <select id="slx-ln-shifts" class="slx-input">
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+            </select>
+          </div>
+          <div class="slx-field">
+            <label class="slx-lbl">Min / Shift</label>
+            <input id="slx-ln-mins" type="number" placeholder="455" inputmode="numeric" class="slx-input">
+            <div class="slx-hint">8hr = 480, less breaks</div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <div class="slx-field">
+            <label class="slx-lbl">PFD %</label>
+            <input id="slx-ln-pfd" type="number" placeholder="15" inputmode="decimal" class="slx-input">
+            <div class="slx-hint">Assembly = 15, grip = 18</div>
+          </div>
+          <div class="slx-field" style="display:flex;align-items:flex-end;padding-bottom:2px;">
+            <div style="width:100%;">
+              <div id="slx-avail-preview" style="font-family:var(--mono);font-size:9px;color:var(--muted2);padding:4px 0;min-height:20px;"></div>
+            </div>
+          </div>
+        </div>
+        <button onclick="slxAddLine()" class="slx-btn-secondary" style="width:100%;margin-top:6px;">+ Add This Line</button>
+        <div id="slx-msg-line" class="slx-msg"></div>
+      </div>
+
+      <div id="slx-msg-2" class="slx-msg"></div>
+      <div style="display:flex;gap:8px;">
+        <button onclick="slxBack(1)" class="slx-btn-ghost">← Back</button>
+        <button id="slx-btn-step2-next" onclick="slxStep2Next()" class="slx-btn-primary" style="flex:1;" disabled>Save & Continue →</button>
+      </div>
+    </div>
+
+    <!-- STEP 3: Stations (pro only) -->
+    <div id="slx-step-3" style="display:none;padding:16px 14px;">
+      <div style="background:#FFFBEB;border:1px solid #CA8A04;border-radius:6px;padding:10px 12px;margin-bottom:16px;display:flex;gap:8px;align-items:flex-start;">
+        <div style="font-size:16px;flex-shrink:0;">⭐</div>
+        <div style="font-family:var(--mono);font-size:10px;color:#92400E;line-height:1.7;">Pro feature — define workstations per line. This enables ProcessDx pre-fill and the full line balance view. You can add stations later from settings.</div>
+      </div>
+
+      <!-- Line selector -->
+      <div class="slx-field">
+        <label class="slx-lbl">Add stations to</label>
+        <select id="slx-st-line-sel" class="slx-input" onchange="slxRenderStationList()"></select>
+      </div>
+
+      <!-- Existing stations for selected line -->
+      <div id="slx-station-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px;"></div>
+
+      <!-- Add station -->
+      <div style="background:var(--s1);border:1.5px dashed var(--br);border-radius:8px;padding:12px 14px;margin-bottom:14px;">
+        <div style="font-family:var(--mono);font-size:9px;color:var(--forest);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Add Station</div>
+        <div style="display:grid;grid-template-columns:2fr 1fr;gap:8px;">
+          <div class="slx-field">
+            <label class="slx-lbl">Station Name</label>
+            <input id="slx-st-name" type="text" placeholder="e.g. Frame Build" autocapitalize="words" class="slx-input">
+          </div>
+          <div class="slx-field">
+            <label class="slx-lbl">Headcount</label>
+            <input id="slx-st-hc" type="number" placeholder="1" inputmode="numeric" class="slx-input">
+          </div>
+        </div>
+        <!-- Variants -->
+        <div class="slx-field">
+          <label class="slx-lbl">Product Variants <span style="color:var(--muted2);font-weight:400;">(comma separated)</span></label>
+          <input id="slx-st-variants" type="text" placeholder="e.g. CX, WW, Slider" autocapitalize="words" class="slx-input">
+          <div class="slx-hint">Leave blank if single product</div>
+        </div>
+        <!-- Volume per variant — rendered dynamically -->
+        <div id="slx-variant-volumes" style="display:none;margin-bottom:8px;">
+          <label class="slx-lbl">Volume per variant / shift</label>
+          <div id="slx-vol-inputs" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;"></div>
+        </div>
+        <button onclick="slxAddStation()" class="slx-btn-secondary" style="width:100%;margin-top:6px;">+ Add This Station</button>
+        <div id="slx-msg-st" class="slx-msg"></div>
+      </div>
+
+      <div id="slx-msg-3" class="slx-msg"></div>
+      <div style="display:flex;gap:8px;">
+        <button onclick="slxBack(2)" class="slx-btn-ghost">← Back</button>
+        <button onclick="slxFinish()" class="slx-btn-primary" style="flex:1;">Finish Setup →</button>
+      </div>
+    </div>
+
+  </div>
 </div>
+
+
 <!-- SLD: Dashboard -->
 <div id="SLD" class="scr">
   <div class="sl-hdr">
@@ -5027,6 +5230,252 @@ window.addEventListener('load',function(){
 });
 
 // ── Event binding ─────────────────────────────────────────
+
+// ════════════════════════════════════════════════════════
+//  SETUP WIZARD — sl-setup
+// ════════════════════════════════════════════════════════
+
+var _slxPlantId = null;    // Supabase plant id after step 1 saves
+var _slxLines   = [];      // {name,takt,headcount,shifts,mins,pfd, id?}
+var _slxStations= {};      // {lineIndex: [{name,hc,variants,volumes}]}
+var _slxStep    = 1;
+
+function slxId(id){return document.getElementById(id);}
+
+// Show/hide steps
+function slxGoto(step){
+  _slxStep=step;
+  [1,2,3].forEach(function(n){
+    var el=slxId('slx-step-'+n);if(el)el.style.display=n===step?'block':'none';
+    var pb=slxId('slx-p'+n);if(pb)pb.style.background=n<=step?'#FCD34D':'rgba(255,255,255,.15)';
+  });
+  var titles=['','Plant Setup','Add Lines','Add Stations'];
+  var subs=['','Step 1 of 2','Step 2 of 2','Step 3 of 3 — Pro'];
+  slId('slx-title').textContent=titles[step]||'Setup';
+  slId('slx-sub').textContent=subs[step]||'';
+  // Show skip on step 3
+  var skip=slxId('slx-skip');if(skip)skip.style.display=step===3?'block':'none';
+}
+
+function slxBack(toStep){slxGoto(toStep);}
+function slxSkip(){slxFinish();}
+
+// Available minutes preview
+function slxUpdateAvailPreview(){
+  var mins=parseFloat(slxId('slx-ln-mins').value)||455;
+  var pfd=parseFloat(slxId('slx-ln-pfd').value)||15;
+  var avail=Math.round(mins*(1-pfd/100));
+  var el=slxId('slx-avail-preview');
+  if(el)el.textContent='Net: '+avail+' min/shift';
+}
+
+// Variant volume inputs
+function slxUpdateVariantVolumes(){
+  var raw=(slxId('slx-st-variants').value||'').trim();
+  var vars=raw?raw.split(',').map(function(v){return v.trim();}).filter(Boolean):[];
+  var wrap=slxId('slx-variant-volumes');
+  var inp=slxId('slx-vol-inputs');
+  if(!wrap||!inp)return;
+  if(!vars.length){wrap.style.display='none';inp.innerHTML='';return;}
+  wrap.style.display='block';
+  inp.innerHTML=vars.map(function(v){
+    return '<div><label style="font-family:var(--mono);font-size:8px;color:var(--muted2);display:block;margin-bottom:3px;">'+v+'</label>'
+      +'<input type="number" inputmode="numeric" placeholder="0" data-variant="'+v+'" class="slx-input" style="padding:9px 10px;font-size:14px;"></div>';
+  }).join('');
+}
+
+// Step 1 — validate and save plant
+async function slxStep1Next(){
+  var name=(slxId('slx-plant-name').value||'').trim();
+  var rate=parseFloat(slxId('slx-labor-rate').value)||0;
+  var days=parseInt(slxId('slx-work-days').value)||250;
+  var cur=slxId('slx-currency').value||'USD';
+  var tz=slxId('slx-timezone').value||'America/New_York';
+  var msg=slxId('slx-msg-1');
+  if(!name){if(msg)msg.textContent='Plant name required.';return;}
+  if(rate<=0){if(msg)msg.textContent='Enter your labor rate.';return;}
+  if(msg)msg.textContent='';
+  var sb=slgGetSB();
+  var uid=null;
+  try{var s=await sb.auth.getSession();uid=s.data.session.user.id;}catch(e){}
+  if(sb&&uid){
+    var res=await sb.from('plants').upsert({
+      name:name,labor_rate:rate,work_days_year:days,
+      currency:cur,timezone:tz,user_id:uid
+    },{onConflict:'user_id'}).select('id').single();
+    if(res.data)_slxPlantId=res.data.id;
+  }
+  localStorage.setItem('sl_plant',name);
+  slxGoto(2);
+}
+
+// Step 2 — add a line to the local list
+function slxAddLine(){
+  var name=(slxId('slx-ln-name').value||'').trim();
+  var takt=parseFloat(slxId('slx-ln-takt').value)||0;
+  var hc=parseInt(slxId('slx-ln-hc').value)||1;
+  var shifts=parseInt(slxId('slx-ln-shifts').value)||1;
+  var mins=parseInt(slxId('slx-ln-mins').value)||455;
+  var pfd=parseFloat(slxId('slx-ln-pfd').value)||15;
+  var msg=slxId('slx-msg-line');
+  if(!name){if(msg)msg.textContent='Line name required.';return;}
+  if(takt<=0){if(msg)msg.textContent='Enter takt time.';return;}
+  // Check duplicate
+  if(_slxLines.find(function(l){return l.name.toLowerCase()===name.toLowerCase();})){
+    if(msg)msg.textContent='Line name already added.';return;
+  }
+  if(msg)msg.textContent='';
+  _slxLines.push({name:name,takt:takt,headcount:hc,shifts:shifts,mins:mins,pfd:pfd});
+  // Clear form
+  ['slx-ln-name','slx-ln-takt','slx-ln-hc','slx-ln-mins'].forEach(function(id){
+    var el=slxId(id);if(el)el.value='';
+  });
+  slxId('slx-ln-pfd').value='15';
+  slxId('slx-avail-preview').textContent='';
+  slxRenderLineCards();
+  var btn=slxId('slx-btn-step2-next');if(btn)btn.disabled=false;
+}
+
+function slxRemoveLine(idx){
+  _slxLines.splice(idx,1);
+  slxRenderLineCards();
+  var btn=slxId('slx-btn-step2-next');
+  if(btn)btn.disabled=_slxLines.length===0;
+}
+
+function slxRenderLineCards(){
+  var list=slxId('slx-lines-list');if(!list)return;
+  if(!_slxLines.length){list.innerHTML='';return;}
+  list.innerHTML=_slxLines.map(function(l,i){
+    var avail=Math.round(l.mins*(1-l.pfd/100));
+    return '<div class="slx-line-card">'
+      +'<div class="slx-line-card-body">'
+        +'<div class="slx-line-card-name">'+l.name+'</div>'
+        +'<div class="slx-line-card-meta">Takt '+l.takt+'s · '+l.headcount+' ppl · '+l.shifts+' shift'+(l.shifts>1?'s':'')+' · '+avail+' min net</div>'
+      +'</div>'
+      +'<button class="slx-rm" onclick="slxRemoveLine('+i+')">✕</button>'
+    +'</div>';
+  }).join('');
+}
+
+// Step 2 → save lines to Supabase + go to step 3 or finish
+async function slxStep2Next(){
+  var msg=slxId('slx-msg-2');
+  if(!_slxLines.length){if(msg)msg.textContent='Add at least one line.';return;}
+  if(msg)msg.textContent='Saving…';
+  var sb=slgGetSB();
+  var uid=null;
+  try{var s=await sb.auth.getSession();uid=s.data.session.user.id;}catch(e){}
+  if(sb&&uid){
+    for(var i=0;i<_slxLines.length;i++){
+      var l=_slxLines[i];
+      var res=await sb.from('lines').insert({
+        line_name:l.name,takt_seconds:l.takt,headcount:l.headcount,
+        shifts_per_day:l.shifts,minutes_per_shift:l.mins,pfd_pct:l.pfd,
+        plant_id:_slxPlantId,user_id:uid
+      }).select('id').single();
+      if(res.data)l.id=res.data.id;
+    }
+  }
+  if(msg)msg.textContent='';
+  var plan=localStorage.getItem('sl_plan')||'demo';
+  if(plan==='pro'){
+    // Populate line selector for step 3
+    var sel=slxId('slx-st-line-sel');
+    if(sel){
+      sel.innerHTML=_slxLines.map(function(l,i){
+        return '<option value="'+i+'">'+l.name+'</option>';
+      }).join('');
+    }
+    slxRenderStationList();
+    slxGoto(3);
+    // Show step 3 progress pip
+    var p3=slxId('slx-p3');if(p3)p3.style.display='block';
+    slxId('slx-sub').textContent='Step 3 of 3 — Pro';
+  } else {
+    slxFinish();
+  }
+}
+
+// Step 3 — stations
+function slxRenderStationList(){
+  var sel=slxId('slx-st-line-sel');
+  var idx=sel?parseInt(sel.value):0;
+  var list=slxId('slx-station-list');if(!list)return;
+  var sts=(_slxStations[idx]||[]);
+  if(!sts.length){list.innerHTML='';return;}
+  list.innerHTML=sts.map(function(s,si){
+    var vols=s.variants.length?s.variants.map(function(v){return v+':'+(s.volumes[v]||0);}).join(' · '):'single product';
+    return '<div class="slx-line-card">'
+      +'<div style="width:20px;height:20px;border-radius:50%;background:var(--s2);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:9px;color:var(--muted);flex-shrink:0;">'+(si+1)+'</div>'
+      +'<div class="slx-line-card-body">'
+        +'<div class="slx-line-card-name">'+s.name+'</div>'
+        +'<div class="slx-line-card-meta">'+s.headcount+' ppl · '+vols+'</div>'
+      +'</div>'
+      +'<button class="slx-rm" onclick="slxRemoveStation('+idx+','+si+')">✕</button>'
+    +'</div>';
+  }).join('');
+}
+
+function slxRemoveStation(lidx,sidx){
+  if(_slxStations[lidx])_slxStations[lidx].splice(sidx,1);
+  slxRenderStationList();
+}
+
+function slxAddStation(){
+  var sel=slxId('slx-st-line-sel');
+  var lidx=sel?parseInt(sel.value):0;
+  var name=(slxId('slx-st-name').value||'').trim();
+  var hc=parseInt(slxId('slx-st-hc').value)||1;
+  var varRaw=(slxId('slx-st-variants').value||'').trim();
+  var vars=varRaw?varRaw.split(',').map(function(v){return v.trim();}).filter(Boolean):[];
+  var msg=slxId('slx-msg-st');
+  if(!name){if(msg)msg.textContent='Station name required.';return;}
+  if(msg)msg.textContent='';
+  var volumes={};
+  vars.forEach(function(v){
+    var inp=document.querySelector('[data-variant="'+v+'"]');
+    volumes[v]=inp?parseInt(inp.value)||0:0;
+  });
+  if(!_slxStations[lidx])_slxStations[lidx]=[];
+  _slxStations[lidx].push({name:name,headcount:hc,variants:vars,volumes:volumes});
+  // Clear
+  slxId('slx-st-name').value='';slxId('slx-st-hc').value='';
+  slxId('slx-st-variants').value='';slxId('slx-variant-volumes').style.display='none';
+  slxId('slx-vol-inputs').innerHTML='';
+  slxRenderStationList();
+}
+
+// Finish — save stations and go to dashboard
+async function slxFinish(){
+  var sb=slgGetSB();
+  var uid=null;
+  try{var s=await sb.auth.getSession();uid=s.data.session.user.id;}catch(e){}
+  if(sb&&uid){
+    for(var lidx in _slxStations){
+      var line=_slxLines[parseInt(lidx)];
+      var sts=_slxStations[lidx];
+      for(var si=0;si<sts.length;si++){
+        var st=sts[si];
+        await sb.from('stations').insert({
+          line_name:line.name,station_name:st.name,
+          plant_id:_slxPlantId,line_id:line.id||null,
+          headcount:st.headcount,sequence:si+1,
+          variants:st.variants,volume_per_variant:st.volumes,
+          user_id:uid
+        });
+      }
+    }
+  }
+  localStorage.setItem('sl_setup_done','1');
+  renderDash();slShow('SLD');
+}
+
+// Check whether to show setup on login
+function slxShouldSetup(){
+  return !localStorage.getItem('sl_setup_done');
+}
+
 function bindSLEvents(){
   // Auth events
   var btnSend=slId('btn-slg-send');
@@ -5102,6 +5551,12 @@ function bindSLEvents(){
   });
   var nbHomeW=slId('nb-home-from-walk');if(nbHomeW)nbHomeW.addEventListener('click',function(){slShow('SLD');});
   var nbStudyW=slId('nb-study-from-walk');if(nbStudyW)nbStudyW.addEventListener('click',function(){slShow('S0');});
+  // Setup wizard live events
+  ['slx-ln-mins','slx-ln-pfd'].forEach(function(id){
+    var el=slId(id);if(el)el.addEventListener('input',slxUpdateAvailPreview);
+  });
+  var varEl=slId('slx-st-variants');
+  if(varEl)varEl.addEventListener('input',slxUpdateVariantVolumes);
 }
 </script>
 
