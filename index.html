@@ -732,6 +732,10 @@ body{overscroll-behavior:none;overflow:hidden}
     <div style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:3px;text-transform:uppercase;border-bottom:2px solid var(--forest);padding-bottom:8px;margin-bottom:16px">Muri · Mura · Muda</div>
     <div style="font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.5px;margin-bottom:16px;line-height:2">Seven gates. Right sequence.<br><span style="color:var(--red)">Fix overburden first.</span><br><span style="color:var(--amber)">Stabilize variation second.</span><br><span style="color:var(--green)">Remove waste third.</span></div>
     <div style="font-family:var(--mono);font-size:10px;color:var(--muted2);line-height:1.8;margin-bottom:24px;background:var(--s2);border:1px solid var(--br);border-radius:var(--r);padding:10px 12px">At the end of this study you will have a <strong style="color:var(--forest)">prioritized action list</strong>, a <strong style="color:var(--forest)">time study record</strong>, and a <strong style="color:var(--forest)">target condition</strong> ready for your next coaching conversation.</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <button onclick="goHome()" style="background:none;border:1px solid var(--br);color:var(--muted);padding:8px 12px;border-radius:4px;font-family:var(--mono);font-size:10px;cursor:pointer;-webkit-appearance:none;touch-action:manipulation;letter-spacing:.5px;">← Site Level</button>
+      <div style="font-family:var(--mono);font-size:9px;color:var(--muted2);letter-spacing:1px;text-transform:uppercase;">by TrueShift</div>
+    </div>
     <button class="btn-primary" style="width:100%;margin-bottom:12px;font-size:18px" onclick="startNew()">Begin Diagnostic →</button>
     <div id="resumeBtnWrap" style="display:none;margin-bottom:12px">
       <button id="resumeBtn" class="btn-primary" style="width:100%;background:var(--amber);border-color:var(--amber);font-size:16px;padding:16px" onclick="doResume()">↩ Resume Last Study →</button>
@@ -5143,6 +5147,13 @@ function slgOnLogin(user){
   plant=plant.charAt(0).toUpperCase()+plant.slice(1);
   localStorage.setItem('sl_email',user.email);
   localStorage.setItem('sl_plant',plant);
+  // Restore setup state from user metadata if already completed on another device
+  if(meta.setup_done){
+    localStorage.setItem('sl_setup_done','1');
+    if(meta.plant_name)localStorage.setItem('sl_plant',meta.plant_name);
+  } else {
+    localStorage.removeItem('sl_setup_done');
+  }
   // Store plan from profiles table — fetch async, dashboard works without it
   var sb=slgGetSB();
   if(sb){
@@ -5468,6 +5479,9 @@ async function slxFinish(){
     }
   }
   localStorage.setItem('sl_setup_done','1');
+  // Write setup_done to user metadata so it persists across devices
+  var sbf=slgGetSB();
+  if(sbf){sbf.auth.updateUser({data:{setup_done:true,plant_name:localStorage.getItem('sl_plant')}}).catch(function(){});}
   renderDash();slShow('SLD');
 }
 
@@ -5489,6 +5503,8 @@ function bindSLEvents(){
     localStorage.setItem('sl_plant','Demo Plant');
     localStorage.setItem('sl_plan','demo');
     localStorage.removeItem('sl_email');
+    // Demo skips setup — goes straight to dashboard with demo data
+    localStorage.setItem('sl_setup_done','1');
     renderDash();slShow('SLD');
   });
   var btnLogout=slId('btn-logout');
