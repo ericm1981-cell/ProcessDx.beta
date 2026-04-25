@@ -4961,9 +4961,8 @@ function slgOnLogin(user){
 function slgCheckSession(){
   var sb=slgGetSB();
   if(!sb){
-    var demo=localStorage.getItem('sl_plant');
-    slShow(demo?'SLD':'SLG');
-    if(demo)renderDash();
+    // No Supabase available — show login always
+    slShow('SLG');
     return;
   }
   // Listen for auth state changes (fires when magic link is clicked)
@@ -4985,9 +4984,11 @@ function slgCheckSession(){
     if(session&&session.user){
       slgOnLogin(session.user);
     } else {
-      var demo=localStorage.getItem('sl_plant');
-      slShow(demo?'SLD':'SLG');
-      if(demo)renderDash();
+      // No real session — clear any stale localStorage and show login
+      localStorage.removeItem('sl_email');
+      localStorage.removeItem('sl_plant');
+      localStorage.removeItem('sl_plan');
+      slShow('SLG');
     }
   }).catch(function(){
     slShow('SLG');
