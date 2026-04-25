@@ -602,6 +602,12 @@ body{overscroll-behavior:none;overflow:hidden}
       <div class="sl-ks" style="grid-template-columns:repeat(4,1fr);" id="dash-kpis"></div>
       <div class="sl-sh"><div class="sl-shl">Production Lines</div><div class="sl-shr">Tap to drill in</div></div>
       <div id="dash-lines"></div>
+      <div id="dash-empty" style="display:none;padding:32px 20px;text-align:center;">
+        <div style="font-size:36px;margin-bottom:12px;">&#128205;</div>
+        <div style="font-family:var(--head);font-size:20px;font-weight:800;color:var(--txt);margin-bottom:8px;">Start with a Walk</div>
+        <div style="font-family:var(--mono);font-size:11px;color:var(--muted2);line-height:1.9;margin-bottom:20px;">Your first step is a Work Sample. Walk your most important line and tap what each operator is doing. 20 minutes. You'll know your current VA% and what it's costing you before you leave the floor.</div>
+        <button onclick="initWalk();slShow('SLW');" style="width:100%;padding:15px;background:var(--navy);color:#fff;border:none;border-radius:8px;font-family:var(--head);font-size:18px;font-weight:800;cursor:pointer;-webkit-appearance:none;touch-action:manipulation;">Walk a Line Now &#8594;</button>
+      </div>
     </div>
   </div>
   <nav class="sl-nav" id="nav-dash">
@@ -671,19 +677,43 @@ body{overscroll-behavior:none;overflow:hidden}
 <div id="SLW" class="scr">
   <div class="sl-hdr"><div><div class="sl-ht">Walk My Floor</div><div class="sl-hs">WorkSample — 97 observations</div></div></div>
   <!-- Setup -->
-  <div id="slw-setup" class="scroll" style="padding:12px;display:flex;flex-direction:column;gap:10px;padding-bottom:70px;">
-    <div style="background:var(--s1);border-radius:8px;overflow:hidden;border:1px solid var(--br);">
-      <div style="padding:8px 12px;border-bottom:1px solid var(--br);font-family:var(--mono);font-size:9px;font-weight:700;color:var(--forest);text-transform:uppercase;letter-spacing:.8px;">Which line?</div>
-      <div style="padding:10px 12px;">
-        <select id="slw-line-sel" style="width:100%;padding:9px 12px;border:1px solid var(--br);border-radius:6px;font-size:15px;background:var(--s1);color:var(--txt);font-family:var(--body);">
+  <div id="slw-setup" class="scroll" style="padding:14px;display:flex;flex-direction:column;gap:14px;padding-bottom:80px;">
+
+    <!-- Step 1: Line -->
+    <div style="background:var(--s1);border:1px solid var(--br);border-radius:10px;overflow:hidden;">
+      <div style="padding:10px 14px;border-bottom:1px solid var(--br);background:var(--s2);">
+        <div style="font-family:var(--mono);font-size:9px;font-weight:700;color:var(--forest);text-transform:uppercase;letter-spacing:1px;">Step 1 — Choose a Line</div>
+      </div>
+      <div style="padding:12px 14px;">
+        <select id="slw-line-sel" style="width:100%;padding:11px 12px;border:1px solid var(--br);border-radius:6px;font-size:16px;background:var(--s1);color:var(--txt);font-family:var(--body);-webkit-appearance:auto;">
           <option value="">Select a line...</option>
         </select>
       </div>
     </div>
-    <button class="btn-navy" id="btn-start-walk" style="font-size:19px;">&#9654; Start Walking &#8594;</button>
+
+    <!-- Step 2: What to measure -->
+    <div style="background:var(--s1);border:1px solid var(--br);border-radius:10px;overflow:hidden;">
+      <div style="padding:10px 14px;border-bottom:1px solid var(--br);background:var(--s2);">
+        <div style="font-family:var(--mono);font-size:9px;font-weight:700;color:var(--forest);text-transform:uppercase;letter-spacing:1px;">Step 2 — What to Measure</div>
+        <div style="font-family:var(--mono);font-size:9px;color:var(--muted2);margin-top:2px;">Value Add is always tracked. Select up to 4 waste types.</div>
+      </div>
+      <div style="padding:12px 14px;">
+        <!-- Value Add — always on -->
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--s2);">
+          <div style="width:14px;height:14px;border-radius:3px;background:#16A34A;flex-shrink:0;"></div>
+          <div style="flex:1;font-family:var(--head);font-size:15px;font-weight:700;color:var(--txt);">Value Add</div>
+          <div style="font-family:var(--mono);font-size:9px;color:var(--forest);background:rgba(22,163,74,.1);padding:2px 8px;border-radius:10px;border:1px solid rgba(22,163,74,.2);">Always on</div>
+        </div>
+        <!-- Selectable waste types -->
+        <div id="slw-cat-list" style="margin-top:4px;"></div>
+      </div>
+    </div>
+
+    <button class="btn-navy" id="btn-start-walk" style="font-size:18px;padding:16px;">&#9654;&nbsp; Start Walking</button>
+
     <div style="background:var(--s2);border-radius:8px;padding:12px 14px;border:1px solid var(--br);">
-      <div style="font-family:var(--head);font-size:13px;font-weight:700;color:var(--forest);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">How it works</div>
-      <div style="font-family:var(--mono);font-size:10px;color:var(--muted);line-height:1.8;">Start at one end of the line. Glance at each operator. Tap what they are doing at that exact moment. Loop back. Repeat. 97 observations gives you a statistically defensible result.</div>
+      <div style="font-family:var(--head);font-size:12px;font-weight:700;color:var(--forest);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;">How it works</div>
+      <div style="font-family:var(--mono);font-size:10px;color:var(--muted);line-height:1.9;">Start at one end of the line. Glance at each operator. Tap what they are doing at that exact moment. Loop back and repeat. 97 observations = a statistically defensible result.</div>
     </div>
   </div>
   <!-- Observation -->
@@ -701,7 +731,7 @@ body{overscroll-behavior:none;overflow:hidden}
         <span style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.4);">Target: 97</span>
       </div>
     </div>
-    <div id="slw-btns" style="flex:1;padding:10px;display:flex;flex-direction:column;gap:8px;overflow-y:auto;padding-bottom:70px;"></div>
+    <div id="slw-btns" style="flex:1;padding:10px;display:grid;grid-template-columns:1fr 1fr;gap:10px;align-content:start;overflow-y:auto;padding-bottom:70px;"></div>
     <div style="padding:8px 12px;display:flex;gap:8px;flex-shrink:0;background:var(--s1);border-top:1px solid var(--br);">
       <button id="btn-undo" style="flex:1;padding:11px;background:var(--s2);color:var(--muted);border:1px solid var(--br);border-radius:6px;font-family:var(--head);font-size:14px;font-weight:700;cursor:pointer;-webkit-appearance:none;touch-action:manipulation;">&#8617; Undo</button>
       <button id="btn-finish" disabled style="flex:2;padding:11px;background:var(--forest);color:#fff;border:none;border-radius:6px;font-family:var(--head);font-size:14px;font-weight:800;cursor:pointer;-webkit-appearance:none;touch-action:manipulation;opacity:.3;">Finish &#8594;</button>
@@ -714,16 +744,36 @@ body{overscroll-behavior:none;overflow:hidden}
       <div style="font-family:var(--head);font-size:15px;font-weight:800;color:#fff;">Results</div>
     </div>
     <div style="padding:14px;display:flex;flex-direction:column;gap:12px;padding-bottom:80px;">
+
+      <!-- VA score -->
       <div style="background:var(--s1);border-radius:10px;padding:18px;text-align:center;border-top:4px solid var(--forest);">
         <div style="font-family:var(--mono);font-size:9px;color:var(--muted2);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px;" id="slwr-line">—</div>
-        <div style="font-family:var(--mono);font-size:60px;font-weight:600;color:var(--forest);line-height:1;" id="slwr-va">—</div>
+        <div style="font-family:var(--mono);font-size:64px;font-weight:600;line-height:1;" id="slwr-va">—</div>
         <div style="font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:4px;">Value Add</div>
+        <div id="slwr-benchmark" style="margin-top:8px;font-family:var(--mono);font-size:10px;color:var(--muted2);"></div>
       </div>
+
+      <!-- Category breakdown -->
       <div style="background:var(--s1);border-radius:10px;padding:14px;" id="slwr-bars"></div>
-      <div style="background:var(--forest);border-radius:10px;padding:16px;border-left:4px solid #FCD34D;">
-        <div style="font-size:14px;color:rgba(255,255,255,.85);line-height:1.7;margin-bottom:14px;" id="slwr-copy"></div>
-        <button id="btn-find-cause" style="width:100%;padding:13px;background:#CA8A04;color:#fff;border:none;border-radius:6px;font-family:var(--head);font-size:17px;font-weight:800;cursor:pointer;-webkit-appearance:none;touch-action:manipulation;">Find out what's causing it &#8594;</button>
+
+      <!-- Financial impact -->
+      <div style="background:#1E3A5F;border-radius:10px;padding:16px;">
+        <div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:12px;">What This Costs You</div>
+        <div id="slwr-cost" style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;"></div>
+        <div id="slwr-copy" style="font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.6);line-height:1.8;margin-bottom:14px;"></div>
+        <button id="btn-find-cause" style="width:100%;padding:14px;background:#CA8A04;color:#fff;border:none;border-radius:6px;font-family:var(--head);font-size:17px;font-weight:800;cursor:pointer;-webkit-appearance:none;touch-action:manipulation;">
+          Find out what's causing it &#8594;
+        </button>
       </div>
+
+      <!-- What to do next -->
+      <div style="background:var(--s1);border-radius:10px;border:1px solid var(--br);overflow:hidden;">
+        <div style="padding:10px 14px;background:var(--s2);border-bottom:1px solid var(--br);">
+          <div style="font-family:var(--mono);font-size:9px;font-weight:700;color:var(--forest);text-transform:uppercase;letter-spacing:1px;">What to Do Next</div>
+        </div>
+        <div id="slwr-next" style="padding:12px 14px;display:flex;flex-direction:column;gap:10px;"></div>
+      </div>
+
     </div>
   </div>
   <nav class="sl-nav">
@@ -4701,6 +4751,14 @@ function renderDash(){
   // Plant name
   var pname=localStorage.getItem('sl_plant')||'Demo Plant';
   slText('sl-plant',pname.charAt(0).toUpperCase()+pname.slice(1));
+  // Show empty state if no lines
+  var emptyEl=slId('dash-empty');
+  var linesEl=slId('dash-lines');
+  if(emptyEl&&linesEl){
+    var hasLines=LINES.length>0;
+    emptyEl.style.display=hasLines?'none':'block';
+    linesEl.style.display=hasLines?'block':'none';
+  }
   // Shift
   var h=new Date().getHours();
   var shift=h>=6&&h<14?'1st Shift':h>=14&&h<22?'2nd Shift':'3rd Shift';
@@ -4867,27 +4925,96 @@ var WALK_CATS=[
   ['defects','Defects','#DC2626'],
 ];
 
+var _wActiveCats=['motion','waiting','defects','overproc']; // default selection
+
+var ALL_WALK_CATS=[
+  {key:'motion',    label:'Motion',          desc:'Walking to get something',     col:'#EA580C'},
+  {key:'waiting',   label:'Waiting',          desc:'Stopped, nothing to do',       col:'#2563EB'},
+  {key:'defects',   label:'Defects / Rework', desc:'Fixing or inspecting bad work', col:'#DC2626'},
+  {key:'overproc',  label:'Over-processing',  desc:'More work than needed',        col:'#CA8A04'},
+  {key:'transport', label:'Transport',         desc:'Moving materials/parts',       col:'#92400E'},
+  {key:'inventory', label:'Inventory',         desc:'Waiting on material',          col:'#6B7280'},
+  {key:'overprodn', label:'Overproduction',    desc:'Making more than ordered',     col:'#7C3AED'},
+];
+
 function initWalk(){
+  // Line selector
   var sel=slId('slw-line-sel');
-  if(!sel)return;
-  // Clear existing options except first
-  while(sel.options.length>1)sel.remove(1);
-  LINES.forEach(function(L){
-    var o=document.createElement('option');
-    o.value=L.id;o.textContent=L.name;sel.appendChild(o);
-  });
-  // Build tap buttons
-  var btns=slId('slw-btns');
-  if(btns&&!btns.dataset.built){
-    btns.dataset.built='1';
-    WALK_CATS.forEach(function(c){
-      var btn=document.createElement('button');
-      btn.style.cssText='width:100%;padding:18px 14px;background:'+c[2]+';color:#fff;border:none;border-radius:8px;font-family:var(--head);font-size:18px;font-weight:800;cursor:pointer;-webkit-appearance:none;touch-action:manipulation;text-align:left;';
-      btn.textContent=c[1];btn.dataset.cat=c[0];
-      btn.addEventListener('click',function(){wObs(this.dataset.cat);});
-      btns.appendChild(btn);
+  if(sel){
+    while(sel.options.length>1)sel.remove(1);
+    LINES.forEach(function(L){
+      var o=document.createElement('option');
+      o.value=L.id;o.textContent=L.name;sel.appendChild(o);
     });
   }
+  // Category checkboxes
+  var catList=slId('slw-cat-list');
+  if(catList&&!catList.dataset.built){
+    catList.dataset.built='1';
+    catList.innerHTML=ALL_WALK_CATS.map(function(c){
+      var checked=_wActiveCats.indexOf(c.key)>=0;
+      return '<div onclick="slwToggleCat(''+c.key+'')" id="slwcat-'+c.key+'" style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--s2);cursor:pointer;">'
+        +'<div id="slwcatbox-'+c.key+'" style="width:20px;height:20px;border-radius:4px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;'+(checked?'background:'+c.col+';':'background:var(--s2);border:2px solid var(--br);')+'">'+( checked?'&#10003;':'')+'</div>'
+        +'<div style="flex:1;">'
+          +'<div style="font-family:var(--head);font-size:15px;font-weight:700;color:var(--txt);">'+c.label+'</div>'
+          +'<div style="font-family:var(--mono);font-size:9px;color:var(--muted2);">'+c.desc+'</div>'
+        +'</div>'
+      +'</div>';
+    }).join('');
+  }
+  // Rebuild tap buttons based on active cats (always rebuild)
+  slwRebuildButtons();
+}
+
+function slwToggleCat(key){
+  var idx=_wActiveCats.indexOf(key);
+  if(idx>=0){
+    if(_wActiveCats.length<=1)return; // must keep at least 1
+    _wActiveCats.splice(idx,1);
+  } else {
+    if(_wActiveCats.length>=4)return; // max 4
+    _wActiveCats.push(key);
+  }
+  // Update checkbox UI
+  var cat=ALL_WALK_CATS.find(function(c){return c.key===key;});
+  if(!cat)return;
+  var box=slId('slwcatbox-'+key);
+  var on=_wActiveCats.indexOf(key)>=0;
+  if(box){
+    box.style.background=on?cat.col:'var(--s2)';
+    box.style.border=on?'none':'2px solid var(--br)';
+    box.innerHTML=on?'&#10003;':'';
+  }
+  slwRebuildButtons();
+}
+
+function slwRebuildButtons(){
+  var btns=slId('slw-btns');if(!btns)return;
+  btns.innerHTML='';
+  // Value Add first — always
+  var vaBtn=document.createElement('button');
+  vaBtn.style.cssText='padding:0;background:#16A34A;color:#fff;border:none;border-radius:10px;font-family:var(--head);font-size:17px;font-weight:800;cursor:pointer;-webkit-appearance:none;touch-action:manipulation;aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:90px;';
+  vaBtn.innerHTML='<span style="font-size:22px;">&#10003;</span><span>Value Add</span>';
+  vaBtn.dataset.cat='va';
+  vaBtn.addEventListener('click',function(){wObs('va');slwFlashBtn(this);});
+  btns.appendChild(vaBtn);
+  // Active waste cats
+  _wActiveCats.forEach(function(key){
+    var cat=ALL_WALK_CATS.find(function(c){return c.key===key;});
+    if(!cat)return;
+    var btn=document.createElement('button');
+    btn.style.cssText='padding:0;background:'+cat.col+';color:#fff;border:none;border-radius:10px;font-family:var(--head);font-size:15px;font-weight:800;cursor:pointer;-webkit-appearance:none;touch-action:manipulation;aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:90px;text-align:center;';
+    btn.innerHTML='<span>'+cat.label+'</span>';
+    btn.dataset.cat=key;
+    btn.addEventListener('click',function(){wObs(this.dataset.cat);slwFlashBtn(this);});
+    btns.appendChild(btn);
+  });
+}
+
+function slwFlashBtn(btn){
+  var orig=btn.style.opacity;
+  btn.style.opacity='.5';
+  setTimeout(function(){btn.style.opacity=orig||'1';},100);
 }
 
 function wObs(cat){
@@ -4919,16 +5046,95 @@ function finishWalk(){
   var cats={};_wObs.forEach(function(o){if(o!=='va')cats[o]=(cats[o]||0)+1;});
   var obs=slId('slw-obs');if(obs)obs.style.display='none';
   var res=slId('slw-result');if(res)res.style.display='flex';
-  slText('slwr-line',_wLine);slText('slwr-va',vp+'%');
+
+  // VA headline + color
+  var vaColor=vp>=60?'#16A34A':vp>=40?'#CA8A04':'#DC2626';
+  slText('slwr-line',_wLine);
+  var vaEl=slId('slwr-va');
+  if(vaEl){vaEl.textContent=vp+'%';vaEl.style.color=vaColor;}
+
+  // Benchmark
+  var benchMsg=vp>=45?'Above industry average for light assembly (35\u201345%). Keep going.'
+    :vp>=35?'Near industry average for light assembly (35\u201345%). Significant room to improve.'
+    :'Below industry average for light assembly (35\u201345%). Large opportunity on this line.';
+  var bEl=slId('slwr-benchmark');
+  if(bEl)bEl.innerHTML='<span style="color:'+(vp>=45?'#16A34A':vp>=35?'#CA8A04':'#DC2626')+';">'+benchMsg+'</span>';
+
+  // Breakdown bars
   var all=[['va',va]].concat(Object.entries(cats));
+  var wlabel={va:'Value Add',motion:'Motion',waiting:'Waiting',overproc:'Over-processing',
+    defects:'Defects / Rework',transport:'Transport',inventory:'Inventory',overprodn:'Overproduction'};
   slHTML('slwr-bars',all.map(function(e){
     var cls=e[0],cnt=e[1];var pct=_wTotal>0?Math.round(cnt/_wTotal*100):0;
-    return'<div style="margin-bottom:9px;">'
-      +'<div style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:3px;"><span>'+(WL[cls]||cls)+'</span><span>'+pct+'%</span></div>'
-      +'<div style="height:6px;background:var(--s2);border-radius:3px;overflow:hidden;"><div style="height:100%;background:'+(WC[cls]||'#888')+';border-radius:3px;width:'+pct+'%;"></div></div></div>';
+    return'<div style="margin-bottom:10px;">'
+      +'<div style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;color:var(--txt);margin-bottom:4px;">'
+        +'<span>'+(wlabel[cls]||cls)+'</span>'
+        +'<span style="font-weight:700;">'+pct+'%</span></div>'
+      +'<div style="height:8px;background:var(--s2);border-radius:4px;overflow:hidden;">'
+        +'<div style="height:100%;background:'+(WC[cls]||'#888')+';border-radius:4px;width:'+pct+'%;transition:width .6s;"></div></div></div>';
   }).join(''));
-  var rec=Math.max(1,Math.round(waste*.1));
-  slHTML('slwr-copy','You found that <strong style="color:#FCD34D">'+waste+'% of operator time</strong> is spent on work your customers don\'t pay for. What could you do with <strong style="color:#FCD34D">'+rec+'%</strong> of that back?');
+
+  // Financial impact
+  var L=LINES.find(function(x){return x.name===_wLine;});
+  var hc=(L&&L.headcount)||0;
+  var laborRate=parseFloat(localStorage.getItem('sl_labor_rate'))||20.25;
+  var shiftsDay=(L&&L.shifts_per_day)||1;
+  var availMins=(L&&L.available_minutes)||387;
+  var workDays=parseInt(localStorage.getItem('sl_work_days'))||250;
+  var costPerShift=hc>0?(waste/100)*hc*availMins*(laborRate/60):0;
+  var costPerDay=costPerShift*shiftsDay;
+  var costPerYear=costPerDay*workDays;
+  var costEl=slId('slwr-cost');
+  if(costEl){
+    if(hc>0){
+      costEl.innerHTML=
+        '<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.08);">'
+          +'<span style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.5);">NVA cost per shift</span>'
+          +'<span style="font-family:var(--mono);font-size:18px;font-weight:700;color:#FCD34D;">$'+Math.round(costPerShift).toLocaleString()+'</span></div>'
+        +'<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.08);">'
+          +'<span style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.5);">NVA cost per day</span>'
+          +'<span style="font-family:var(--mono);font-size:18px;font-weight:700;color:#FCD34D;">$'+Math.round(costPerDay).toLocaleString()+'</span></div>'
+        +'<div style="display:flex;justify-content:space-between;padding:7px 0;margin-bottom:4px;">'
+          +'<span style="font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.7);font-weight:700;">Annual NVA cost</span>'
+          +'<span style="font-family:var(--mono);font-size:26px;font-weight:800;color:#FCD34D;">$'+Math.round(costPerYear).toLocaleString()+'</span></div>'
+        +'<div style="font-family:var(--mono);font-size:8px;color:rgba(255,255,255,.25);padding-top:2px;line-height:1.6;">'
+          +waste+'% NVA &times; '+hc+' operators &times; '+availMins+' net min &times; $'+(laborRate/60).toFixed(3)+'/min &times; '+shiftsDay+' shift'+(shiftsDay>1?'s':'')+' &times; '+workDays+' days</div>';
+    } else {
+      costEl.innerHTML='<div style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.4);">Complete line setup to see the dollar impact.</div>';
+    }
+  }
+
+  // Top waste copy
+  var topWaste=Object.entries(cats).sort(function(a,b){return b[1]-a[1];})[0];
+  var twLabel=topWaste?(wlabel[topWaste[0]]||topWaste[0]):null;
+  var copyEl=slId('slwr-copy');
+  if(copyEl)copyEl.textContent=twLabel
+    ?twLabel+' is your biggest NVA category at '+Math.round(topWaste[1]/_wTotal*100)+'%. That\'s your first target.'
+    :'You have the data. Now find out what\'s driving it.';
+
+  // Next steps
+  var nextEl=slId('slwr-next');
+  if(nextEl){
+    var steps=[];
+    if(topWaste){
+      if(topWaste[0]==='motion')steps.push({t:'Run a spaghetti diagram',d:'Trace one operator\'s path for one full cycle. Root cause is almost always workstation layout or material placement.'});
+      else if(topWaste[0]==='waiting')steps.push({t:'Identify the constraint',d:'Is the operator starved or blocked? Stand at the station for 10 minutes and watch before doing anything else.'});
+      else if(topWaste[0]==='defects')steps.push({t:'Pull your defect log',d:'Find your top defect type from the last 30 days. One category will dominate. Start there.'});
+      else if(topWaste[0]==='overproc')steps.push({t:'Map what you actually need vs. what you do',d:'List every step. Ask: does the customer pay for this? Anything that fails that test is a target.'});
+      else steps.push({t:'Observe the top waste category',d:'Stand at the highest-NVA station and watch one full cycle before building any countermeasures.'});
+    }
+    steps.push({t:'Run a ProcessDx study on your highest-NVA station',d:'The Walk tells you where. ProcessDx tells you why. Tap below to start \u2014 your line and station will be pre-filled.',action:true});
+    nextEl.innerHTML=steps.map(function(s,i){
+      return'<div style="display:flex;gap:10px;align-items:flex-start;padding:'+(s.action?'10px':'8px 0')+';'
+        +(s.action?'background:rgba(22,163,74,.08);border-radius:8px;border:1px solid rgba(22,163,74,.2);':'border-bottom:1px solid var(--br);')+'">'
+        +'<div style="width:22px;height:22px;border-radius:50%;background:'+(s.action?'#16A34A':'var(--s2)')+';'
+          +'display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:10px;font-weight:700;'
+          +'color:'+(s.action?'#fff':'var(--muted)')+';flex-shrink:0;">'+(i+1)+'</div>'
+        +'<div><div style="font-family:var(--head);font-size:14px;font-weight:700;color:var(--txt);margin-bottom:2px;">'+s.t+'</div>'
+          +'<div style="font-family:var(--mono);font-size:10px;color:var(--muted2);line-height:1.7;">'+s.d+'</div></div>'
+      +'</div>';
+    }).join('');
+  }
 }
 
 // ── Pre-populate Gate 1 from current station ──────────────
@@ -5298,6 +5504,8 @@ async function slxStep1Next(){
     console.warn('No sb or uid — plant not saved to Supabase');
   }
   localStorage.setItem('sl_plant',name);
+  localStorage.setItem('sl_labor_rate',rate);
+  localStorage.setItem('sl_work_days',days);
   slxGoto(2);
 }
 
