@@ -423,7 +423,7 @@ body{overscroll-behavior:none;overflow:hidden}
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
         <div class="slx-field">
-          <label class="slx-lbl">Labor Rate ($/hr)</label>
+          <label class="slx-lbl">Average Labor Rate ($/hr) <span style="font-weight:400;color:var(--muted2);">straight time</span></label>
           <input id="slx-labor-rate" type="number" placeholder="20.25" inputmode="decimal" class="slx-input">
         </div>
         <div class="slx-field">
@@ -476,15 +476,9 @@ body{overscroll-behavior:none;overflow:hidden}
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
           <div class="slx-field">
-            <label class="slx-lbl">Takt (seconds)</label>
-            <input id="slx-ln-takt" type="number" placeholder="75" inputmode="decimal" class="slx-input">
-          </div>
-          <div class="slx-field">
-            <label class="slx-lbl">Headcount</label>
+            <label class="slx-lbl">People on Line</label>
             <input id="slx-ln-hc" type="number" placeholder="8" inputmode="numeric" class="slx-input">
           </div>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
           <div class="slx-field">
             <label class="slx-lbl">Shifts / Day</label>
             <select id="slx-ln-shifts" class="slx-input">
@@ -493,24 +487,36 @@ body{overscroll-behavior:none;overflow:hidden}
               <option value="3">3</option>
             </select>
           </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
           <div class="slx-field">
-            <label class="slx-lbl">Min / Shift</label>
+            <label class="slx-lbl">Units Needed / Shift</label>
+            <input id="slx-ln-upshift" type="number" placeholder="360" inputmode="numeric" class="slx-input">
+            <div class="slx-hint">Your daily production target</div>
+          </div>
+          <div class="slx-field">
+            <label class="slx-lbl">Minutes / Shift</label>
             <input id="slx-ln-mins" type="number" placeholder="455" inputmode="numeric" class="slx-input">
-            <div class="slx-hint">8hr = 480, less breaks</div>
+            <div class="slx-hint">8 hr shift = 480 − breaks</div>
           </div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
           <div class="slx-field">
-            <label class="slx-lbl">PFD %</label>
-            <input id="slx-ln-pfd" type="number" placeholder="15" inputmode="decimal" class="slx-input">
-            <div class="slx-hint">Assembly = 15, grip = 18</div>
+            <label class="slx-lbl">Break Time / Shift (min)</label>
+            <input id="slx-ln-breaks" type="number" placeholder="68" inputmode="numeric" class="slx-input">
+            <div class="slx-hint">Paid breaks + lunch (not counted as work time)</div>
           </div>
-          <div class="slx-field" style="display:flex;align-items:flex-end;padding-bottom:2px;">
-            <div style="width:100%;">
-              <div id="slx-avail-preview" style="font-family:var(--mono);font-size:9px;color:var(--muted2);padding:4px 0;min-height:20px;"></div>
+          <div class="slx-field" style="display:flex;flex-direction:column;justify-content:flex-end;">
+            <div id="slx-avail-preview" style="background:var(--s2);border-radius:6px;padding:8px 10px;border:1px solid var(--br);">
+              <div style="font-family:var(--mono);font-size:7px;color:var(--muted2);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;">Takt Time</div>
+              <div id="slx-takt-calc" style="font-family:var(--mono);font-size:18px;font-weight:700;color:var(--forest);">—</div>
+              <div style="font-family:var(--mono);font-size:7px;color:var(--muted2);margin-top:1px;">seconds per unit</div>
             </div>
           </div>
         </div>
+        <!-- Hidden takt field — calculated from upshift + mins − breaks -->
+        <input type="hidden" id="slx-ln-takt">
+        <input type="hidden" id="slx-ln-pfd" value="15">
         <button onclick="slxAddLine()" class="slx-btn-secondary" style="width:100%;margin-top:6px;">+ Add This Line</button>
         <div id="slx-msg-line" class="slx-msg"></div>
       </div>
@@ -554,7 +560,7 @@ body{overscroll-behavior:none;overflow:hidden}
         <!-- Variants -->
         <div class="slx-field">
           <label class="slx-lbl">Product Variants <span style="color:var(--muted2);font-weight:400;">(comma separated)</span></label>
-          <input id="slx-st-variants" type="text" placeholder="e.g. CX, WW, Slider" autocapitalize="words" class="slx-input">
+          <input id="slx-st-variants" type="text" placeholder="e.g. Standard, Premium, Large" autocapitalize="words" class="slx-input">
           <div class="slx-hint">Leave blank if single product</div>
         </div>
         <!-- Volume per variant — rendered dynamically -->
@@ -4797,8 +4803,8 @@ function renderDash(){
     var arr=L.trend==='up'?'↑':L.trend==='dn'?'↓':'—';
     var arr_c=L.trend==='up'?'#16A34A':L.trend==='dn'?'#DC2626':'#CBD5E1';
     var waste=L.waste?L.waste+' · ':'';
-    var act=L.actions>0?L.actions+' action'+(L.actions>1?'s':''):'clean';
-    var cap=L.cap>0?L.cap+' units/shift':'no data';
+    var act=L.actions>0?L.actions+' action'+(L.actions>1?'s':''):'no open actions';
+    var cap=L.takt?'Takt '+L.takt+'s':'no studies yet';
     html+='<div data-lid="'+L.id+'" class="line-row">'
       +'<div class="lr-bar" style="background:'+sc+';"></div>'
       +'<div class="lr-body">'
@@ -5137,16 +5143,22 @@ function slgOnLogin(user){
   var sb=slgGetSB();
   if(sb){
     sb.from('profiles').select('plan,plant_name').eq('id',user.id).single()
-      .then(function(r){
+      .then(async function(r){
         if(r.data){
           if(r.data.plant_name)localStorage.setItem('sl_plant',r.data.plant_name);
           localStorage.setItem('sl_plan',r.data.plan||'demo');
         }
         if(slxShouldSetup()){slxGoto(1);slShow('SLX');}
-        else{renderDash();slShow('SLD');}
-      }).catch(function(){
+        else{
+          await loadUserLines();
+          renderDash();slShow('SLD');
+        }
+      }).catch(async function(){
         if(slxShouldSetup()){slxGoto(1);slShow('SLX');}
-        else{renderDash();slShow('SLD');}
+        else{
+          await loadUserLines();
+          renderDash();slShow('SLD');
+        }
       });
   } else {
     if(slxShouldSetup()){slxGoto(1);slShow('SLX');}
@@ -5345,11 +5357,22 @@ function slxSkip(){slxFinish();}
 
 // Available minutes preview
 function slxUpdateAvailPreview(){
-  var mins=parseFloat(slxId('slx-ln-mins').value)||455;
-  var pfd=parseFloat(slxId('slx-ln-pfd').value)||15;
-  var avail=Math.round(mins*(1-pfd/100));
-  var el=slxId('slx-avail-preview');
-  if(el)el.textContent='Net: '+avail+' min/shift';
+  var mins=parseFloat(slxId('slx-ln-mins').value)||0;
+  var breaks=parseFloat(slxId('slx-ln-breaks').value)||0;
+  var upshift=parseFloat(slxId('slx-ln-upshift').value)||0;
+  var avail=mins-breaks;
+  // Calculate takt = available minutes * 60 / units needed
+  var taktCalc=upshift>0&&avail>0?Math.round(avail*60/upshift):0;
+  // Store in hidden field
+  var th=slxId('slx-ln-takt');if(th)th.value=taktCalc||'';
+  // Store PFD from break ratio
+  var pfd=mins>0?Math.round(breaks/mins*100):15;
+  var ph=slxId('slx-ln-pfd');if(ph)ph.value=pfd;
+  // Update display
+  var tc=slxId('slx-takt-calc');
+  if(tc)tc.textContent=taktCalc>0?taktCalc+'s':'—';
+  var tc2=slxId('slx-takt-calc');
+  if(tc2)tc2.style.color=taktCalc>0?'var(--forest)':'var(--muted2)';
 }
 
 // Variant volume inputs
@@ -5400,9 +5423,18 @@ function slxAddLine(){
   var shifts=parseInt(slxId('slx-ln-shifts').value)||1;
   var mins=parseInt(slxId('slx-ln-mins').value)||455;
   var pfd=parseFloat(slxId('slx-ln-pfd').value)||15;
+  var upshift=parseInt(slxId('slx-ln-upshift').value)||0;
+  var breaks=parseInt(slxId('slx-ln-breaks').value)||0;
   var msg=slxId('slx-msg-line');
   if(!name){if(msg)msg.textContent='Line name required.';return;}
-  if(takt<=0){if(msg)msg.textContent='Enter takt time.';return;}
+  if(!upshift){if(msg)msg.textContent='Enter units needed per shift.';return;}
+  if(!mins){if(msg)msg.textContent='Enter minutes per shift.';return;}
+  // Recalculate takt if not already set
+  if(!takt){
+    var avail=mins-breaks;
+    takt=upshift>0&&avail>0?Math.round(avail*60/upshift):0;
+  }
+  if(takt<=0){if(msg)msg.textContent='Check your units and minutes — takt could not be calculated.';return;}
   // Check duplicate
   if(_slxLines.find(function(l){return l.name.toLowerCase()===name.toLowerCase();})){
     if(msg)msg.textContent='Line name already added.';return;
@@ -5410,11 +5442,11 @@ function slxAddLine(){
   if(msg)msg.textContent='';
   _slxLines.push({name:name,takt:takt,headcount:hc,shifts:shifts,mins:mins,pfd:pfd});
   // Clear form
-  ['slx-ln-name','slx-ln-takt','slx-ln-hc','slx-ln-mins'].forEach(function(id){
+  ['slx-ln-name','slx-ln-hc','slx-ln-mins','slx-ln-upshift','slx-ln-breaks','slx-ln-takt'].forEach(function(id){
     var el=slxId(id);if(el)el.value='';
   });
   slxId('slx-ln-pfd').value='15';
-  slxId('slx-avail-preview').textContent='';
+  var tc=slxId('slx-takt-calc');if(tc)tc.textContent='—';
   slxRenderLineCards();
   var btn=slxId('slx-btn-step2-next');if(btn)btn.disabled=false;
 }
@@ -5430,11 +5462,11 @@ function slxRenderLineCards(){
   var list=slxId('slx-lines-list');if(!list)return;
   if(!_slxLines.length){list.innerHTML='';return;}
   list.innerHTML=_slxLines.map(function(l,i){
-    var avail=Math.round(l.mins*(1-l.pfd/100));
+    var avail=Math.round(l.mins-((l.pfd/100)*l.mins));
     return '<div class="slx-line-card">'
       +'<div class="slx-line-card-body">'
         +'<div class="slx-line-card-name">'+l.name+'</div>'
-        +'<div class="slx-line-card-meta">Takt '+l.takt+'s · '+l.headcount+' ppl · '+l.shifts+' shift'+(l.shifts>1?'s':'')+' · '+avail+' min net</div>'
+        +'<div class="slx-line-card-meta">'+l.takt+'s takt &nbsp;·&nbsp; '+l.headcount+' people &nbsp;·&nbsp; '+l.shifts+' shift'+(l.shifts>1?'s':'')+' &nbsp;·&nbsp; '+avail+' net min</div>'
       +'</div>'
       +'<button class="slx-rm" onclick="slxRemoveLine('+i+')">✕</button>'
     +'</div>';
@@ -5551,15 +5583,76 @@ async function slxFinish(){
     }
   }
   localStorage.setItem('sl_setup_done','1');
-  // Write setup_done to user metadata so it persists across devices
   var sbf=slgGetSB();
   if(sbf){sbf.auth.updateUser({data:{setup_done:true,plant_name:localStorage.getItem('sl_plant')}}).catch(function(){});}
-  renderDash();slShow('SLD');
+  // Load real data before showing dashboard
+  loadUserLines().then(function(){
+    renderDash();slShow('SLD');
+  });
 }
 
 // Check whether to show setup on login
 function slxShouldSetup(){
   return !localStorage.getItem('sl_setup_done');
+}
+
+
+// ── Load real user data from Supabase ────────────────────────────
+async function loadUserLines(){
+  var sb=slgGetSB();
+  if(!sb)return false;
+  var uid=null;
+  try{var s=await sb.auth.getSession();uid=s.data.session&&s.data.session.user.id;}catch(e){}
+  if(!uid)return false;
+  try{
+    // Fetch lines for this user
+    var linesRes=await sb.from('lines')
+      .select('id,line_name,takt_seconds,headcount,available_minutes,shifts_per_day,minutes_per_shift')
+      .eq('user_id',uid)
+      .order('id');
+    if(linesRes.error||!linesRes.data||!linesRes.data.length)return false;
+
+    // Fetch stations for this user
+    var stRes=await sb.from('stations')
+      .select('id,line_id,line_name,station_name,headcount,sequence,variants,volume_per_variant')
+      .eq('user_id',uid)
+      .order('sequence');
+
+    var stations=stRes.data||[];
+
+    // Build LINES array from real data
+    var newLines=linesRes.data.map(function(l){
+      var lineStations=stations
+        .filter(function(s){return s.line_id===l.id||s.line_name===l.line_name;})
+        .map(function(s){
+          return {
+            id:s.station_name.toLowerCase().replace(/\s+/g,'-'),
+            name:s.station_name,
+            status:'n',va:0,trend:'nt',
+            ct:0,takt:l.takt_seconds||75,gap:'no study',
+            segs:[],src:'none',date:'—',
+            studies:[],actions:[]
+          };
+        });
+      return {
+        id:'line-'+l.id,
+        name:l.line_name,
+        status:'n',va:0,trend:'nt',
+        waste:null,actions:0,cap:0,gap:0,studies:0,
+        takt:l.takt_seconds||75,
+        headcount:l.headcount||0,
+        stations:lineStations
+      };
+    });
+
+    // Replace LINES with real data
+    LINES.length=0;
+    newLines.forEach(function(l){LINES.push(l);});
+    return true;
+  } catch(e){
+    console.warn('loadUserLines error:',e);
+    return false;
+  }
 }
 
 function bindSLEvents(){
@@ -5644,7 +5737,7 @@ function bindSLEvents(){
   var nbHomeW=slId('nb-home-from-walk');if(nbHomeW)nbHomeW.addEventListener('click',function(){slShow('SLD');});
   var nbStudyW=slId('nb-study-from-walk');if(nbStudyW)nbStudyW.addEventListener('click',function(){slShow('S0');});
   // Setup wizard live events
-  ['slx-ln-mins','slx-ln-pfd'].forEach(function(id){
+  ['slx-ln-mins','slx-ln-breaks','slx-ln-upshift'].forEach(function(id){
     var el=slId(id);if(el)el.addEventListener('input',slxUpdateAvailPreview);
   });
   var varEl=slId('slx-st-variants');
