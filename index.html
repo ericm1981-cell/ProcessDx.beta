@@ -327,66 +327,55 @@ body{overscroll-behavior:none;overflow:hidden}
 
 <!-- ══════════════ SITE LEVEL SCREENS ══════════════ -->
 
-<!-- SLG: Login — Magic Link -->
+<!-- SLG: Login -->
 <div id="SLG" class="scr on">
   <div style="flex:1;background:#1E3A5F;display:flex;flex-direction:column;overflow-y:auto;">
-
-    <!-- Brand -->
-    <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 28px 24px;">
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 28px 24px;min-height:220px;">
       <div style="width:68px;height:68px;background:#CA8A04;border-radius:16px;display:flex;align-items:center;justify-content:center;font-family:var(--head);font-size:24px;font-weight:800;color:#fff;letter-spacing:1px;margin-bottom:14px;">SL</div>
       <div style="font-family:var(--head);font-size:36px;font-weight:800;color:#fff;letter-spacing:5px;line-height:1;">SITE<span style="color:#CA8A04;">LEVEL</span></div>
       <div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.3);letter-spacing:2px;text-transform:uppercase;margin-top:6px;">by TrueShift Consulting</div>
     </div>
-
-    <!-- Form area -->
-    <div style="flex:0 0 auto;background:rgba(0,0,0,.2);border-top:1px solid rgba(255,255,255,.08);padding:28px 24px 36px;padding-bottom:calc(36px + env(safe-area-inset-bottom,0px));">
+    <div style="flex:0 0 auto;background:rgba(0,0,0,.2);border-top:1px solid rgba(255,255,255,.08);padding:24px;padding-bottom:calc(32px + env(safe-area-inset-bottom,0px));">
       <div style="max-width:340px;margin:0 auto;">
-
-        <!-- STATE A: Email entry -->
-        <div id="slg-state-entry">
-          <div style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.45);line-height:1.9;margin-bottom:20px;text-align:center;letter-spacing:.3px;">
-            Enter your work email.<br>We'll send you a sign-in link — no password needed.
-          </div>
-          <label style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:1.5px;display:block;margin-bottom:6px;">Work Email</label>
-          <input id="slg-email" type="email" placeholder="you@company.com"
-            autocomplete="email" autocapitalize="none" spellcheck="false" inputmode="email"
-            style="width:100%;padding:14px 16px;border:1.5px solid rgba(255,255,255,.15);border-radius:8px;background:rgba(255,255,255,.07);color:#fff;font-size:16px;font-family:var(--body);outline:none;-webkit-appearance:none;margin-bottom:10px;transition:border-color .15s;"
+        <div id="slg-mode-lbl" style="font-family:var(--head);font-size:20px;font-weight:800;color:#fff;margin-bottom:18px;">Sign In</div>
+        <div style="margin-bottom:12px;">
+          <label style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:1.5px;display:block;margin-bottom:5px;">Email</label>
+          <input id="slg-email" type="email" placeholder="you@company.com" autocomplete="email" autocapitalize="none" spellcheck="false" inputmode="email"
+            style="width:100%;padding:13px 14px;border:1.5px solid rgba(255,255,255,.15);border-radius:6px;background:rgba(255,255,255,.07);color:#fff;font-size:16px;font-family:var(--body);outline:none;-webkit-appearance:none;"
             onfocus="this.style.borderColor='rgba(255,255,255,.5)'" onblur="this.style.borderColor='rgba(255,255,255,.15)'">
-          <div id="slg-msg" style="font-family:var(--mono);font-size:11px;min-height:16px;margin-bottom:12px;text-align:center;"></div>
-          <button id="btn-slg-send"
-            style="width:100%;padding:15px;background:#CA8A04;color:#fff;border:none;border-radius:8px;font-family:var(--head);font-size:19px;font-weight:800;letter-spacing:.5px;cursor:pointer;-webkit-appearance:none;touch-action:manipulation;">
-            Send Sign-In Link →
-          </button>
-          <div style="margin-top:20px;text-align:center;padding-top:16px;border-top:1px solid rgba(255,255,255,.07);">
-            <button id="btn-slg-demo"
-              style="background:none;border:none;color:rgba(255,255,255,.2);font-family:var(--mono);font-size:10px;cursor:pointer;-webkit-appearance:none;letter-spacing:.5px;touch-action:manipulation;">
-              View Demo — no account needed
-            </button>
+        </div>
+        <div style="margin-bottom:12px;">
+          <label style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:1.5px;display:block;margin-bottom:5px;">Password</label>
+          <div style="position:relative;">
+            <input id="slg-pass" type="password" placeholder="Min 6 characters" autocomplete="current-password"
+              style="width:100%;padding:13px 42px 13px 14px;border:1.5px solid rgba(255,255,255,.15);border-radius:6px;background:rgba(255,255,255,.07);color:#fff;font-size:16px;font-family:var(--body);outline:none;-webkit-appearance:none;"
+              onfocus="this.style.borderColor='rgba(255,255,255,.5)'" onblur="this.style.borderColor='rgba(255,255,255,.15)'">
+            <button type="button" onclick="slgTogglePass()" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:rgba(255,255,255,.35);cursor:pointer;padding:4px;font-size:15px;line-height:1;-webkit-appearance:none;">&#128065;</button>
           </div>
         </div>
-
-        <!-- STATE B: Link sent confirmation -->
-        <div id="slg-state-sent" style="display:none;text-align:center;">
-          <div style="font-size:40px;margin-bottom:16px;">✉️</div>
-          <div style="font-family:var(--head);font-size:22px;font-weight:800;color:#fff;margin-bottom:8px;">Check your email</div>
-          <div style="font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.5);line-height:1.8;margin-bottom:24px;">
-            We sent a sign-in link to<br>
-            <span id="slg-sent-email" style="color:rgba(255,255,255,.8);font-weight:600;"></span>
-          </div>
-          <div style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.3);line-height:1.7;margin-bottom:24px;">
-            Tap the link in the email to sign in.<br>It expires in 1 hour.
-          </div>
-          <button id="btn-slg-retry"
-            style="background:none;border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.5);padding:10px 20px;border-radius:6px;font-family:var(--mono);font-size:11px;cursor:pointer;-webkit-appearance:none;touch-action:manipulation;letter-spacing:.5px;">
-            ← Use a different email
-          </button>
+        <div id="slg-plant-row" style="display:none;margin-bottom:12px;">
+          <label style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:1.5px;display:block;margin-bottom:5px;">Plant Name</label>
+          <input id="slg-plant" type="text" placeholder="e.g. Northside Assembly" autocapitalize="words"
+            style="width:100%;padding:13px 14px;border:1.5px solid rgba(255,255,255,.15);border-radius:6px;background:rgba(255,255,255,.07);color:#fff;font-size:16px;font-family:var(--body);outline:none;-webkit-appearance:none;"
+            onfocus="this.style.borderColor='rgba(255,255,255,.5)'" onblur="this.style.borderColor='rgba(255,255,255,.15)'">
         </div>
-
+        <div id="slg-msg" style="font-family:var(--mono);font-size:11px;min-height:16px;margin-bottom:10px;line-height:1.5;"></div>
+        <button id="btn-slg-submit" onclick="slgSubmit()"
+          style="width:100%;padding:15px;background:#CA8A04;color:#fff;border:none;border-radius:6px;font-family:var(--head);font-size:19px;font-weight:800;letter-spacing:.5px;cursor:pointer;-webkit-appearance:none;touch-action:manipulation;">
+          Sign In &rarr;
+        </button>
+        <div style="margin-top:16px;text-align:center;">
+          <span id="slg-toggle-lbl" style="font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.3);">New to Site Level? </span>
+          <button id="btn-slg-toggle" onclick="slgToggleMode()" style="background:none;border:none;color:rgba(255,255,255,.5);font-family:var(--mono);font-size:11px;cursor:pointer;-webkit-appearance:none;text-decoration:underline;padding:0;">Create account</button>
+        </div>
+        <div style="margin-top:20px;text-align:center;border-top:1px solid rgba(255,255,255,.07);padding-top:16px;">
+          <button onclick="slgDemo()" style="background:none;border:none;color:rgba(255,255,255,.2);font-family:var(--mono);font-size:10px;cursor:pointer;-webkit-appearance:none;letter-spacing:.5px;touch-action:manipulation;">View Demo &mdash; no account needed</button>
+        </div>
       </div>
     </div>
-
   </div>
-</div><!-- SLX: Setup Wizard -->
+</div>
+<!-- SLX: Setup Wizard -->
 <div id="SLX" class="scr">
   <div class="sl-hdr">
     <div>
@@ -5071,7 +5060,9 @@ function slStartStudy(){
 }
 
 
-// ── Auth — Magic Link ─────────────────────────────────────────────
+// ── Auth — Email / Password ──────────────────────────────────────
+
+var _slgMode = 'signin';
 
 function slgGetSB(){
   if(window._sbClient)return window._sbClient;
@@ -5088,73 +5079,45 @@ function slgGetSB(){
 function slgMsg(txt,isErr){
   var el=slId('slg-msg');if(!el)return;
   el.textContent=txt;
-  el.style.color=isErr?'#FCA5A5':'#FCD34D';
+  el.style.color=isErr?'#FCA5A5':'#86EFAC';
 }
 
 function slgSetLoading(on){
-  var btn=slId('btn-slg-send');if(!btn)return;
-  btn.disabled=on;
-  btn.style.opacity=on?'.5':'1';
-  btn.textContent=on?'Sending…':'Send Sign-In Link →';
+  var btn=slId('btn-slg-submit');if(!btn)return;
+  btn.disabled=on;btn.style.opacity=on?'.5':'1';
+  btn.textContent=on?'...'
+    :(_slgMode==='signup'?'Create Account →':'Sign In →');
 }
 
-function slgShowState(state){
-  // state: 'entry' | 'sent'
-  var entry=slId('slg-state-entry');
-  var sent=slId('slg-state-sent');
-  if(entry)entry.style.display=state==='entry'?'block':'none';
-  if(sent)sent.style.display=state==='sent'?'block':'none';
+function slgTogglePass(){
+  var inp=slId('slg-pass');if(!inp)return;
+  inp.type=inp.type==='password'?'text':'password';
 }
 
-async function slgSendLink(){
-  var email=(slId('slg-email').value||'').trim();
-  if(!email||!email.includes('@')){slgMsg('Enter a valid email address.',true);return;}
-  var sb=slgGetSB();
-  if(!sb){
-    // No Supabase — store locally, go to dashboard (dev fallback)
-    localStorage.setItem('sl_email',email);
-    localStorage.setItem('sl_plant',email.split('@')[1].split('.')[0]);
-    renderDash();slShow('SLD');
-    return;
-  }
-  slgSetLoading(true);slgMsg('');
-  try{
-    var result=await sb.auth.signInWithOtp({
-      email:email,
-      options:{
-        emailRedirectTo: window.location.origin+window.location.pathname
-      }
-    });
-    if(result.error)throw result.error;
-    // Show confirmation state
-    var sentEl=slId('slg-sent-email');if(sentEl)sentEl.textContent=email;
-    slgSetLoading(false);
-    slgShowState('sent');
-  }catch(err){
-    slgSetLoading(false);
-    var msg=err.message||'Something went wrong. Try again.';
-    if(msg.toLowerCase().includes('rate limit'))msg='Too many requests. Wait a minute and try again.';
-    if(msg.toLowerCase().includes('invalid email'))msg='Enter a valid email address.';
-    slgMsg(msg,true);
-  }
+function slgToggleMode(){
+  _slgMode=_slgMode==='signin'?'signup':'signin';
+  var up=_slgMode==='signup';
+  var lbl=slId('slg-mode-lbl');if(lbl)lbl.textContent=up?'Create Account':'Sign In';
+  var btn=slId('btn-slg-submit');if(btn)btn.textContent=up?'Create Account →':'Sign In →';
+  var tl=slId('slg-toggle-lbl');if(tl)tl.textContent=up?'Already have an account? ':'New to Site Level? ';
+  var tb=slId('btn-slg-toggle');if(tb)tb.textContent=up?'Sign in':'Create account';
+  var pr=slId('slg-plant-row');if(pr)pr.style.display=up?'block':'none';
+  var pp=slId('slg-pass');if(pp)pp.autocomplete=up?'new-password':'current-password';
+  slgMsg('');
 }
 
 function slgOnLogin(user){
-  // Read plant name from metadata, fall back to email domain
-  var meta=(user.user_metadata||{});
+  var meta=user.user_metadata||{};
   var plant=meta.plant_name||user.email.split('@')[1].split('.')[0];
-  // Capitalise first letter
   plant=plant.charAt(0).toUpperCase()+plant.slice(1);
   localStorage.setItem('sl_email',user.email);
   localStorage.setItem('sl_plant',plant);
-  // Restore setup state from user metadata if already completed on another device
   if(meta.setup_done){
     localStorage.setItem('sl_setup_done','1');
     if(meta.plant_name)localStorage.setItem('sl_plant',meta.plant_name);
   } else {
     localStorage.removeItem('sl_setup_done');
   }
-  // Store plan from profiles table — fetch async, dashboard works without it
   var sb=slgGetSB();
   if(sb){
     sb.from('profiles').select('plan,plant_name').eq('id',user.id).single()
@@ -5163,50 +5126,92 @@ function slgOnLogin(user){
           if(r.data.plant_name)localStorage.setItem('sl_plant',r.data.plant_name);
           localStorage.setItem('sl_plan',r.data.plan||'demo');
         }
-        renderDash();slShow('SLD');
+        if(slxShouldSetup()){slxGoto(1);slShow('SLX');}
+        else{renderDash();slShow('SLD');}
       }).catch(function(){
-        renderDash();slShow('SLD');
+        if(slxShouldSetup()){slxGoto(1);slShow('SLX');}
+        else{renderDash();slShow('SLD');}
       });
   } else {
-    renderDash();slShow('SLD');
+    if(slxShouldSetup()){slxGoto(1);slShow('SLX');}
+    else{renderDash();slShow('SLD');}
   }
+}
+
+async function slgSubmit(){
+  var email=(slId('slg-email').value||'').trim();
+  var pass=(slId('slg-pass').value||'').trim();
+  var plant=_slgMode==='signup'?(slId('slg-plant').value||'').trim():'';
+  if(!email||!email.includes('@')){slgMsg('Enter a valid email.',true);return;}
+  if(!pass||pass.length<6){slgMsg('Password must be at least 6 characters.',true);return;}
+  if(_slgMode==='signup'&&!plant){slgMsg('Enter your plant name.',true);return;}
+  var sb=slgGetSB();
+  if(!sb){
+    localStorage.setItem('sl_email',email);
+    localStorage.setItem('sl_plant',plant||email.split('@')[1].split('.')[0]);
+    if(slxShouldSetup()){slxGoto(1);slShow('SLX');}
+    else{renderDash();slShow('SLD');}
+    return;
+  }
+  slgSetLoading(true);slgMsg('');
+  try{
+    var result;
+    if(_slgMode==='signup'){
+      result=await sb.auth.signUp({email:email,password:pass,options:{data:{plant_name:plant}}});
+      if(result.error)throw result.error;
+      if(result.data&&result.data.user&&result.data.session){
+        slgOnLogin(result.data.user);return;
+      }
+      slgSetLoading(false);
+      slgMsg('Account created. Check your email to confirm, then sign in.',false);
+      slgToggleMode();return;
+    } else {
+      result=await sb.auth.signInWithPassword({email:email,password:pass});
+      if(result.error)throw result.error;
+    }
+    if(result.data&&result.data.user)slgOnLogin(result.data.user);
+  } catch(err){
+    slgSetLoading(false);
+    var msg=err.message||'Something went wrong.';
+    if(/invalid.*(login|credentials)/i.test(msg))msg='Email or password is incorrect.';
+    if(/already.*(registered|been registered)/i.test(msg))msg='Account exists — sign in instead.';
+    if(/email not confirmed/i.test(msg))msg='Check your email to confirm your account first.';
+    slgMsg(msg,true);
+  }
+  slgSetLoading(false);
+}
+
+function slgDemo(){
+  localStorage.setItem('sl_plant','Demo Plant');
+  localStorage.setItem('sl_plan','demo');
+  localStorage.removeItem('sl_email');
+  localStorage.setItem('sl_setup_done','1');
+  renderDash();slShow('SLD');
 }
 
 function slgCheckSession(){
   var sb=slgGetSB();
-  if(!sb){
-    // No Supabase available — show login always
-    slShow('SLG');
-    return;
-  }
-  // Listen for auth state changes (fires when magic link is clicked)
+  if(!sb){slShow('SLG');return;}
   sb.auth.onAuthStateChange(function(event,session){
-    if((event==='SIGNED_IN'||event==='TOKEN_REFRESHED')&&session&&session.user){
-      slgOnLogin(session.user);
-    }
     if(event==='SIGNED_OUT'){
       localStorage.removeItem('sl_email');
       localStorage.removeItem('sl_plant');
       localStorage.removeItem('sl_plan');
-      slgShowState('entry');
+      _slgMode='signin';
       slShow('SLG');
     }
   });
-  // Check existing session
   sb.auth.getSession().then(function(r){
     var session=r&&r.data&&r.data.session;
     if(session&&session.user){
       slgOnLogin(session.user);
     } else {
-      // No real session — clear any stale localStorage and show login
       localStorage.removeItem('sl_email');
       localStorage.removeItem('sl_plant');
       localStorage.removeItem('sl_plan');
       slShow('SLG');
     }
-  }).catch(function(){
-    slShow('SLG');
-  });
+  }).catch(function(){slShow('SLG');});
 }
 
 function slgSignOut(){
@@ -5215,8 +5220,11 @@ function slgSignOut(){
   localStorage.removeItem('sl_email');
   localStorage.removeItem('sl_plant');
   localStorage.removeItem('sl_plan');
-  slgShowState('entry');
-  var emailEl=slId('slg-email');if(emailEl)emailEl.value='';
+  localStorage.removeItem('sl_setup_done');
+  _slgMode='signin';
+  var lbl=slId('slg-mode-lbl');if(lbl)lbl.textContent='Sign In';
+  var btn=slId('btn-slg-submit');if(btn){btn.textContent='Sign In →';btn.disabled=false;btn.style.opacity='1';}
+  var pr=slId('slg-plant-row');if(pr)pr.style.display='none';
   slgMsg('');
   slShow('SLG');
 }
@@ -5506,6 +5514,10 @@ function bindSLEvents(){
     // Demo skips setup — goes straight to dashboard with demo data
     localStorage.setItem('sl_setup_done','1');
     renderDash();slShow('SLD');
+  });
+  ['slg-email','slg-pass','slg-plant'].forEach(function(id){
+    var el=slId(id);
+    if(el)el.addEventListener('keydown',function(e){if(e.key==='Enter')slgSubmit();});
   });
   var btnLogout=slId('btn-logout');
   if(btnLogout)btnLogout.addEventListener('click',function(){slgSignOut();});
