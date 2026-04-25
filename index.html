@@ -345,7 +345,10 @@ body{overscroll-behavior:none;overflow:hidden}
             onfocus="this.style.borderColor='rgba(255,255,255,.5)'" onblur="this.style.borderColor='rgba(255,255,255,.15)'">
         </div>
         <div style="margin-bottom:12px;">
-          <label style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:1.5px;display:block;margin-bottom:5px;">Password</label>
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px;">
+            <label style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:1.5px;">Password</label>
+            <button id="btn-forgot" onclick="slgShowForgot()" type="button" style="background:none;border:none;color:rgba(255,255,255,.3);font-family:var(--mono);font-size:9px;cursor:pointer;-webkit-appearance:none;padding:0;letter-spacing:.3px;">Forgot password?</button>
+          </div>
           <div style="position:relative;">
             <input id="slg-pass" type="password" placeholder="Min 6 characters" autocomplete="current-password"
               style="width:100%;padding:13px 42px 13px 14px;border:1.5px solid rgba(255,255,255,.15);border-radius:6px;background:rgba(255,255,255,.07);color:#fff;font-size:16px;font-family:var(--body);outline:none;-webkit-appearance:none;"
@@ -368,6 +371,19 @@ body{overscroll-behavior:none;overflow:hidden}
           <span id="slg-toggle-lbl" style="font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.3);">New to Site Level? </span>
           <button id="btn-slg-toggle" onclick="slgToggleMode()" style="background:none;border:none;color:rgba(255,255,255,.5);font-family:var(--mono);font-size:11px;cursor:pointer;-webkit-appearance:none;text-decoration:underline;padding:0;">Create account</button>
         </div>
+        <!-- Forgot password panel -->
+        <div id="slg-forgot-panel" style="display:none;margin-top:16px;padding:14px;background:rgba(255,255,255,.05);border-radius:8px;border:1px solid rgba(255,255,255,.1);">
+          <div style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.5);margin-bottom:10px;line-height:1.7;">Enter your email and we'll send a reset link.</div>
+          <input id="slg-reset-email" type="email" placeholder="your@email.com" autocapitalize="none" spellcheck="false" inputmode="email"
+            style="width:100%;padding:11px 12px;border:1px solid rgba(255,255,255,.15);border-radius:6px;background:rgba(255,255,255,.07);color:#fff;font-size:15px;font-family:var(--body);outline:none;-webkit-appearance:none;margin-bottom:8px;"
+            onfocus="this.style.borderColor='rgba(255,255,255,.4)'" onblur="this.style.borderColor='rgba(255,255,255,.15)'">
+          <div id="slg-reset-msg" style="font-family:var(--mono);font-size:10px;min-height:14px;margin-bottom:8px;"></div>
+          <div style="display:flex;gap:8px;">
+            <button onclick="slgHideForgot()" style="flex:1;padding:10px;background:none;border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.4);border-radius:6px;font-family:var(--mono);font-size:11px;cursor:pointer;-webkit-appearance:none;touch-action:manipulation;">Cancel</button>
+            <button onclick="slgSendReset()" style="flex:2;padding:10px;background:#CA8A04;color:#fff;border:none;border-radius:6px;font-family:var(--head);font-size:14px;font-weight:800;cursor:pointer;-webkit-appearance:none;touch-action:manipulation;">Send Reset Link</button>
+          </div>
+        </div>
+
         <div style="margin-top:20px;text-align:center;border-top:1px solid rgba(255,255,255,.07);padding-top:16px;">
           <button onclick="slgDemo()" style="background:none;border:none;color:rgba(255,255,255,.2);font-family:var(--mono);font-size:10px;cursor:pointer;-webkit-appearance:none;letter-spacing:.5px;touch-action:manipulation;">View Demo &mdash; no account needed</button>
         </div>
@@ -5181,6 +5197,39 @@ async function slgSubmit(){
   slgSetLoading(false);
 }
 
+function slgShowForgot(){
+  var panel=slId('slg-forgot-panel');if(panel)panel.style.display='block';
+  var btn=slId('btn-forgot');if(btn)btn.style.display='none';
+  var re=slId('slg-reset-email');
+  if(re){re.value=slId('slg-email').value||'';re.focus();}
+}
+
+function slgHideForgot(){
+  var panel=slId('slg-forgot-panel');if(panel)panel.style.display='none';
+  var btn=slId('btn-forgot');if(btn)btn.style.display='';
+  slId('slg-reset-msg').textContent='';
+}
+
+async function slgSendReset(){
+  var email=(slId('slg-reset-email').value||'').trim();
+  var msg=slId('slg-reset-msg');
+  if(!email||!email.includes('@')){
+    if(msg){msg.textContent='Enter a valid email.';msg.style.color='#FCA5A5';}return;
+  }
+  var sb=slgGetSB();
+  if(!sb){if(msg){msg.textContent='Not available offline.';msg.style.color='#FCA5A5';}return;}
+  if(msg){msg.textContent='Sending...';msg.style.color='rgba(255,255,255,.5)';}
+  var result=await sb.auth.resetPasswordForEmail(email,{
+    redirectTo: window.location.origin+window.location.pathname
+  });
+  if(result.error){
+    if(msg){msg.textContent='Error: '+result.error.message;msg.style.color='#FCA5A5';}
+  } else {
+    if(msg){msg.textContent='Reset link sent. Check your email.';msg.style.color='#86EFAC';}
+    setTimeout(function(){slgHideForgot();},3000);
+  }
+}
+
 function slgDemo(){
   localStorage.setItem('sl_plant','Demo Plant');
   localStorage.setItem('sl_plan','demo');
@@ -5200,6 +5249,10 @@ function slgCheckSession(){
       _slgMode='signin';
       slShow('SLG');
     }
+    if(event==='PASSWORD_RECOVERY'){
+      // User clicked reset link — prompt for new password
+      slgShowNewPasswordPrompt();
+    }
   });
   sb.auth.getSession().then(function(r){
     var session=r&&r.data&&r.data.session;
@@ -5212,6 +5265,17 @@ function slgCheckSession(){
       slShow('SLG');
     }
   }).catch(function(){slShow('SLG');});
+}
+
+function slgShowNewPasswordPrompt(){
+  // Show a simple prompt to set a new password
+  var newPass=window.prompt('Enter your new password (min 6 characters):');
+  if(!newPass||newPass.length<6){alert('Password must be at least 6 characters.');return;}
+  var sb=slgGetSB();if(!sb)return;
+  sb.auth.updateUser({password:newPass}).then(function(r){
+    if(r.error){alert('Error: '+r.error.message);}
+    else{alert('Password updated. You are now signed in.');renderDash();slShow('SLD');}
+  });
 }
 
 function slgSignOut(){
