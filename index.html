@@ -363,8 +363,8 @@ body{overscroll-behavior:none;overflow:hidden}
             onfocus="this.style.borderColor='rgba(255,255,255,.5)'" onblur="this.style.borderColor='rgba(255,255,255,.15)'">
         </div>
         <div id="slg-msg" style="font-family:var(--mono);font-size:11px;min-height:16px;margin-bottom:10px;line-height:1.5;"></div>
-        <button id="btn-slg-submit" onclick="slgSubmit()"
-          style="width:100%;padding:15px;background:#CA8A04;color:#fff;border:none;border-radius:6px;font-family:var(--head);font-size:19px;font-weight:800;letter-spacing:.5px;cursor:pointer;-webkit-appearance:none;touch-action:manipulation;">
+        <button id="btn-slg-submit"
+          style="width:100%;padding:18px 15px;background:#CA8A04;color:#fff;border:none;border-radius:8px;font-family:var(--head);font-size:20px;font-weight:800;letter-spacing:.5px;cursor:pointer;-webkit-appearance:none;touch-action:manipulation;-webkit-tap-highlight-color:rgba(0,0,0,.2);user-select:none;">
           Sign In &rarr;
         </button>
         <div style="margin-top:16px;text-align:center;">
@@ -750,7 +750,7 @@ body{overscroll-behavior:none;overflow:hidden}
         <div style="font-family:var(--mono);font-size:9px;color:var(--muted2);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px;" id="slwr-line">—</div>
         <div style="font-family:var(--mono);font-size:64px;font-weight:600;line-height:1;" id="slwr-va">—</div>
         <div style="font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:4px;">Value Add</div>
-        <div id="slwr-benchmark" style="margin-top:8px;font-family:var(--mono);font-size:10px;color:var(--muted2);"></div>
+
       </div>
 
       <!-- Category breakdown -->
@@ -865,15 +865,19 @@ body{overscroll-behavior:none;overflow:hidden}
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:8px">
         <div>
           <div style="font-family:var(--mono);font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px">Plant</div>
-          <input type="text" id="g1plant" placeholder="e.g. Acme Mfg" maxlength="20" style="width:100%;font-family:var(--mono);font-size:12px;border:1px solid var(--br);border-radius:4px;padding:6px 8px;background:var(--s1);color:var(--forest)" oninput="updateStudyFilename()">
+          <input type="text" id="g1plant" maxlength="30" style="width:100%;font-family:var(--mono);font-size:12px;border:1px solid var(--br);border-radius:4px;padding:6px 8px;background:var(--s1);color:var(--forest)" oninput="updateStudyFilename()">
         </div>
         <div>
           <div style="font-family:var(--mono);font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px">Line</div>
-          <input type="text" id="g1line" placeholder="e.g. L2" maxlength="20" style="width:100%;font-family:var(--mono);font-size:12px;border:1px solid var(--br);border-radius:4px;padding:6px 8px;background:var(--s1);color:var(--forest)" oninput="updateStudyFilename()">
+          <select id="g1line" style="width:100%;font-family:var(--mono);font-size:12px;border:1px solid var(--br);border-radius:4px;padding:6px 4px;background:var(--s1);color:var(--forest);-webkit-appearance:auto;" onchange="g1LineSelected(this.value);updateStudyFilename();">
+            <option value="">Select...</option>
+          </select>
         </div>
         <div>
           <div style="font-family:var(--mono);font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px">Station</div>
-          <input type="text" id="g1station" placeholder="e.g. Screen Build" maxlength="40" style="width:100%;font-family:var(--mono);font-size:12px;border:1px solid var(--br);border-radius:4px;padding:6px 8px;background:var(--s1);color:var(--forest)" oninput="updateStudyFilename();const gp=$('g1proc');if(gp)gp.value=this.value;">
+          <select id="g1station" style="width:100%;font-family:var(--mono);font-size:12px;border:1px solid var(--br);border-radius:4px;padding:6px 4px;background:var(--s1);color:var(--forest);-webkit-appearance:auto;" onchange="g1StationSelected(this.value);updateStudyFilename();var gp=$('g1proc');if(gp)gp.value=this.value;">
+            <option value="">Select...</option>
+          </select>
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;background:var(--s1);border:1px solid var(--br);border-radius:4px;padding:7px 10px">
@@ -1474,7 +1478,7 @@ function startNew(){
   });
   yamStepStates={};
   $('g1date').value=new Date().toLocaleDateString('en-US');
-  goGate(1);
+  g1Prefill();goGate(1);
 }
 
 function startDemo(){
@@ -3115,6 +3119,7 @@ function _showStationSelector(){
 
 window._pdxBoot=function(){
   try{var d=$('g1date');if(d)d.value=new Date().toLocaleDateString('en-US');}catch(e){}
+  try{g1Prefill();}catch(e){}
   try{checkResume();}catch(e){}
 };
 
@@ -5053,12 +5058,6 @@ function finishWalk(){
   var vaEl=slId('slwr-va');
   if(vaEl){vaEl.textContent=vp+'%';vaEl.style.color=vaColor;}
 
-  // Benchmark
-  var benchMsg=vp>=45?'Above industry average for light assembly (35\u201345%). Keep going.'
-    :vp>=35?'Near industry average for light assembly (35\u201345%). Significant room to improve.'
-    :'Below industry average for light assembly (35\u201345%). Large opportunity on this line.';
-  var bEl=slId('slwr-benchmark');
-  if(bEl)bEl.innerHTML='<span style="color:'+(vp>=45?'#16A34A':vp>=35?'#CA8A04':'#DC2626')+';">'+benchMsg+'</span>';
 
   // Breakdown bars
   var all=[['va',va]].concat(Object.entries(cats));
@@ -5138,16 +5137,139 @@ function finishWalk(){
 }
 
 // ── Pre-populate Gate 1 from current station ──────────────
+
+// ── Gate 1 pre-fill from setup data ──────────────────────────────
+
+function g1GetLineName(){
+  var el=$('g1line');
+  return el?(el.tagName==='SELECT'?el.value:el.value):'';
+}
+
+function g1Prefill(presetLine,presetStation){
+  // Plant
+  var plant=localStorage.getItem('sl_plant')||'';
+  var pEl=$('g1plant');if(pEl)pEl.value=plant;
+
+  // Analyst — derive from email
+  var email=localStorage.getItem('sl_email')||'';
+  var aEl=$('g1analyst');
+  if(aEl&&email){
+    var raw=email.split('@')[0].replace(/[._+]/g,' ');
+    var name=raw.split(' ').map(function(w){
+      return w.charAt(0).toUpperCase()+w.slice(1).toLowerCase();
+    }).join(' ');
+    aEl.value=name;
+  }
+
+  // Labor rate
+  var rate=localStorage.getItem('sl_labor_rate');
+  var rEl=$('g1rate');if(rEl&&rate)rEl.value=rate;
+
+  // Work days → weeks
+  var days=parseInt(localStorage.getItem('sl_work_days'))||250;
+  var wEl=$('g1weeks');if(wEl)wEl.value=Math.round(days/5);
+
+  // Line dropdown
+  var lineSel=$('g1line');
+  if(lineSel&&lineSel.tagName==='SELECT'&&LINES.length){
+    lineSel.innerHTML='<option value="">Select line...</option>';
+    LINES.forEach(function(L){
+      var o=document.createElement('option');
+      o.value=L.name;o.textContent=L.name;
+      lineSel.appendChild(o);
+    });
+    var target=presetLine||(LINES.length===1?LINES[0].name:'');
+    if(target){lineSel.value=target;g1LineSelected(target,presetStation);}
+  }
+
+  if(typeof updateStudyFilename==='function')updateStudyFilename();
+}
+
+function g1LineSelected(lineName,presetStation){
+  if(!lineName)return;
+  var L=LINES.find(function(x){return x.name===lineName;});
+  if(!L)return;
+
+  // Takt
+  if(L.takt){
+    var tEl=$('g1takt');if(tEl)tEl.value=L.takt;
+    var tsmEl=$('g1taktShiftMin');if(tsmEl)tsmEl.value=L.takt;
+  }
+
+  // Shift minutes
+  var mins=L.minutes_per_shift||L.mins||455;
+  var smEl=$('g1shiftmin');if(smEl)smEl.value=mins;
+  var tsmEl2=$('g1taktShiftMin');if(tsmEl2)tsmEl2.value=mins;
+
+  // Shifts/day
+  var sdEl=$('g1shiftsday');
+  if(sdEl&&L.shifts_per_day)sdEl.value=String(L.shifts_per_day);
+
+  // Units/shift
+  if(L.takt&&mins){
+    var avail=L.available_minutes||(mins*0.85);
+    var ups=Math.round(avail*60/L.takt);
+    var upEl=$('g1upshift');if(upEl)upEl.value=ups;
+  }
+
+  // Station dropdown
+  var stSel=$('g1station');
+  if(stSel&&stSel.tagName==='SELECT'){
+    stSel.innerHTML='<option value="">Select station...</option>';
+    if(L.stations&&L.stations.length){
+      L.stations.forEach(function(S){
+        var o=document.createElement('option');
+        o.value=S.name;o.textContent=S.name;
+        stSel.appendChild(o);
+      });
+    }
+    var newO=document.createElement('option');
+    newO.value='__new__';newO.textContent='+ New station...';
+    stSel.appendChild(newO);
+    if(presetStation){stSel.value=presetStation;g1StationSelected(presetStation);}
+    else if(L.stations&&L.stations.length===1){
+      stSel.value=L.stations[0].name;
+      g1StationSelected(L.stations[0].name);
+    }
+  }
+}
+
+function g1StationSelected(val){
+  if(!val||val==='__new__'){
+    if(val==='__new__'){
+      // Swap select for text input
+      var sel=$('g1station');
+      if(sel&&sel.tagName==='SELECT'){
+        var inp=document.createElement('input');
+        inp.type='text';inp.id='g1station';
+        inp.placeholder='Station name';
+        inp.style.cssText='width:100%;font-family:var(--mono);font-size:12px;border:1px solid var(--br);border-radius:4px;padding:6px 8px;background:var(--s1);color:var(--forest);';
+        inp.addEventListener('input',function(){
+          updateStudyFilename();
+          var gp=$('g1proc');if(gp)gp.value=this.value;
+        });
+        sel.parentNode.replaceChild(inp,sel);
+        inp.focus();
+      }
+    }
+    return;
+  }
+  var lineName=g1GetLineName();
+  var L=LINES.find(function(x){return x.name===lineName;});
+  if(!L)return;
+  var S=L.stations&&L.stations.find(function(s){return s.name===val;});
+  if(!S)return;
+  var hEl=$('g1heads');if(hEl&&S.headcount)hEl.value=S.headcount;
+}
+
 function slStartStudy(){
   slShow('S1');
-  if(_curStation&&_curLine){
-    setTimeout(function(){
-      var st=document.getElementById('g1station');if(st)st.value=_curStation.name;
-      var li=document.getElementById('g1line');if(li)li.value=_curLine.name;
-      var pr=document.getElementById('g1proc');if(pr)pr.value=_curStation.name;
-      if(typeof updateStudyFilename==='function')updateStudyFilename();
-    },200);
-  }
+  var presetLine=_curLine?_curLine.name:null;
+  var presetStation=_curStation?_curStation.name:null;
+  setTimeout(function(){
+    g1Prefill(presetLine,presetStation);
+    var pr=$('g1proc');if(pr&&presetStation)pr.value=presetStation;
+  },150);
 }
 
 
@@ -5759,33 +5881,38 @@ async function loadUserLines(){
 }
 
 function bindSLEvents(){
-  // Auth events
-  var btnSend=slId('btn-slg-send');
-  if(btnSend)btnSend.addEventListener('click',function(){slgSendLink();});
-  var emailIn=slId('slg-email');
-  if(emailIn)emailIn.addEventListener('keydown',function(e){if(e.key==='Enter')slgSendLink();});
-  var btnRetry=slId('btn-slg-retry');
-  if(btnRetry)btnRetry.addEventListener('click',function(){slgShowState('entry');slgMsg('');});
-  var btnDemo=slId('btn-slg-demo');
-  if(btnDemo)btnDemo.addEventListener('click',function(){
-    localStorage.setItem('sl_plant','Demo Plant');
-    localStorage.setItem('sl_plan','demo');
-    localStorage.removeItem('sl_email');
-    // Demo skips setup — goes straight to dashboard with demo data
-    localStorage.setItem('sl_setup_done','1');
-    renderDash();slShow('SLD');
-  });
+  // Auth events — email/password with iOS touchend fix
+  var _authBusy=false;
+  function _fireSubmit(e){
+    if(_authBusy)return;
+    if(e&&e.preventDefault)e.preventDefault();
+    _authBusy=true;
+    slgSubmit();
+    setTimeout(function(){_authBusy=false;},2500);
+  }
+  var btnSubmit=slId('btn-slg-submit');
+  if(btnSubmit){
+    btnSubmit.addEventListener('touchend',_fireSubmit,{passive:false});
+    btnSubmit.addEventListener('click',_fireSubmit);
+  }
   ['slg-email','slg-pass','slg-plant'].forEach(function(id){
     var el=slId(id);
-    if(el)el.addEventListener('keydown',function(e){if(e.key==='Enter')slgSubmit();});
+    if(el)el.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();slgSubmit();}});
   });
+  var btnToggle=slId('btn-slg-toggle');
+  if(btnToggle)btnToggle.addEventListener('click',slgToggleMode);
+  var btnForgot=slId('btn-forgot');
+  if(btnForgot)btnForgot.addEventListener('click',slgShowForgot);
   var btnLogout=slId('btn-logout');
-  if(btnLogout)btnLogout.addEventListener('click',function(){slgSignOut();});
+  if(btnLogout){
+    btnLogout.addEventListener('touchend',function(e){e.preventDefault();slgSignOut();},{passive:false});
+    btnLogout.addEventListener('click',slgSignOut);
+  }
 
   // Dashboard nav
   var nbDash=slId('nb-dash');if(nbDash)nbDash.addEventListener('click',function(){slShow('SLD');});
   var nbWalk=slId('nb-walk');if(nbWalk)nbWalk.addEventListener('click',function(){initWalk();slShow('SLW');});
-  var nbStudy=slId('nb-study');if(nbStudy)nbStudy.addEventListener('click',function(){slShow('S0');});
+  var nbStudy=slId('nb-study');if(nbStudy)nbStudy.addEventListener('click',function(){slShow('S0');setTimeout(g1Prefill,150);});
   var nbBal=slId('nb-bal');if(nbBal)nbBal.addEventListener('click',function(){alert('Line Balance — coming in Phase 2');});
 
   // Line + station row clicks (event delegation)
