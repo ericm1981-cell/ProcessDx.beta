@@ -42,7 +42,7 @@ body{overscroll-behavior:none}
 .ts-badge{font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.6);background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:3px;padding:4px 8px;display:inline-flex;align-items:center;gap:5px}
 .dot-live{width:6px;height:6px;border-radius:50%;background:#ef4444;animation:blink .9s infinite;flex-shrink:0}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.15}}
-.scr{display:none;flex-direction:column;height:100vh;height:100dvh;overflow:hidden}.scr.on{display:flex}
+.scr{position:fixed;inset:0;display:none;flex-direction:column;overflow:hidden;background:var(--bg)}.scr.on{display:flex}
 .scroll{flex:1;overflow-y:auto;padding:16px 18px;-webkit-overflow-scrolling:touch;padding-bottom:16px}
 .gate-hdr{background:var(--s1);border-bottom:1px solid var(--br);padding:14px 18px;flex-shrink:0;box-shadow:var(--shadow)}
 .gate-tag{font-family:var(--mono);font-size:9px;letter-spacing:2px;color:var(--green);text-transform:uppercase;margin-bottom:2px}
@@ -328,7 +328,7 @@ body{overscroll-behavior:none}
 <!-- ══════════════ SITE LEVEL SCREENS ══════════════ -->
 
 <!-- SLG: Login -->
-<div id="SLG" class="scr on" style="background:#1E3A5F;display:flex;flex-direction:column;height:100vh;height:100dvh;">
+<div id="SLG" class="scr on" style="background:#1E3A5F;position:fixed;inset:0;display:flex;flex-direction:column;z-index:100;">
   <!-- Brand -->
   <div style="flex:0 0 auto;display:flex;flex-direction:column;align-items:center;padding:52px 24px 24px;">
     <div style="width:68px;height:68px;background:#CA8A04;border-radius:18px;display:flex;align-items:center;justify-content:center;font-family:var(--head);font-size:24px;font-weight:800;color:#fff;letter-spacing:1px;margin-bottom:14px;">SL</div>
