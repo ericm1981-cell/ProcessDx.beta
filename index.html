@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-title" content="Site Level">
 <meta name="theme-color" content="#1E3A5F">
 <link rel="manifest" href="manifest.json">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<!-- Supabase loaded on demand -->
 <link rel="apple-touch-icon" href="processdx-icon-180.png">
 <title>Site Level</title>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -25,7 +25,7 @@
   --st:env(safe-area-inset-top,0px);--shadow:0 1px 3px rgba(0,0,0,.07);
   --shadow2:0 4px 12px rgba(0,0,0,.1);
 }
-*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;cursor:pointer;}
 html,body{background:var(--bg);color:var(--txt);font-family:var(--body);height:100%;height:100dvh;overflow:hidden;-webkit-font-smoothing:antialiased}
 body{overscroll-behavior:none}
 .prog-wrap{background:var(--forest);padding:10px 16px;padding-top:calc(10px + var(--st));flex-shrink:0}
@@ -42,7 +42,7 @@ body{overscroll-behavior:none}
 .ts-badge{font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.6);background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:3px;padding:4px 8px;display:inline-flex;align-items:center;gap:5px}
 .dot-live{width:6px;height:6px;border-radius:50%;background:#ef4444;animation:blink .9s infinite;flex-shrink:0}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.15}}
-.scr{position:fixed;inset:0;display:none;flex-direction:column;overflow:hidden;background:var(--bg)}.scr.on{display:flex}
+.scr{position:fixed;inset:0;display:none;flex-direction:column;overflow:hidden;background:var(--bg)}.scr.on{display:flex;cursor:pointer}
 .scroll{flex:1;overflow-y:auto;padding:16px 18px;-webkit-overflow-scrolling:touch;padding-bottom:16px}
 .gate-hdr{background:var(--s1);border-bottom:1px solid var(--br);padding:14px 18px;flex-shrink:0;box-shadow:var(--shadow)}
 .gate-tag{font-family:var(--mono);font-size:9px;letter-spacing:2px;color:var(--green);text-transform:uppercase;margin-bottom:2px}
@@ -241,6 +241,22 @@ body{overscroll-behavior:none}
 .wt-input:focus{outline:1px solid var(--green);border-radius:2px}
 
 /* ══════════════ SITE LEVEL CSS ══════════════ */
+.screen{position:fixed;inset:0;display:none;flex-direction:column;overflow:hidden;background:var(--bg);}
+.screen.active{display:flex;}
+
+
+
+button:active,.btn-navy:active,.btn-amber-sl:active,.slx-btn-primary:active,.slx-btn-secondary:active,.slx-btn-ghost:active,.sl-add-btn:active,.journey-btn:active{opacity:.85;}
+/* iOS Safari tap fix */
+button,
+.slx-btn-primary,.slx-btn-secondary,.slx-btn-ghost,
+.btn-navy,.btn-amber-sl,
+.line-row,.station-row,.lr-body,
+[onclick]{
+  cursor:pointer;
+  -webkit-tap-highlight-color:rgba(0,0,0,.1);
+}
+
 
 /* ── Setup Wizard ─────────────────────────────── */
 .slx-field{margin-bottom:10px;}
@@ -328,41 +344,8 @@ body{overscroll-behavior:none}
 <!-- ══════════════ SITE LEVEL SCREENS ══════════════ -->
 
 <!-- SLG: Login -->
-<div id="SLG" class="scr on" style="position:fixed;inset:0;background:#1E3A5F;display:flex;flex-direction:column;z-index:200;">
-  <div style="flex:0 0 auto;display:flex;flex-direction:column;align-items:center;padding:52px 24px 24px;">
-    <div style="width:68px;height:68px;background:#CA8A04;border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:800;color:#fff;font-family:sans-serif;margin-bottom:14px;">SL</div>
-    <div style="font-size:36px;font-weight:800;color:#fff;letter-spacing:5px;font-family:sans-serif;">SITE<span style="color:#CA8A04;">LEVEL</span></div>
-    <div style="font-size:9px;color:rgba(255,255,255,.3);letter-spacing:2px;text-transform:uppercase;margin-top:6px;font-family:monospace;">by TrueShift Consulting</div>
-  </div>
-  <div style="flex:1;overflow-y:auto;padding:20px 24px 8px;">
-    <div id="slg-mode-lbl" style="font-size:19px;font-weight:800;color:#fff;margin-bottom:16px;font-family:sans-serif;">Sign In</div>
-    <div style="margin-bottom:12px;">
-      <div style="font-size:9px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:5px;font-family:monospace;">Email</div>
-      <input id="slg-email" type="email" placeholder="you@company.com" autocomplete="email" autocapitalize="none" spellcheck="false" inputmode="email" style="width:100%;padding:14px;border:1.5px solid rgba(255,255,255,.2);border-radius:8px;background:rgba(255,255,255,.08);color:#fff;font-size:16px;outline:none;-webkit-appearance:none;box-sizing:border-box;">
-    </div>
-    <div style="margin-bottom:12px;">
-      <div style="font-size:9px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:5px;font-family:monospace;">Password</div>
-      <input id="slg-pass" type="password" placeholder="Min 6 characters" autocomplete="current-password" style="width:100%;padding:14px;border:1.5px solid rgba(255,255,255,.2);border-radius:8px;background:rgba(255,255,255,.08);color:#fff;font-size:16px;outline:none;-webkit-appearance:none;box-sizing:border-box;">
-    </div>
-    <div id="slg-plant-row" style="display:none;margin-bottom:12px;">
-      <div style="font-size:9px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:5px;font-family:monospace;">Plant Name</div>
-      <input id="slg-plant" type="text" placeholder="e.g. Acme Manufacturing" autocapitalize="words" style="width:100%;padding:14px;border:1.5px solid rgba(255,255,255,.2);border-radius:8px;background:rgba(255,255,255,.08);color:#fff;font-size:16px;outline:none;-webkit-appearance:none;box-sizing:border-box;">
-    </div>
-    <div id="slg-msg" style="font-size:11px;min-height:18px;color:#FCA5A5;margin-bottom:8px;font-family:monospace;"></div>
-  </div>
-  <div style="flex:0 0 auto;padding:12px 24px;padding-bottom:calc(16px + env(safe-area-inset-bottom,0px));">
-    <button type="button" onclick="slgSubmit()" id="btn-slg-submit" style="display:block;width:100%;padding:18px;background:#CA8A04;color:#fff;border:none;border-radius:8px;font-size:20px;font-weight:800;cursor:pointer;-webkit-appearance:none;touch-action:manipulation;margin-bottom:12px;font-family:sans-serif;">Sign In &#8594;</button>
-    <div style="text-align:center;margin-bottom:10px;">
-      <span id="slg-toggle-lbl" style="font-size:11px;color:rgba(255,255,255,.3);font-family:monospace;">New to Site Level? </span><button type="button" onclick="slgToggleMode()" id="btn-slg-toggle" style="background:none;border:none;color:rgba(255,255,255,.5);font-size:11px;cursor:pointer;-webkit-appearance:none;text-decoration:underline;padding:2px 4px;font-family:monospace;touch-action:manipulation;">Create account</button>
-    </div>
-    <div style="text-align:center;border-top:1px solid rgba(255,255,255,.08);padding-top:12px;">
-      <button type="button" onclick="slgDemo()" id="btn-slg-demo" style="background:none;border:none;color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;-webkit-appearance:none;letter-spacing:.5px;font-family:monospace;touch-action:manipulation;">View Demo &mdash; no account needed</button>
-    </div>
-  </div>
-</div>
-
 <!-- SLX: Setup Wizard -->
-<div id="SLX" class="scr">
+<div id="SLX" class="screen active" ontouchstart="">
   <div class="sl-hdr">
     <div>
       <div class="sl-ht" id="slx-title">Plant Setup</div>
@@ -380,7 +363,7 @@ body{overscroll-behavior:none}
     <div id="slx-p3" style="flex:1;height:3px;border-radius:2px;background:rgba(255,255,255,.15);transition:background .3s;display:none;"></div>
   </div>
 
-  <div class="scroll" style="padding-bottom:80px;">
+  <div class="scroll" style="padding-bottom:80px;" ontouchstart="">
 
     <!-- STEP 1: Plant -->
     <div id="slx-step-1" style="padding:16px 14px;">
@@ -554,7 +537,7 @@ body{overscroll-behavior:none}
 
 
 <!-- SLD: Dashboard -->
-<div id="SLD" class="scr">
+<div id="SLD" class="screen" ontouchstart="">
   <div class="sl-hdr">
     <div>
       <div class="sl-ht" id="sl-plant">My Plant</div>
@@ -589,7 +572,7 @@ body{overscroll-behavior:none}
 </div>
 
 <!-- SLL: Line View -->
-<div id="SLL" class="scr">
+<div id="SLL" class="screen" ontouchstart="">
   <div class="sl-hdr" style="gap:8px;">
     <button class="sl-hbtn" id="btn-back-dash">&#8592; Home</button>
     <div style="flex:1;padding:0 8px;"><div class="sl-ht" id="sll-name">—</div></div>
@@ -610,7 +593,7 @@ body{overscroll-behavior:none}
 </div>
 
 <!-- SLS: Station View -->
-<div id="SLS" class="scr">
+<div id="SLS" class="screen" ontouchstart="">
   <div class="sl-hdr" style="gap:8px;">
     <button class="sl-hbtn" id="btn-back-line">&#8592; Line</button>
     <div style="flex:1;padding:0 6px;"><div class="sl-ht" id="sls-name">—</div><div class="sl-hs" id="sls-path">—</div></div>
@@ -644,7 +627,7 @@ body{overscroll-behavior:none}
 </div>
 
 <!-- SLW: Walk (WorkSample) -->
-<div id="SLW" class="scr">
+<div id="SLW" class="screen" ontouchstart="">
   <div class="sl-hdr"><div><div class="sl-ht">Walk My Floor</div><div class="sl-hs">WorkSample — 97 observations</div></div></div>
   <!-- Setup -->
   <div id="slw-setup" class="scroll" style="padding:14px;display:flex;flex-direction:column;gap:14px;padding-bottom:80px;">
@@ -2707,9 +2690,8 @@ const SB_URL = 'https://crmfanzohigqflsfrddl.supabase.co';
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNybWZhbnpvaGlncWZsc2ZyZGRsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4ODYyNDMsImV4cCI6MjA5MjQ2MjI0M30.LPxuroJra66RG_xx2jEt-h7D2LJbEyAvmSqEpCK2DfY';
 let _sbClient = null;
 function sbClient(){
-  if(!_sbClient && window.supabase)
-    _sbClient = window.supabase.createClient(SB_URL, SB_KEY);
-  return _sbClient;
+  try{if(!_sbClient&&window.supabase)_sbClient=window.supabase.createClient(SB_URL,SB_KEY);}catch(e){}
+  return _sbClient||null;
 }
 
 function sbDebug(){
@@ -4507,8 +4489,9 @@ function slId(id){return document.getElementById(id);}
 function slText(id,v){var e=slId(id);if(e)e.textContent=v;}
 function slHTML(id,v){var e=slId(id);if(e)e.innerHTML=v;}
 function slShow(id){
-  document.querySelectorAll('.scr').forEach(function(s){s.classList.remove('on');});
-  var el=slId(id);if(el)el.classList.add('on');
+  // Site Level screens use .screen/.active — separate from ProcessDx .scr/.on
+  document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
+  var el=slId(id);if(el)el.classList.add('active');
   window._slCur=id;
 }
 
@@ -5247,9 +5230,7 @@ function slStartStudy(){
 
 var _slgMode = 'signin';
 
-function slgGetSB(){
-  try{var c=typeof sbClient=="function"?sbClient():null;return c;}catch(e){return null;}
-}
+function slgGetSB(){try{return typeof sbClient==="function"?sbClient():null;}catch(e){return null;}}
 
 function slgMsg(txt,isErr){
   var el=slId('slg-msg');if(!el)return;
@@ -5476,14 +5457,14 @@ function slgSignOut(){
 
 // ── Boot sequence ─────────────────────────────────────────
 window.addEventListener('load',function(){
-  console.log("SL boot start");
-  // Determine start screen
-  // Auth: check Supabase session first, fall back to demo/localStorage
+  try{
+  // Boot: skip login, go straight to app
+  // Determine start screenrst, fall back to demo/localStorage
   slgCheckSession();
   // Boot ProcessDx in background
   setTimeout(function(){
     if(typeof window._pdxBoot==='function')window._pdxBoot();
-  },400);
+  },500);
   // Override goHome after PDX script parsed
   setTimeout(function(){
     window.goHome=function(){slShow('SLD');};
@@ -5491,6 +5472,12 @@ window.addEventListener('load',function(){
   // Wire events
   try{bindSLEvents();}catch(e){console.error("bindSLEvents:",e);}
   try{initWalk();}catch(e){}
+  } catch(err){
+    // Last resort fallback — show setup wizard
+    document.querySelectorAll('.scr').forEach(function(s){s.classList.remove('on');});
+    var sx=document.getElementById('SLX');if(sx)sx.classList.add('on');
+    console.error('Boot error:',err);
+  }
 });
 
 // ── Event binding ─────────────────────────────────────────
