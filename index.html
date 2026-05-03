@@ -328,58 +328,58 @@ body{overscroll-behavior:none}
 <!-- ══════════════ SITE LEVEL SCREENS ══════════════ -->
 
 <!-- SLG: Login -->
-<div id="SLG" class="scr on" style="background:#1E3A5F;">
+<div id="SLG" class="scr on" style="background:#1E3A5F;display:flex;flex-direction:column;height:100vh;height:100dvh;">
   <!-- Brand -->
-  <div style="flex:0 0 auto;padding:44px 24px 20px;display:flex;flex-direction:column;align-items:center;">
-    <div style="width:64px;height:64px;background:#CA8A04;border-radius:16px;display:flex;align-items:center;justify-content:center;font-family:var(--head);font-size:22px;font-weight:800;color:#fff;margin-bottom:12px;">SL</div>
-    <div style="font-family:var(--head);font-size:34px;font-weight:800;color:#fff;letter-spacing:5px;">SITE<span style="color:#CA8A04;">LEVEL</span></div>
-    <div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.3);letter-spacing:2px;text-transform:uppercase;margin-top:5px;">by TrueShift Consulting</div>
+  <div style="flex:0 0 auto;display:flex;flex-direction:column;align-items:center;padding:52px 24px 24px;">
+    <div style="width:68px;height:68px;background:#CA8A04;border-radius:18px;display:flex;align-items:center;justify-content:center;font-family:var(--head);font-size:24px;font-weight:800;color:#fff;letter-spacing:1px;margin-bottom:14px;">SL</div>
+    <div style="font-family:var(--head);font-size:36px;font-weight:800;color:#fff;letter-spacing:5px;line-height:1;">SITE<span style="color:#CA8A04;">LEVEL</span></div>
+    <div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.3);letter-spacing:2px;text-transform:uppercase;margin-top:6px;">by TrueShift Consulting</div>
   </div>
-  <!-- Fields only — no buttons in here -->
-  <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;">
-    <div style="padding:20px 24px 8px;max-width:360px;margin:0 auto;">
-      <div id="slg-mode-lbl" style="font-family:var(--head);font-size:19px;font-weight:800;color:#fff;margin-bottom:16px;">Sign In</div>
-      <div style="margin-bottom:12px;">
-        <div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:5px;">Email</div>
-        <input id="slg-email" type="email" placeholder="you@company.com" autocomplete="email" autocapitalize="none" spellcheck="false" inputmode="email" style="width:100%;padding:13px 14px;border:1.5px solid rgba(255,255,255,.2);border-radius:6px;background:rgba(255,255,255,.08);color:#fff;font-size:16px;font-family:var(--body);outline:none;box-sizing:border-box;-webkit-appearance:none;">
+  <!-- Fields — scrollable -->
+  <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:20px 24px 8px;">
+    <div id="slg-mode-lbl" style="font-family:var(--head);font-size:19px;font-weight:800;color:#fff;margin-bottom:16px;">Sign In</div>
+    <div style="margin-bottom:12px;">
+      <div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:5px;">Email</div>
+      <input id="slg-email" type="email" placeholder="you@company.com" autocomplete="email" autocapitalize="none" spellcheck="false" inputmode="email"
+        style="width:100%;padding:14px;border:1.5px solid rgba(255,255,255,.2);border-radius:8px;background:rgba(255,255,255,.08);color:#fff;font-size:16px;font-family:var(--body);outline:none;-webkit-appearance:none;box-sizing:border-box;">
+    </div>
+    <div style="margin-bottom:12px;">
+      <div style="display:flex;justify-content:space-between;margin-bottom:5px;">
+        <div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:1.5px;">Password</div>
+        <span id="btn-forgot" onclick="slgShowForgot()" style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.35);cursor:pointer;">Forgot?</span>
       </div>
-      <div style="margin-bottom:12px;">
-        <div style="display:flex;justify-content:space-between;margin-bottom:5px;">
-          <div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:1.5px;">Password</div>
-          <button id="btn-forgot" type="button" onclick="slgShowForgot()" style="background:none;border:none;color:rgba(255,255,255,.35);font-family:var(--mono);font-size:9px;cursor:pointer;-webkit-appearance:none;padding:0;touch-action:manipulation;">Forgot?</button>
-        </div>
-        <input id="slg-pass" type="password" placeholder="Min 6 characters" autocomplete="current-password" style="width:100%;padding:13px 14px;border:1.5px solid rgba(255,255,255,.2);border-radius:6px;background:rgba(255,255,255,.08);color:#fff;font-size:16px;font-family:var(--body);outline:none;box-sizing:border-box;-webkit-appearance:none;">
-      </div>
-      <div id="slg-plant-row" style="display:none;margin-bottom:12px;">
-        <div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:5px;">Plant Name</div>
-        <input id="slg-plant" type="text" placeholder="e.g. Northside Assembly" autocapitalize="words" style="width:100%;padding:13px 14px;border:1.5px solid rgba(255,255,255,.2);border-radius:6px;background:rgba(255,255,255,.08);color:#fff;font-size:16px;font-family:var(--body);outline:none;box-sizing:border-box;-webkit-appearance:none;">
-      </div>
-      <div id="slg-msg" style="font-family:var(--mono);font-size:11px;min-height:16px;line-height:1.5;color:#FCA5A5;"></div>
-      <div id="slg-forgot-panel" style="display:none;background:rgba(255,255,255,.06);border-radius:8px;border:1px solid rgba(255,255,255,.12);padding:14px;margin-top:10px;">
-        <div style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.5);margin-bottom:10px;line-height:1.7;">Enter your email to receive a password reset link.</div>
-        <input id="slg-reset-email" type="email" placeholder="your@email.com" autocapitalize="none" inputmode="email" style="width:100%;padding:11px 12px;border:1px solid rgba(255,255,255,.2);border-radius:6px;background:rgba(255,255,255,.07);color:#fff;font-size:15px;font-family:var(--body);outline:none;box-sizing:border-box;-webkit-appearance:none;margin-bottom:8px;">
-        <div id="slg-reset-msg" style="font-family:var(--mono);font-size:10px;min-height:14px;margin-bottom:8px;"></div>
-        <div style="display:flex;gap:8px;">
-          <button id="btn-slg-cancel-reset" type="button" onclick="slgHideForgot()" style="flex:1;padding:10px;background:none;border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.4);border-radius:6px;font-family:var(--mono);font-size:11px;cursor:pointer;-webkit-appearance:none;touch-action:manipulation;">Cancel</button>
-          <button id="btn-slg-send-reset" type="button" onclick="slgSendReset()" style="flex:2;padding:10px;background:#CA8A04;color:#fff;border:none;border-radius:6px;font-family:var(--head);font-size:14px;font-weight:800;cursor:pointer;-webkit-appearance:none;touch-action:manipulation;">Send Reset Link</button>
-        </div>
+      <input id="slg-pass" type="password" placeholder="Min 6 characters" autocomplete="current-password"
+        style="width:100%;padding:14px;border:1.5px solid rgba(255,255,255,.2);border-radius:8px;background:rgba(255,255,255,.08);color:#fff;font-size:16px;font-family:var(--body);outline:none;-webkit-appearance:none;box-sizing:border-box;">
+    </div>
+    <div id="slg-plant-row" style="display:none;margin-bottom:12px;">
+      <div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:5px;">Plant Name</div>
+      <input id="slg-plant" type="text" placeholder="e.g. Northside Assembly" autocapitalize="words"
+        style="width:100%;padding:14px;border:1.5px solid rgba(255,255,255,.2);border-radius:8px;background:rgba(255,255,255,.08);color:#fff;font-size:16px;font-family:var(--body);outline:none;-webkit-appearance:none;box-sizing:border-box;">
+    </div>
+    <div id="slg-msg" style="font-family:var(--mono);font-size:11px;min-height:18px;color:#FCA5A5;margin-bottom:8px;"></div>
+    <div id="slg-forgot-panel" style="display:none;background:rgba(255,255,255,.06);border-radius:8px;padding:14px;margin-bottom:12px;">
+      <div style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.5);margin-bottom:10px;line-height:1.7;">Enter your email to receive a password reset link.</div>
+      <input id="slg-reset-email" type="email" placeholder="your@email.com" autocapitalize="none" inputmode="email"
+        style="width:100%;padding:11px 12px;border:1px solid rgba(255,255,255,.2);border-radius:6px;background:rgba(255,255,255,.07);color:#fff;font-size:15px;font-family:var(--body);outline:none;-webkit-appearance:none;box-sizing:border-box;margin-bottom:8px;">
+      <div id="slg-reset-msg" style="font-family:var(--mono);font-size:10px;min-height:14px;margin-bottom:8px;"></div>
+      <div style="display:flex;gap:8px;">
+        <button type="button" onclick="slgHideForgot()" style="flex:1;padding:10px;background:none;border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.4);border-radius:6px;font-family:var(--mono);font-size:11px;cursor:pointer;-webkit-appearance:none;touch-action:manipulation;">Cancel</button>
+        <button type="button" onclick="slgSendReset()" style="flex:2;padding:10px;background:#CA8A04;color:#fff;border:none;border-radius:6px;font-family:var(--head);font-size:14px;font-weight:800;cursor:pointer;-webkit-appearance:none;touch-action:manipulation;">Send Reset Link</button>
       </div>
     </div>
   </div>
-  <!-- Buttons — OUTSIDE scroll, always tappable -->
-  <div style="flex:0 0 auto;padding:12px 24px;padding-bottom:calc(16px + env(safe-area-inset-bottom,0px));background:rgba(0,0,0,.15);">
-    <div style="max-width:360px;margin:0 auto;">
-      <button id="btn-slg-submit" type="button" onclick="slgSubmit()"
-        style="width:100%;padding:17px;background:#CA8A04;color:#fff;border:none;border-radius:8px;font-family:var(--head);font-size:20px;font-weight:800;cursor:pointer;-webkit-appearance:none;touch-action:manipulation;display:block;box-sizing:border-box;margin-bottom:12px;">
-        Sign In &#8594;
-      </button>
-      <div style="display:flex;justify-content:center;align-items:center;gap:4px;margin-bottom:12px;">
-        <span id="slg-toggle-lbl" style="font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.3);">New to Site Level?</span>
-        <button id="btn-slg-toggle" type="button" onclick="slgToggleMode()" style="background:none;border:none;color:rgba(255,255,255,.5);font-family:var(--mono);font-size:11px;cursor:pointer;-webkit-appearance:none;text-decoration:underline;padding:2px 4px;touch-action:manipulation;">Create account</button>
-      </div>
-      <div style="text-align:center;border-top:1px solid rgba(255,255,255,.07);padding-top:12px;">
-        <button id="btn-slg-demo" type="button" onclick="slgDemo()" style="background:none;border:none;color:rgba(255,255,255,.25);font-family:var(--mono);font-size:10px;cursor:pointer;-webkit-appearance:none;letter-spacing:.5px;touch-action:manipulation;">View Demo &mdash; no account needed</button>
-      </div>
+  <!-- Buttons — OUTSIDE scroll, flex:0 so always visible at bottom -->
+  <div style="flex:0 0 auto;padding:12px 24px;padding-bottom:calc(16px + env(safe-area-inset-bottom,0px));">
+    <button type="button" id="btn-slg-submit" onclick="slgSubmit()"
+      style="display:block;width:100%;padding:17px;background:#CA8A04;color:#fff;border:none;border-radius:8px;font-family:var(--head);font-size:20px;font-weight:800;cursor:pointer;-webkit-appearance:none;touch-action:manipulation;margin-bottom:12px;">
+      Sign In &#8594;
+    </button>
+    <div style="display:flex;justify-content:center;align-items:center;gap:4px;margin-bottom:12px;">
+      <span id="slg-toggle-lbl" style="font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.3);">New to Site Level?</span>
+      <button type="button" id="btn-slg-toggle" onclick="slgToggleMode()" style="background:none;border:none;color:rgba(255,255,255,.5);font-family:var(--mono);font-size:11px;cursor:pointer;-webkit-appearance:none;text-decoration:underline;padding:2px 6px;touch-action:manipulation;">Create account</button>
+    </div>
+    <div style="text-align:center;border-top:1px solid rgba(255,255,255,.07);padding-top:12px;">
+      <button type="button" id="btn-slg-demo" onclick="slgDemo()" style="background:none;border:none;color:rgba(255,255,255,.25);font-family:var(--mono);font-size:10px;cursor:pointer;-webkit-appearance:none;letter-spacing:.5px;touch-action:manipulation;">View Demo &mdash; no account needed</button>
     </div>
   </div>
 </div>
