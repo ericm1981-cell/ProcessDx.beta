@@ -346,7 +346,7 @@ body{overscroll-behavior:none;overflow:hidden}
       <div style="margin-bottom:11px;">
         <div style="display:flex;justify-content:space-between;margin-bottom:5px;">
           <div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:1.5px;">Password</div>
-          <button id="btn-forgot" type="button" style="background:none;border:none;color:rgba(255,255,255,.35);font-family:var(--mono);font-size:9px;cursor:pointer;-webkit-appearance:none;padding:0;touch-action:manipulation;">Forgot?</button>
+          <button id="btn-forgot" type="button" onclick="slgShowForgot()" style="background:none;border:none;color:rgba(255,255,255,.35);font-family:var(--mono);font-size:9px;cursor:pointer;-webkit-appearance:none;padding:0;touch-action:manipulation;">Forgot?</button>
         </div>
         <input id="slg-pass" type="password" placeholder="Min 6 characters"
           autocomplete="current-password"
@@ -359,12 +359,12 @@ body{overscroll-behavior:none;overflow:hidden}
           style="width:100%;padding:13px 14px;border:1.5px solid rgba(255,255,255,.2);border-radius:6px;background:rgba(255,255,255,.08);color:#fff;font-size:16px;font-family:var(--body);outline:none;box-sizing:border-box;-webkit-appearance:none;">
       </div>
       <div id="slg-msg" style="font-family:var(--mono);font-size:11px;min-height:16px;margin-bottom:8px;line-height:1.5;color:#FCA5A5;"></div>
-      <button id="btn-slg-submit" type="button"
+      <button id="btn-slg-submit" type="button" onclick="slgSubmit()"
         style="width:100%;padding:17px;background:#CA8A04;color:#fff;border:none;border-radius:8px;font-family:var(--head);font-size:20px;font-weight:800;cursor:pointer;-webkit-appearance:none;touch-action:manipulation;display:block;box-sizing:border-box;margin-bottom:14px;">
         Sign In &#8594;
       </button>
       <div style="text-align:center;margin-bottom:16px;">
-        <span id="slg-toggle-lbl" style="font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.3);">New to Site Level? </span><button id="btn-slg-toggle" type="button" style="background:none;border:none;color:rgba(255,255,255,.5);font-family:var(--mono);font-size:11px;cursor:pointer;-webkit-appearance:none;text-decoration:underline;padding:0;touch-action:manipulation;">Create account</button>
+        <span id="slg-toggle-lbl" style="font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.3);">New to Site Level? </span><button id="btn-slg-toggle" type="button" onclick="slgToggleMode()" style="background:none;border:none;color:rgba(255,255,255,.5);font-family:var(--mono);font-size:11px;cursor:pointer;-webkit-appearance:none;text-decoration:underline;padding:0;touch-action:manipulation;">Create account</button>
       </div>
       <div id="slg-forgot-panel" style="display:none;background:rgba(255,255,255,.06);border-radius:8px;border:1px solid rgba(255,255,255,.12);padding:14px;margin-bottom:14px;">
         <div style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.5);margin-bottom:10px;line-height:1.7;">Enter your email to receive a password reset link.</div>
@@ -373,12 +373,12 @@ body{overscroll-behavior:none;overflow:hidden}
           style="width:100%;padding:11px 12px;border:1px solid rgba(255,255,255,.2);border-radius:6px;background:rgba(255,255,255,.07);color:#fff;font-size:15px;font-family:var(--body);outline:none;box-sizing:border-box;-webkit-appearance:none;margin-bottom:8px;">
         <div id="slg-reset-msg" style="font-family:var(--mono);font-size:10px;min-height:14px;margin-bottom:8px;"></div>
         <div style="display:flex;gap:8px;">
-          <button id="btn-slg-cancel-reset" type="button" style="flex:1;padding:10px;background:none;border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.4);border-radius:6px;font-family:var(--mono);font-size:11px;cursor:pointer;-webkit-appearance:none;touch-action:manipulation;">Cancel</button>
-          <button id="btn-slg-send-reset" type="button" style="flex:2;padding:10px;background:#CA8A04;color:#fff;border:none;border-radius:6px;font-family:var(--head);font-size:14px;font-weight:800;cursor:pointer;-webkit-appearance:none;touch-action:manipulation;">Send Reset Link</button>
+          <button id="btn-slg-cancel-reset" type="button" onclick="slgHideForgot()" style="flex:1;padding:10px;background:none;border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.4);border-radius:6px;font-family:var(--mono);font-size:11px;cursor:pointer;-webkit-appearance:none;touch-action:manipulation;">Cancel</button>
+          <button id="btn-slg-send-reset" type="button" onclick="slgSendReset()" style="flex:2;padding:10px;background:#CA8A04;color:#fff;border:none;border-radius:6px;font-family:var(--head);font-size:14px;font-weight:800;cursor:pointer;-webkit-appearance:none;touch-action:manipulation;">Send Reset Link</button>
         </div>
       </div>
       <div style="text-align:center;border-top:1px solid rgba(255,255,255,.07);padding-top:16px;">
-        <button id="btn-slg-demo" type="button" style="background:none;border:none;color:rgba(255,255,255,.2);font-family:var(--mono);font-size:10px;cursor:pointer;-webkit-appearance:none;letter-spacing:.5px;touch-action:manipulation;">View Demo &mdash; no account needed</button>
+        <button id="btn-slg-demo" type="button" onclick="slgDemo()" style="background:none;border:none;color:rgba(255,255,255,.2);font-family:var(--mono);font-size:10px;cursor:pointer;-webkit-appearance:none;letter-spacing:.5px;touch-action:manipulation;">View Demo &mdash; no account needed</button>
       </div>
     </div>
   </div>
@@ -2727,7 +2727,7 @@ function exportTimeStudyXLS(){
 
 // ═══ SUPABASE ═══
 const SB_URL = 'https://crmfanzohigqflsfrddl.supabase.co';
-const SB_KEY = 'sb_publishable_fw-zV5Jp3UyE8mhr7AV0pw_G7GT7hN0';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNybWZhbnpvaGlncWZsc2ZyZGRsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4ODYyNDMsImV4cCI6MjA5MjQ2MjI0M30.LPxuroJra66RG_xx2jEt-h7D2LJbEyAvmSqEpCK2DfY';
 let _sbClient = null;
 function sbClient(){
   if(!_sbClient && window.supabase)
@@ -5275,7 +5275,7 @@ function slgGetSB(){
   if(window.supabase){
     window._sbClient=window.supabase.createClient(
       'https://crmfanzohigqflsfrddl.supabase.co',
-      'sb_publishable_fw-zV5Jp3UyE8mhr7AV0pw_G7GT7hN0'
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNybWZhbnpvaGlncWZsc2ZyZGRsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4ODYyNDMsImV4cCI6MjA5MjQ2MjI0M30.LPxuroJra66RG_xx2jEt-h7D2LJbEyAvmSqEpCK2DfY'
     );
     return window._sbClient;
   }
@@ -5352,7 +5352,7 @@ function slgOnLogin(user){
   }
 }
 
-async function slgSubmit(){
+function slgSubmit(){
   var email=(slId('slg-email').value||'').trim();
   var pass=(slId('slg-pass').value||'').trim();
   var plant=_slgMode==='signup'?(slId('slg-plant').value||'').trim():'';
@@ -5368,30 +5368,30 @@ async function slgSubmit(){
     return;
   }
   slgSetLoading(true);slgMsg('');
-  try{
-    var result;
-    if(_slgMode==='signup'){
-      result=await sb.auth.signUp({email:email,password:pass,options:{data:{plant_name:plant}}});
-      if(result.error)throw result.error;
-      if(result.data&&result.data.user&&result.data.session){
-        slgOnLogin(result.data.user);return;
-      }
-      slgSetLoading(false);
-      slgMsg('Account created. Check your email to confirm, then sign in.',false);
-      slgToggleMode();return;
-    } else {
-      result=await sb.auth.signInWithPassword({email:email,password:pass});
-      if(result.error)throw result.error;
-    }
-    if(result.data&&result.data.user)slgOnLogin(result.data.user);
-  } catch(err){
-    var msg=err.message||'Something went wrong.';
+  function onErr(err){
+    slgSetLoading(false);
+    var msg=(err&&err.message)||'Something went wrong.';
     if(/invalid.*(login|credentials)/i.test(msg))msg='Email or password is incorrect.';
     if(/already.*(registered|been registered)/i.test(msg))msg='Account exists — sign in instead.';
     if(/email not confirmed/i.test(msg))msg='Check your email to confirm your account first.';
     slgMsg(msg,true);
-  } finally {
-    slgSetLoading(false);
+  }
+  if(_slgMode==='signup'){
+    sb.auth.signUp({email:email,password:pass,options:{data:{plant_name:plant}}})
+      .then(function(r){
+        slgSetLoading(false);
+        if(r.error){onErr(r.error);return;}
+        if(r.data&&r.data.user&&r.data.session){slgOnLogin(r.data.user);return;}
+        slgMsg('Account created. Check your email to confirm, then sign in.',false);
+        slgToggleMode();
+      }).catch(onErr);
+  } else {
+    sb.auth.signInWithPassword({email:email,password:pass})
+      .then(function(r){
+        slgSetLoading(false);
+        if(r.error){onErr(r.error);return;}
+        if(r.data&&r.data.user)slgOnLogin(r.data.user);
+      }).catch(onErr);
   }
 }
 
@@ -5408,7 +5408,7 @@ function slgHideForgot(){
   slId('slg-reset-msg').textContent='';
 }
 
-async function slgSendReset(){
+function slgSendReset(){
   var email=(slId('slg-reset-email').value||'').trim();
   var msg=slId('slg-reset-msg');
   if(!email||!email.includes('@')){
@@ -5417,15 +5417,18 @@ async function slgSendReset(){
   var sb=slgGetSB();
   if(!sb){if(msg){msg.textContent='Not available offline.';msg.style.color='#FCA5A5';}return;}
   if(msg){msg.textContent='Sending...';msg.style.color='rgba(255,255,255,.5)';}
-  var result=await sb.auth.resetPasswordForEmail(email,{
+  sb.auth.resetPasswordForEmail(email,{
     redirectTo: window.location.origin+window.location.pathname
+  }).then(function(result){
+    if(result.error){
+      if(msg){msg.textContent='Error: '+result.error.message;msg.style.color='#FCA5A5';}
+    } else {
+      if(msg){msg.textContent='Reset link sent. Check your email.';msg.style.color='#86EFAC';}
+      setTimeout(function(){slgHideForgot();},3000);
+    }
+  }).catch(function(err){
+    if(msg){msg.textContent='Error sending reset.';msg.style.color='#FCA5A5';}
   });
-  if(result.error){
-    if(msg){msg.textContent='Error: '+result.error.message;msg.style.color='#FCA5A5';}
-  } else {
-    if(msg){msg.textContent='Reset link sent. Check your email.';msg.style.color='#86EFAC';}
-    setTimeout(function(){slgHideForgot();},3000);
-  }
 }
 
 function slgDemo(){
