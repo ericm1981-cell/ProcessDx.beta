@@ -328,69 +328,62 @@ body{overscroll-behavior:none;overflow:hidden}
 <!-- ══════════════ SITE LEVEL SCREENS ══════════════ -->
 
 <!-- SLG: Login -->
-<div id="SLG" class="scr on">
-  <div style="flex:1;background:#1E3A5F;display:flex;flex-direction:column;overflow-y:auto;">
-    <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 28px 24px;min-height:220px;">
-      <div style="width:68px;height:68px;background:#CA8A04;border-radius:16px;display:flex;align-items:center;justify-content:center;font-family:var(--head);font-size:24px;font-weight:800;color:#fff;letter-spacing:1px;margin-bottom:14px;">SL</div>
-      <div style="font-family:var(--head);font-size:36px;font-weight:800;color:#fff;letter-spacing:5px;line-height:1;">SITE<span style="color:#CA8A04;">LEVEL</span></div>
-      <div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.3);letter-spacing:2px;text-transform:uppercase;margin-top:6px;">by TrueShift Consulting</div>
-    </div>
-    <div style="flex:0 0 auto;background:rgba(0,0,0,.2);border-top:1px solid rgba(255,255,255,.08);padding:24px;padding-bottom:calc(32px + env(safe-area-inset-bottom,0px));">
-      <div style="max-width:340px;margin:0 auto;">
-        <div id="slg-mode-lbl" style="font-family:var(--head);font-size:20px;font-weight:800;color:#fff;margin-bottom:18px;">Sign In</div>
-        <div style="margin-bottom:12px;">
-          <label style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:1.5px;display:block;margin-bottom:5px;">Email</label>
-          <input id="slg-email" type="email" placeholder="you@company.com" autocomplete="email" autocapitalize="none" spellcheck="false" inputmode="email"
-            style="width:100%;padding:13px 14px;border:1.5px solid rgba(255,255,255,.15);border-radius:6px;background:rgba(255,255,255,.07);color:#fff;font-size:16px;font-family:var(--body);outline:none;-webkit-appearance:none;"
-            onfocus="this.style.borderColor='rgba(255,255,255,.5)'" onblur="this.style.borderColor='rgba(255,255,255,.15)'">
+<div id="SLG" class="scr on" style="background:#1E3A5F;">
+  <div style="flex:0 0 auto;background:#1E3A5F;padding:44px 24px 20px;display:flex;flex-direction:column;align-items:center;">
+    <div style="width:64px;height:64px;background:#CA8A04;border-radius:16px;display:flex;align-items:center;justify-content:center;font-family:var(--head);font-size:22px;font-weight:800;color:#fff;margin-bottom:12px;">SL</div>
+    <div style="font-family:var(--head);font-size:34px;font-weight:800;color:#fff;letter-spacing:5px;">SITE<span style="color:#CA8A04;">LEVEL</span></div>
+    <div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.3);letter-spacing:2px;text-transform:uppercase;margin-top:5px;">by TrueShift Consulting</div>
+  </div>
+  <div class="scroll" style="background:rgba(0,0,0,.25);padding-bottom:20px;">
+    <div style="max-width:360px;margin:0 auto;padding:20px 24px;">
+      <div id="slg-mode-lbl" style="font-family:var(--head);font-size:19px;font-weight:800;color:#fff;margin-bottom:16px;">Sign In</div>
+      <div style="margin-bottom:11px;">
+        <div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:5px;">Email</div>
+        <input id="slg-email" type="email" placeholder="you@company.com"
+          autocomplete="email" autocapitalize="none" spellcheck="false" inputmode="email"
+          style="width:100%;padding:13px 14px;border:1.5px solid rgba(255,255,255,.2);border-radius:6px;background:rgba(255,255,255,.08);color:#fff;font-size:16px;font-family:var(--body);outline:none;box-sizing:border-box;-webkit-appearance:none;">
+      </div>
+      <div style="margin-bottom:11px;">
+        <div style="display:flex;justify-content:space-between;margin-bottom:5px;">
+          <div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:1.5px;">Password</div>
+          <button id="btn-forgot" type="button" style="background:none;border:none;color:rgba(255,255,255,.35);font-family:var(--mono);font-size:9px;cursor:pointer;-webkit-appearance:none;padding:0;touch-action:manipulation;">Forgot?</button>
         </div>
-        <div style="margin-bottom:12px;">
-          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px;">
-            <label style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:1.5px;">Password</label>
-            <button id="btn-forgot" onclick="slgShowForgot()" type="button" style="background:none;border:none;color:rgba(255,255,255,.3);font-family:var(--mono);font-size:9px;cursor:pointer;-webkit-appearance:none;padding:0;letter-spacing:.3px;">Forgot password?</button>
-          </div>
-          <div style="position:relative;">
-            <input id="slg-pass" type="password" placeholder="Min 6 characters" autocomplete="current-password"
-              style="width:100%;padding:13px 42px 13px 14px;border:1.5px solid rgba(255,255,255,.15);border-radius:6px;background:rgba(255,255,255,.07);color:#fff;font-size:16px;font-family:var(--body);outline:none;-webkit-appearance:none;"
-              onfocus="this.style.borderColor='rgba(255,255,255,.5)'" onblur="this.style.borderColor='rgba(255,255,255,.15)'">
-            <button type="button" onclick="slgTogglePass()" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:rgba(255,255,255,.35);cursor:pointer;padding:4px;font-size:15px;line-height:1;-webkit-appearance:none;">&#128065;</button>
-          </div>
+        <input id="slg-pass" type="password" placeholder="Min 6 characters"
+          autocomplete="current-password"
+          style="width:100%;padding:13px 14px;border:1.5px solid rgba(255,255,255,.2);border-radius:6px;background:rgba(255,255,255,.08);color:#fff;font-size:16px;font-family:var(--body);outline:none;box-sizing:border-box;-webkit-appearance:none;">
+      </div>
+      <div id="slg-plant-row" style="display:none;margin-bottom:11px;">
+        <div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:5px;">Plant Name</div>
+        <input id="slg-plant" type="text" placeholder="e.g. Northside Assembly"
+          autocapitalize="words"
+          style="width:100%;padding:13px 14px;border:1.5px solid rgba(255,255,255,.2);border-radius:6px;background:rgba(255,255,255,.08);color:#fff;font-size:16px;font-family:var(--body);outline:none;box-sizing:border-box;-webkit-appearance:none;">
+      </div>
+      <div id="slg-msg" style="font-family:var(--mono);font-size:11px;min-height:16px;margin-bottom:8px;line-height:1.5;color:#FCA5A5;"></div>
+      <button id="btn-slg-submit" type="button"
+        style="width:100%;padding:17px;background:#CA8A04;color:#fff;border:none;border-radius:8px;font-family:var(--head);font-size:20px;font-weight:800;cursor:pointer;-webkit-appearance:none;touch-action:manipulation;display:block;box-sizing:border-box;margin-bottom:14px;">
+        Sign In &#8594;
+      </button>
+      <div style="text-align:center;margin-bottom:16px;">
+        <span id="slg-toggle-lbl" style="font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.3);">New to Site Level? </span><button id="btn-slg-toggle" type="button" style="background:none;border:none;color:rgba(255,255,255,.5);font-family:var(--mono);font-size:11px;cursor:pointer;-webkit-appearance:none;text-decoration:underline;padding:0;touch-action:manipulation;">Create account</button>
+      </div>
+      <div id="slg-forgot-panel" style="display:none;background:rgba(255,255,255,.06);border-radius:8px;border:1px solid rgba(255,255,255,.12);padding:14px;margin-bottom:14px;">
+        <div style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.5);margin-bottom:10px;line-height:1.7;">Enter your email to receive a password reset link.</div>
+        <input id="slg-reset-email" type="email" placeholder="your@email.com"
+          autocapitalize="none" inputmode="email"
+          style="width:100%;padding:11px 12px;border:1px solid rgba(255,255,255,.2);border-radius:6px;background:rgba(255,255,255,.07);color:#fff;font-size:15px;font-family:var(--body);outline:none;box-sizing:border-box;-webkit-appearance:none;margin-bottom:8px;">
+        <div id="slg-reset-msg" style="font-family:var(--mono);font-size:10px;min-height:14px;margin-bottom:8px;"></div>
+        <div style="display:flex;gap:8px;">
+          <button id="btn-slg-cancel-reset" type="button" style="flex:1;padding:10px;background:none;border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.4);border-radius:6px;font-family:var(--mono);font-size:11px;cursor:pointer;-webkit-appearance:none;touch-action:manipulation;">Cancel</button>
+          <button id="btn-slg-send-reset" type="button" style="flex:2;padding:10px;background:#CA8A04;color:#fff;border:none;border-radius:6px;font-family:var(--head);font-size:14px;font-weight:800;cursor:pointer;-webkit-appearance:none;touch-action:manipulation;">Send Reset Link</button>
         </div>
-        <div id="slg-plant-row" style="display:none;margin-bottom:12px;">
-          <label style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:1.5px;display:block;margin-bottom:5px;">Plant Name</label>
-          <input id="slg-plant" type="text" placeholder="e.g. Northside Assembly" autocapitalize="words"
-            style="width:100%;padding:13px 14px;border:1.5px solid rgba(255,255,255,.15);border-radius:6px;background:rgba(255,255,255,.07);color:#fff;font-size:16px;font-family:var(--body);outline:none;-webkit-appearance:none;"
-            onfocus="this.style.borderColor='rgba(255,255,255,.5)'" onblur="this.style.borderColor='rgba(255,255,255,.15)'">
-        </div>
-        <div id="slg-msg" style="font-family:var(--mono);font-size:11px;min-height:16px;margin-bottom:10px;line-height:1.5;"></div>
-        <button id="btn-slg-submit"
-          style="width:100%;padding:18px 15px;background:#CA8A04;color:#fff;border:none;border-radius:8px;font-family:var(--head);font-size:20px;font-weight:800;letter-spacing:.5px;cursor:pointer;-webkit-appearance:none;touch-action:manipulation;-webkit-tap-highlight-color:rgba(0,0,0,.2);user-select:none;">
-          Sign In &rarr;
-        </button>
-        <div style="margin-top:16px;text-align:center;">
-          <span id="slg-toggle-lbl" style="font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.3);">New to Site Level? </span>
-          <button id="btn-slg-toggle" onclick="slgToggleMode()" style="background:none;border:none;color:rgba(255,255,255,.5);font-family:var(--mono);font-size:11px;cursor:pointer;-webkit-appearance:none;text-decoration:underline;padding:0;">Create account</button>
-        </div>
-        <!-- Forgot password panel -->
-        <div id="slg-forgot-panel" style="display:none;margin-top:16px;padding:14px;background:rgba(255,255,255,.05);border-radius:8px;border:1px solid rgba(255,255,255,.1);">
-          <div style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.5);margin-bottom:10px;line-height:1.7;">Enter your email and we'll send a reset link.</div>
-          <input id="slg-reset-email" type="email" placeholder="your@email.com" autocapitalize="none" spellcheck="false" inputmode="email"
-            style="width:100%;padding:11px 12px;border:1px solid rgba(255,255,255,.15);border-radius:6px;background:rgba(255,255,255,.07);color:#fff;font-size:15px;font-family:var(--body);outline:none;-webkit-appearance:none;margin-bottom:8px;"
-            onfocus="this.style.borderColor='rgba(255,255,255,.4)'" onblur="this.style.borderColor='rgba(255,255,255,.15)'">
-          <div id="slg-reset-msg" style="font-family:var(--mono);font-size:10px;min-height:14px;margin-bottom:8px;"></div>
-          <div style="display:flex;gap:8px;">
-            <button onclick="slgHideForgot()" style="flex:1;padding:10px;background:none;border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.4);border-radius:6px;font-family:var(--mono);font-size:11px;cursor:pointer;-webkit-appearance:none;touch-action:manipulation;">Cancel</button>
-            <button onclick="slgSendReset()" style="flex:2;padding:10px;background:#CA8A04;color:#fff;border:none;border-radius:6px;font-family:var(--head);font-size:14px;font-weight:800;cursor:pointer;-webkit-appearance:none;touch-action:manipulation;">Send Reset Link</button>
-          </div>
-        </div>
-
-        <div style="margin-top:20px;text-align:center;border-top:1px solid rgba(255,255,255,.07);padding-top:16px;">
-          <button onclick="slgDemo()" style="background:none;border:none;color:rgba(255,255,255,.2);font-family:var(--mono);font-size:10px;cursor:pointer;-webkit-appearance:none;letter-spacing:.5px;touch-action:manipulation;">View Demo &mdash; no account needed</button>
-        </div>
+      </div>
+      <div style="text-align:center;border-top:1px solid rgba(255,255,255,.07);padding-top:16px;">
+        <button id="btn-slg-demo" type="button" style="background:none;border:none;color:rgba(255,255,255,.2);font-family:var(--mono);font-size:10px;cursor:pointer;-webkit-appearance:none;letter-spacing:.5px;touch-action:manipulation;">View Demo &mdash; no account needed</button>
       </div>
     </div>
   </div>
 </div>
+
 <!-- SLX: Setup Wizard -->
 <div id="SLX" class="scr">
   <div class="sl-hdr">
@@ -5445,7 +5438,7 @@ function slgDemo(){
 
 function slgResetButton(){
   var btn=slId('btn-slg-submit');
-  if(btn){btn.disabled=false;btn.style.opacity='1';btn.textContent='Sign In →';}
+  if(btn){btn.disabled=false;btn.style.opacity='1';btn.textContent=_slgMode==='signup'?'Create Account →':'Sign In →';}
   slgMsg('');
 }
 
@@ -5502,7 +5495,7 @@ function slgSignOut(){
   localStorage.removeItem('sl_setup_done');
   _slgMode='signin';
   var lbl=slId('slg-mode-lbl');if(lbl)lbl.textContent='Sign In';
-  var btn=slId('btn-slg-submit');if(btn){btn.textContent='Sign In →';btn.disabled=false;btn.style.opacity='1';}
+  var btn=slId('btn-slg-submit');if(btn){btn.textContent='Sign In →';btn.disabled=false;btn.style.opacity='1';_slgMode='signin';}
   var pr=slId('slg-plant-row');if(pr)pr.style.display='none';
   slgMsg('');
   slShow('SLG');
@@ -5881,91 +5874,37 @@ async function loadUserLines(){
 }
 
 function bindSLEvents(){
-  // Auth events — email/password with iOS touchend fix
-  var _authBusy=false;
-  function _fireSubmit(e){
-    if(_authBusy)return;
-    if(e&&e.preventDefault)e.preventDefault();
-    _authBusy=true;
-    slgSubmit();
-    setTimeout(function(){_authBusy=false;},2500);
+  // Auth events — all wired via addEventListener (iOS Safari safe)
+  function _wire(id, fn){
+    var el=slId(id);
+    if(!el)return;
+    el.addEventListener('click', fn);
+    el.addEventListener('touchend', function(e){e.preventDefault();fn(e);}, {passive:false});
   }
-  var btnSubmit=slId('btn-slg-submit');
-  if(btnSubmit){
-    btnSubmit.addEventListener('touchend',_fireSubmit,{passive:false});
-    btnSubmit.addEventListener('click',_fireSubmit);
+  _wire('btn-slg-submit', function(){slgSubmit();});
+  _wire('btn-slg-toggle', function(){slgToggleMode();});
+  _wire('btn-slg-demo',   function(){slgDemo();});
+  _wire('btn-forgot',     function(){slgShowForgot();});
+  _wire('btn-slg-cancel-reset', function(){slgHideForgot();});
+  _wire('btn-slg-send-reset',   function(){slgSendReset();});
+  _wire('btn-logout',     function(){slgSignOut();});
+  // Show/hide password toggle
+  var passEl=slId('slg-pass');
+  if(passEl){
+    passEl.addEventListener('dblclick',function(){
+      this.type=this.type==='password'?'text':'password';
+    });
   }
+  // Enter key
   ['slg-email','slg-pass','slg-plant'].forEach(function(id){
     var el=slId(id);
-    if(el)el.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();slgSubmit();}});
+    if(el)el.addEventListener('keydown',function(e){
+      if(e.key==='Enter'){e.preventDefault();slgSubmit();}
+    });
   });
-  var btnToggle=slId('btn-slg-toggle');
-  if(btnToggle)btnToggle.addEventListener('click',slgToggleMode);
-  var btnForgot=slId('btn-forgot');
-  if(btnForgot)btnForgot.addEventListener('click',slgShowForgot);
-  var btnLogout=slId('btn-logout');
-  if(btnLogout){
-    btnLogout.addEventListener('touchend',function(e){e.preventDefault();slgSignOut();},{passive:false});
-    btnLogout.addEventListener('click',slgSignOut);
-  }
-
-  // Dashboard nav
-  var nbDash=slId('nb-dash');if(nbDash)nbDash.addEventListener('click',function(){slShow('SLD');});
-  var nbWalk=slId('nb-walk');if(nbWalk)nbWalk.addEventListener('click',function(){initWalk();slShow('SLW');});
-  var nbStudy=slId('nb-study');if(nbStudy)nbStudy.addEventListener('click',function(){slShow('S0');setTimeout(g1Prefill,150);});
-  var nbBal=slId('nb-bal');if(nbBal)nbBal.addEventListener('click',function(){alert('Line Balance — coming in Phase 2');});
-
-  // Line + station row clicks (event delegation)
-  document.addEventListener('click',function(e){
-    var lr=e.target.closest('.line-row');if(lr&&lr.dataset.lid)openLine(lr.dataset.lid);
-    var sr=e.target.closest('.station-row');if(sr&&sr.dataset.lid&&sr.dataset.sid)openStation(sr.dataset.lid,sr.dataset.sid);
+  slId('slg-reset-email')&&slId('slg-reset-email').addEventListener('keydown',function(e){
+    if(e.key==='Enter'){e.preventDefault();slgSendReset();}
   });
-
-  // Line view
-  var bbd=slId('btn-back-dash');if(bbd)bbd.addEventListener('click',function(){slShow('SLD');});
-  var nbDash2=slId('nb-dash-2');if(nbDash2)nbDash2.addEventListener('click',function(){slShow('SLD');});
-  var nbWalk2=slId('nb-walk-2');if(nbWalk2)nbWalk2.addEventListener('click',function(){initWalk();slShow('SLW');});
-
-  // Station view
-  var bbl=slId('btn-back-line');if(bbl)bbl.addEventListener('click',function(){if(_curLine)openLine(_curLine.id);else slShow('SLD');});
-  var bbl2=slId('btn-back-line-2');if(bbl2)bbl2.addEventListener('click',function(){if(_curLine)openLine(_curLine.id);else slShow('SLD');});
-  var bns=slId('btn-new-study');if(bns)bns.addEventListener('click',slStartStudy);
-  var bps=slId('btn-perform-study');if(bps)bps.addEventListener('click',slStartStudy);
-  var nbWalk3=slId('nb-walk-3');if(nbWalk3)nbWalk3.addEventListener('click',function(){initWalk();slShow('SLW');});
-
-  // Walk
-  var bsw=slId('btn-start-walk');if(bsw)bsw.addEventListener('click',startWalk);
-  var bundo=slId('btn-undo');
-  if(bundo)bundo.addEventListener('click',function(){
-    if(!_wObs.length)return;_wObs.pop();_wTotal=Math.max(0,_wTotal-1);
-    var va=_wObs.filter(function(o){return o==='va';}).length;
-    var pct=_wTotal>0?Math.round(va/_wTotal*100):0;
-    slText('slw-pct',_wTotal>0?pct+'%':'—%');
-    var pb=slId('slw-prog');if(pb)pb.style.width=Math.min(100,_wTotal/97*100)+'%';
-    slText('slw-cnt',_wTotal+' obs');
-  });
-  var bfin=slId('btn-finish');if(bfin)bfin.addEventListener('click',finishWalk);
-  var bnw=slId('btn-new-walk');
-  if(bnw)bnw.addEventListener('click',function(){
-    slId('slw-result').style.display='none';
-    slId('slw-obs').style.display='none';
-    slId('slw-setup').style.display='flex';
-  });
-  var bfc=slId('btn-find-cause');
-  if(bfc)bfc.addEventListener('click',function(){
-    // Go to Gate 1 pre-filled with current walk line
-    if(_wLine){
-      slShow('S1');
-      setTimeout(function(){
-        var li=document.getElementById('g1line');
-        if(li)li.value=_wLine;
-      },200);
-    } else {
-      slShow('S1');
-    }
-  });
-  var nbHomeW=slId('nb-home-from-walk');if(nbHomeW)nbHomeW.addEventListener('click',function(){slShow('SLD');});
-  var nbStudyW=slId('nb-study-from-walk');if(nbStudyW)nbStudyW.addEventListener('click',function(){slShow('S0');});
   // Setup wizard live events
   ['slx-ln-mins','slx-ln-breaks','slx-ln-upshift'].forEach(function(id){
     var el=slId(id);if(el)el.addEventListener('input',slxUpdateAvailPreview);
